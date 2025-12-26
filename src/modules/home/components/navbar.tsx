@@ -16,8 +16,8 @@ import {
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3); // Demo count
 
+  // const { cartCount } = useCart();
   // Scroll Detection for Glass Effect
   useEffect(() => {
     const handleScroll = () => {
@@ -68,8 +68,8 @@ export default function Navbar() {
               <div className="bg-black text-white p-1.5 rounded-lg transform group-hover:rotate-6 transition-transform duration-300">
                 <Zap size={20} fill="currentColor" />
               </div>
-              <span className="text-2xl font-black tracking-tighter uppercase font-sans">
-                Input Gears
+              <span className="text-2xl font-black tracking-tighter  font-sans">
+                Input <span className="text-indigo-600">Gears</span>
               </span>
             </Link>
 
@@ -129,11 +129,11 @@ export default function Navbar() {
               className="relative p-2 text-gray-800 hover:bg-gray-100 rounded-full transition-colors group"
             >
               <ShoppingBag size={24} />
-              {cartCount > 0 && (
-                <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white group-hover:scale-110 transition-transform">
-                  {cartCount}
-                </span>
-              )}
+              {/* {cartCount > 0 && ( */}
+              <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white group-hover:scale-110 transition-transform">
+                {/* {cartCount} */}2
+              </span>
+              {/* )} */}
             </Link>
             <Link
               href="/account"

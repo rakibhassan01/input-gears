@@ -1,5 +1,6 @@
-import Footer from "@/modules/home/components/footer";
+import { Footer } from "@/modules/home/components/footer";
 import Navbar from "@/modules/home/components/navbar";
+import { Toaster } from "sonner";
 
 export default function RootLayout({
   children,
@@ -10,6 +11,7 @@ export default function RootLayout({
     <>
       <Navbar />
       {children}
+      <Toaster position="bottom-center" richColors />
       <Footer />
     </>
   );

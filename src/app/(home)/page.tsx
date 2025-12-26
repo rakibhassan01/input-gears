@@ -1,5 +1,5 @@
-import ProductView from "@/modules/products/views/product-view";
+import HeroSection from "@/modules/home/components/hero";
 
 export default function Home() {
-  return <ProductView />;
+  return <HeroSection />;
 }

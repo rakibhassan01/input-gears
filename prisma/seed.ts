@@ -3,6 +3,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// ১. স্ল্যাগ জেনারেট করার ফাংশন (Helper Function)
+function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-") // স্পেস কে হাইফেন (-) বানাবে
+    .replace(/[^\w\-]+/g, "") // স্পেশাল ক্যারেক্টার রিমুভ করবে
+    .replace(/\-\-+/g, "-") // ডাবল হাইফেন রিমুভ করবে
+    .replace(/^-+/, "") // শুরুর হাইফেন রিমুভ
+    .replace(/-+$/, ""); // শেষের হাইফেন রিমুভ
+}
+
 const products = [
   {
     name: "ThunderStrike Mechanical Keyboard",
@@ -65,14 +78,25 @@ const products = [
 async function main() {
   console.log("🌱 Starting seeding...");
 
-  // আগের সব প্রোডাক্ট মুছে ফেলবে যাতে ডুপ্লিকেট না হয় (Optional)
-  await prisma.product.deleteMany();
+  // আগের সব প্রোডাক্ট মুছে ফেলবে যাতে ডুপ্লিকেট না হয়
+  try {
+    await prisma.product.deleteMany();
+    console.log("🗑️ Cleared previous data");
+  } catch (e) {
+    console.log("⚠️ Could not clear data (maybe first run)");
+  }
 
   for (const product of products) {
+    // ২. নাম থেকে স্ল্যাগ তৈরি করা হচ্ছে
+    const slug = slugify(product.name);
+
     const p = await prisma.product.create({
-      data: product,
+      data: {
+        ...product, // বাকি সব প্রপার্টি (price, image, etc)
+        slug: slug, // জেনারেট করা স্ল্যাগ অ্যাড করা হলো
+      },
     });
-    console.log(`Created product with id: ${p.id}`);
+    console.log(`Created product: ${p.name} (Slug: ${p.slug})`);
   }
 
   console.log("✅ Seeding finished.");

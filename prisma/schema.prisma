@@ -20,7 +20,7 @@ model User {
 
   sessions Session[]
   accounts Account[]
-  orders   Order[] // রিলেশন
+  orders   Order[]
 
   @@map("user")
 }
@@ -73,6 +73,7 @@ model Verification {
 model Product {
   id          String  @id @default(cuid())
   name        String
+  slug        String  @unique
   description String  @db.Text
   price       Float
   image       String? // প্রোডাক্টের ছবির URL

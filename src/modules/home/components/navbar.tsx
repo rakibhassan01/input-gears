@@ -39,7 +39,7 @@ export default function Navbar() {
   return (
     <>
       {/* 1. TOP ANNOUNCEMENT BAR */}
-      <div className="bg-neutral-900 text-white text-[11px] font-medium tracking-widest text-center py-2.5 uppercase">
+      <div className="bg-indigo-900 text-white text-[11px] font-medium tracking-widest text-center py-2.5 uppercase">
         Free Shipping on Orders Over $100 —{" "}
         <span className="text-gray-400 border-b border-gray-400 pb-0.5 cursor-pointer hover:text-white transition">
           Shop Now
@@ -136,7 +136,7 @@ export default function Navbar() {
               {/* )} */}
             </Link>
             <Link
-              href="/account"
+              href="/sign-in"
               className="p-2 text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
             >
               <User size={24} />

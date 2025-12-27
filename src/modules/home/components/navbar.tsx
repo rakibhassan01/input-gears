@@ -11,12 +11,14 @@ import {
   Heart,
   ChevronRight,
   Zap,
+  Loader2,
 } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const { data: session, isPending } = useSession();
   // const { cartCount } = useCart();
   // Scroll Detection for Glass Effect
   useEffect(() => {
@@ -135,12 +137,30 @@ export default function Navbar() {
               </span>
               {/* )} */}
             </Link>
-            <Link
+            {/* <Link
               href="/sign-in"
               className="p-2 text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
             >
               <User size={24} />
-            </Link>
+            </Link> */}
+            {isPending ? (
+              // 1. ডাটা লোড হওয়ার সময় স্পিনার দেখাবে (Optional)
+              <div className="p-2 text-gray-400">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : (
+              // 2. সেশন চেক করে লিংক ঠিক করা
+              <Link
+                href={session ? "/account" : "/sign-in"}
+                className={`p-2 rounded-full transition-colors ${
+                  session
+                    ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" // লগইন থাকলে কালার
+                    : "text-gray-800 hover:bg-gray-100" // লগআউট থাকলে সাধারণ
+                }`}
+              >
+                <User size={24} />
+              </Link>
+            )}
           </div>
         </div>
       </nav>
@@ -148,7 +168,7 @@ export default function Navbar() {
       {/* 3. CUSTOM MOBILE MENU DRAWER (No Libraries) */}
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-60 transition-opacity duration-300 ${
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -156,7 +176,7 @@ export default function Navbar() {
 
       {/* Drawer Panel */}
       <div
-        className={`fixed inset-y-0 left-0 z-[70] w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-70 w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid()) // Better Auth text ID prefer kore (CUID/UUID)
+  id            String   @id @default(cuid())
   name          String
   email         String   @unique
   emailVerified Boolean  @default(false)
@@ -16,8 +16,7 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // Custom Fields (আমাদের প্রজেক্টের জন্য)
-  role       String?   @default("user") // 'admin' | 'user' (Better auth e string prefer kore plug-in er jonno)
+  role       String?   @default("user")
   banned     Boolean?  @default(false)
   banReason  String?
   banExpires DateTime?

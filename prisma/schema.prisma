@@ -24,6 +24,7 @@ model User {
   // Relations
   sessions Session[]
   accounts Account[]
+  orders   Order[]
 
   @@map("user") // Better Auth table name lowercase 'user' prefer kore
 }
@@ -83,8 +84,89 @@ model Product {
   stock       Int
   image       String? // ইমেজের URL
 
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  orderItems OrderItem[]
+
+  @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
+}
+
+// 1. Enums
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  STRIPE
+}
+
+// 2. Order Model
+model Order {
+  id String @id @default(cuid())
+
+  // ✅ User Relation (Optional)
+  // যদি ইউজার লগড-ইন থাকে, তাহলে ID থাকবে। গেস্ট হলে null থাকবে।
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  // ✅ Shipping Info (Snapshot)
+  // লগড-ইন বা গেস্ট, যেই হোক না কেন, এই অর্ডারের জন্য ঠিকানা এখানে ফিক্সড থাকবে।
+  name    String // Receiver's Name
+  email   String? // Contact Email
+  phone   String // Contact Phone
+  address String // Shipping Address
+
+  // Order Details
+  totalAmount Float
+  status      OrderStatus @default(PENDING)
+
+  // Payment Info
+  paymentMethod PaymentMethod @default(COD)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Stripe Data
+  stripePaymentIntentId String? @unique
+
+  // Relations
+  items OrderItem[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
+  @@map("orders")
+}
+
+// 3. Order Item Model (Snapshot of Product)
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // প্রোডাক্ট ডিলিট হলেও অর্ডারের ডাটা যাতে থাকে, তাই রিলেশন অপশনাল রাখা যেতে পারে
+  // অথবা শুধু productId স্ট্রিং হিসেবে রাখা হয় অনেক সময়। 
+  // তবে রিলেশন রাখা ভালো অ্যানালিটিক্সের জন্য।
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Snapshot Fields
+  // অফার শেষ হয়ে গেলে বা দাম বাড়লে যাতে আগের অর্ডারে সমস্যা না হয়
+  name     String
+  price    Float
+  quantity Int
+  image    String?
+
+  @@map("order_items")
 }

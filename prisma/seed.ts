@@ -1,0 +1,119 @@
+// prisma/seed.ts
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log("🌱 Seeding products...");
+
+  // আগের সব ডাটা মুছে ফেলা (অপশনাল)
+  await prisma.product.deleteMany();
+
+  await prisma.product.createMany({
+    data: [
+      {
+        name: "Mechanical Keyboard X1",
+        slug: "mechanical-keyboard-x1",
+        description: "Premium mechanical keyboard with RGB backlighting.",
+        price: 120.0,
+        stock: 50,
+        image:
+          "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Wireless Gaming Mouse",
+        slug: "wireless-gaming-mouse",
+        description: "Ultra-fast response time with 25k DPI sensor.",
+        price: 85.5,
+        stock: 30,
+        image:
+          "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Noise Cancelling Headphones",
+        slug: "noise-cancelling-headphones",
+        description:
+          "Immersive sound experience with active noise cancellation.",
+        price: 250.0,
+        stock: 15,
+        image:
+          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "4K Monitor 27-inch",
+        slug: "4k-monitor-27-inch",
+        description: "Crystal clear display tailored for designers.",
+        price: 450.0,
+        stock: 10,
+        image:
+          "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Ergonomic Desk Chair",
+        slug: "ergonomic-desk-chair",
+        description: "Maximum comfort for long working hours.",
+        price: 320.0,
+        stock: 20,
+        image:
+          "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "USB-C Hub Multiport",
+        slug: "usb-c-hub-multiport",
+        description: "Expand your connectivity with 7 ports.",
+        price: 45.0,
+        stock: 100,
+        image:
+          "https://images.unsplash.com/photo-1622359556214-415510b65637?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Smart Watch Series 5",
+        slug: "smart-watch-series-5",
+        description: "Track your fitness and notifications on the go.",
+        price: 199.0,
+        stock: 25,
+        image:
+          "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Portable SSD 1TB",
+        slug: "portable-ssd-1tb",
+        description: "Lightning fast transfer speeds in a compact design.",
+        price: 110.0,
+        stock: 40,
+        image:
+          "https://images.unsplash.com/photo-1597872250969-95a985c5b2ce?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Webcam 1080p Pro",
+        slug: "webcam-1080p-pro",
+        description: "Look your best in every video call.",
+        price: 70.0,
+        stock: 60,
+        image:
+          "https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=60",
+      },
+      {
+        name: "Gaming Mouse Pad XL",
+        slug: "gaming-mouse-pad-xl",
+        description: "Smooth surface for precise control.",
+        price: 25.0,
+        stock: 150,
+        image:
+          "https://images.unsplash.com/photo-1610444569503-4f514603952f?w=800&auto=format&fit=crop&q=60",
+      },
+    ],
+  });
+
+  console.log("✅ Seeding completed!");
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

@@ -73,3 +73,18 @@ model Verification {
 
   @@map("verification")
 }
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  price       Float // Decimal ও ব্যবহার করতে পারেন, তবে সহজ রাখার জন্য Float দিলাম
+  stock       Int
+  image       String? // ইমেজের URL
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
+}

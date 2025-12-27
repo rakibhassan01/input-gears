@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import UserNav from "./user-nav";
+import CartNav from "./cart-nav";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -127,18 +128,7 @@ export default function Navbar() {
               <Heart size={24} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <Link
-              href="/cart"
-              className="relative p-2 text-gray-800 hover:bg-gray-100 rounded-full transition-colors group"
-            >
-              <ShoppingBag size={24} />
-              {/* {cartCount > 0 && ( */}
-              <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white group-hover:scale-110 transition-transform">
-                {/* {cartCount} */}2
-              </span>
-              {/* )} */}
-            </Link>
-
+            <CartNav />
             {/* <Link
               href={session ? "/account" : "/sign-in"}
               aria-disabled={isPending}

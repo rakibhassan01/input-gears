@@ -55,7 +55,7 @@ export default function SignUpView() {
           email: data.email,
           password: data.password,
           name: data.name, // Extra field for Sign Up
-          callbackURL: "/dashboard",
+          callbackURL: "/account",
         },
         {
           onError: (ctx) => {
@@ -64,7 +64,7 @@ export default function SignUpView() {
           },
           onSuccess: () => {
             toast.success("Account created successfully!");
-            router.push("/dashboard");
+            router.push("/account");
             router.refresh();
           },
         }

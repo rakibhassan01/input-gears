@@ -15,7 +15,13 @@ import {
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import UserNav from "./user-nav";
-import CartNav from "./cart-nav";
+import dynamic from "next/dynamic";
+
+// CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
+const CartNav = dynamic(() => import("./cart-nav"), {
+  ssr: false,
+  loading: () => <div className="w-10 h-10 rounded-full bg-gray-100" />, // লোডিং এর সময় প্লেসহোল্ডার
+});
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);

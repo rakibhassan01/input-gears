@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ShoppingCart, Check, Plus } from "lucide-react";
+import { ShoppingCart, Check } from "lucide-react";
 import { useCart, CartItem } from "@/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
 
@@ -89,7 +89,7 @@ export default function ProductCard({ data }: ProductCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-5 flex flex-col flex-grow justify-between">
+      <div className="p-5 flex flex-col grow justify-between">
         <div>
           <h3 className="font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors text-lg tracking-tight">
             {data.name}
@@ -119,8 +119,8 @@ export default function ProductCard({ data }: ProductCardProps) {
                   isOutOfStock
                     ? "bg-gray-100 text-gray-300 cursor-not-allowed shadow-none border border-gray-200"
                     : isAdded
-                    ? "bg-green-500 text-white shadow-green-200 scale-110" // সাকসেস স্টেট
-                    : "bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700 hover:shadow-md group-hover:scale-110" // নরমাল স্টেট
+                    ? "bg-green-500 text-white shadow-green-200 scale-110"
+                    : "bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700 hover:shadow-md group-hover:scale-110"
                 }
             `}
           >

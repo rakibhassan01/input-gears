@@ -9,12 +9,7 @@ import { ShoppingBag, X, Trash2, ArrowRight, Truck } from "lucide-react";
 
 export default function CartNav() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const cart = useCart();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Scroll Lock
   useEffect(() => {
@@ -38,9 +33,6 @@ export default function CartNav() {
   const progress = Math.min((total / freeShippingThreshold) * 100, 100);
   const remainingForFreeShipping = freeShippingThreshold - total;
 
-  if (!isMounted) return null;
-
-  // ✅ ২. এই অংশটি বাটন (এটি Navbar এই রেন্ডার হবে)
   const TriggerButton = (
     <button
       onClick={() => setIsOpen(true)}
@@ -58,12 +50,9 @@ export default function CartNav() {
     </button>
   );
 
-  // ✅ ৩. এই অংশটি ড্রয়ার (এটি Portal হয়ে Body তে চলে যাবে)
   const DrawerContent = (
-    <div className="relative z-[9999]">
+    <div className="relative z-9999">
       {" "}
-      {/* z-index অনেক বাড়িয়ে দিলাম */}
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
         onClick={() => setIsOpen(false)}
@@ -99,7 +88,7 @@ export default function CartNav() {
                     Your cart is empty
                   </h3>
                   <p className="text-gray-500 max-w-[220px] mx-auto leading-relaxed">
-                    Looks like you haven't added anything to your cart yet.
+                    Looks like you haven&apos;t added anything to your cart yet.
                   </p>
                 </div>
                 <button
@@ -112,7 +101,7 @@ export default function CartNav() {
             ) : (
               <div className="space-y-6">
                 {/* Free Shipping Bar */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100/50">
+                <div className="bg-linear-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100/50">
                   <div className="flex items-center gap-2 text-indigo-700 mb-2.5">
                     <Truck size={18} className="fill-indigo-200" />
                     <span className="text-sm font-semibold tracking-tight">
@@ -141,7 +130,7 @@ export default function CartNav() {
                 <ul className="space-y-6">
                   {cart.items.map((item) => (
                     <li key={item.id} className="flex gap-4 group">
-                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -195,7 +184,6 @@ export default function CartNav() {
             )}
           </div>
 
-          {/* Footer Actions (shrink-0 দেওয়া যাতে ছোট না হয়ে যায়) */}
           {cart.items.length > 0 && (
             <div className="border-t border-gray-100 px-6 py-6 bg-gray-50/50 backdrop-blur-xl shrink-0">
               <div className="flex justify-between items-end mb-4">
@@ -238,7 +226,6 @@ export default function CartNav() {
   return (
     <>
       {TriggerButton}
-      {/* ✅ ৪. ড্রয়ার কন্টেন্ট পোর্টালের মাধ্যমে বডিতে পাঠানো হলো */}
       {isOpen && createPortal(DrawerContent, document.body)}
     </>
   );

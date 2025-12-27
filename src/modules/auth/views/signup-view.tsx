@@ -15,10 +15,11 @@ import SocialLogin from "../components/social-login";
 const signUpSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   // Regex used to avoid deprecation warning
-  email: z
-    .string()
-    .min(1, { message: "Email is required" })
-    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: "Invalid email address" }),
+  // email: z
+  //   .string()
+  //   .min(1, { message: "Email is required" })
+  //   .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: "Invalid email address" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters" }),

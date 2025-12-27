@@ -11,9 +11,10 @@ import {
   Heart,
   ChevronRight,
   Zap,
-  Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
+import UserNav from "./user-nav";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -137,25 +138,58 @@ export default function Navbar() {
               </span>
               {/* )} */}
             </Link>
+
             {/* <Link
-              href="/sign-in"
-              className="p-2 text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
+              href={session ? "/account" : "/sign-in"}
+              aria-disabled={isPending}
+              className={`p-2 rounded-full transition-all duration-300 ${
+                isPending
+                  ? "text-gray-300 cursor-not-allowed bg-transparent" // লোডিং স্টেট
+                  : session
+                  ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" // লগইন
+                  : "text-gray-800 hover:bg-gray-100" // লগআউট
+              }`}
             >
               <User size={24} />
             </Link> */}
+            {/* Show Loader if absolutely necessary, otherwise keep clean
             {isPending ? (
-              // 1. ডাটা লোড হওয়ার সময় স্পিনার দেখাবে (Optional)
-              <div className="p-2 text-gray-400">
-                <Loader2 className="w-6 h-6 animate-spin" />
-              </div>
+              <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
+            ) : session ? (
+              // ✅ UserNav Component বসালাম
+              <UserNav session={session} />
             ) : (
-              // 2. সেশন চেক করে লিংক ঠিক করা
+              // Login Button
+              <Link
+                href="/sign-in"
+                className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+              >
+                <User size={24} />
+              </Link>
+            )} */}
+            {isPending ? (
+              // ✅ Recommended Loading State (Static Placeholder)
+              <div className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-gray-100 opacity-60 cursor-wait">
+                <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                  <User className="h-4 w-4 text-gray-400" />
+                </div>
+                <div className="h-4 w-20 bg-gray-100 rounded animate-pulse hidden sm:block" />
+                <ChevronDown className="w-4 h-4 text-gray-300" />
+              </div>
+            ) : session ? (
+              // ✅ Actual User Dropdown
+              <UserNav session={session} />
+            ) : (
+              // ✅ Logged Out State
               <Link
                 href={session ? "/account" : "/sign-in"}
-                className={`p-2 rounded-full transition-colors ${
-                  session
-                    ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" // লগইন থাকলে কালার
-                    : "text-gray-800 hover:bg-gray-100" // লগআউট থাকলে সাধারণ
+                aria-disabled={isPending}
+                className={`p-2 rounded-full transition-all duration-300 ${
+                  isPending
+                    ? "text-gray-300 cursor-not-allowed bg-transparent" // লোডিং স্টেট
+                    : session
+                    ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" // লগইন
+                    : "text-gray-800 hover:bg-gray-100" // লগআউট
                 }`}
               >
                 <User size={24} />

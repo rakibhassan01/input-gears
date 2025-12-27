@@ -53,7 +53,7 @@ export default function SignInView() {
         {
           email: data.email,
           password: data.password,
-          callbackURL: "/dashboard",
+          callbackURL: "/account",
         },
         {
           onError: (ctx) => {
@@ -62,7 +62,7 @@ export default function SignInView() {
           },
           onSuccess: () => {
             toast.success("Welcome back!");
-            router.push("/dashboard");
+            router.push("/account");
             router.refresh();
           },
         }

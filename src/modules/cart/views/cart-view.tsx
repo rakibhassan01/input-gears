@@ -223,7 +223,10 @@ export default function CartView() {
                 </p>
               </div>
 
-              <button className="w-full mt-8 bg-gray-900 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-600 hover:shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center group relative overflow-hidden">
+              <Link
+                href="/checkout"
+                className="w-full mt-8 bg-gray-900 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-600 hover:shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center group relative overflow-hidden"
+              >
                 <span className="relative z-10 flex items-center">
                   Proceed to Checkout
                   <ArrowRight
@@ -231,7 +234,7 @@ export default function CartView() {
                     className="ml-2 group-hover:translate-x-1 transition-transform"
                   />
                 </span>
-              </button>
+              </Link>
 
               <div className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-gray-500 bg-gray-50 py-2.5 rounded-lg border border-gray-100">
                 <ShieldCheck size={14} className="text-indigo-500" />

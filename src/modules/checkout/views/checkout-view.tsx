@@ -127,13 +127,16 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
   }, [session, form]);
 
   // --- 🚀 SUBMIT HANDLER ---
+  // components/checkout/CheckoutForm.tsx এর ভেতরে
+
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsProcessing(true);
 
     try {
       if (paymentMethod === "cod") {
-        // ✅ COD Logic
-        const result = await placeOrder(data, cart.items, "cod"); // Fixed Type Error
+        // COD এর জন্য কোনো ID লাগবে না
+        const result = await placeOrder(data, cart.items, "cod");
+
         if (result.success) {
           toast.success("Order confirmed via COD! 🎉");
           cart.clearCart();
@@ -142,32 +145,36 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
           toast.error("Failed to place order.");
         }
       } else {
-        // ✅ Stripe Logic
+        // Stripe Logic
         if (!stripe || !elements) return;
 
-        // ১. আগে Stripe পেমেন্ট কনফার্ম করুন
+        // ১. পেমেন্ট কনফার্ম করা
         const { error, paymentIntent } = await stripe.confirmPayment({
           elements,
-          confirmParams: {
-            return_url: `${window.location.origin}/order-success`, // পেমেন্ট শেষে এখানে যাবে (এটি বানাতে হবে না হলে redirect: 'if_required' দিন)
-          },
-          redirect: "if_required", // পেজ রিফ্রেশ না করে হ্যান্ডেল করার জন্য
+          redirect: "if_required",
         });
 
         if (error) {
           toast.error(error.message || "Payment failed");
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
-          // ২. পেমেন্ট সাকসেস হলে ডাটাবেসে অর্ডার সেভ করুন
           toast.success("Payment Successful!");
 
-          const result = await placeOrder(data, cart.items, "stripe"); // "stripe" হিসেবে সেভ হবে
+          // ✅ ২. সাকসেস হওয়ার পর পেমেন্ট আইডি সহ অর্ডার প্লেস করা
+          // paymentIntent.id টি এখানে পাঠানো হচ্ছে
+          const result = await placeOrder(
+            data,
+            cart.items,
+            "stripe",
+            paymentIntent.id
+          );
 
           if (result.success) {
             cart.clearCart();
             router.push(`/order-confirmation/${result.orderId}`);
           } else {
             toast.error(
-              "Payment successful but order saving failed. Contact support."
+              "Order saving failed. Please contact support with ID: " +
+                paymentIntent.id
             );
           }
         }
@@ -179,7 +186,6 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
       setIsProcessing(false);
     }
   };
-
   const isFormValid = form.formState.isValid;
 
   return (

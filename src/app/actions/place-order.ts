@@ -26,7 +26,8 @@ type PaymentMethodInput = "cod" | "stripe";
 export async function placeOrder(
   formData: PlaceOrderFormData,
   cartItems: CartItemInput[],
-  paymentMethod: PaymentMethodInput
+  paymentMethod: PaymentMethodInput,
+  paymentIntentId?: string
 ) {
   try {
     const session = await auth.api.getSession({
@@ -45,7 +46,7 @@ export async function placeOrder(
 
     // ✅ 2. Map Payment Method (frontend 'cod' -> database 'COD')
     const dbPaymentMethod = paymentMethod === "cod" ? "COD" : "STRIPE";
-
+    const isPaid = dbPaymentMethod === "STRIPE" && paymentIntentId;
     const order = await prisma.order.create({
       data: {
         userId: user?.id || null,
@@ -55,12 +56,13 @@ export async function placeOrder(
         email: formData.email || null,
 
         totalAmount: total,
-        status: "PENDING",
-
-        // এখানে mapped value ব্যবহার করা হচ্ছে
+        // ✅ Status Logic Update
+        status: isPaid ? "PROCESSING" : "PENDING",
+        paymentStatus: isPaid ? "PAID" : "PENDING",
         paymentMethod: dbPaymentMethod,
 
-        paymentStatus: "PENDING",
+        // ✅ Stripe ID Save
+        stripePaymentIntentId: paymentIntentId || null,
 
         items: {
           create: cartItems.map((item) => ({

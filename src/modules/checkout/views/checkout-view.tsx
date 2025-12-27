@@ -27,6 +27,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CheckoutSkeleton from "../components/checkout-skeleton";
 
 // --- Validation Schema ---
 const checkoutSchema = z.object({
@@ -78,9 +79,7 @@ export default function CheckoutForm() {
           <CheckoutContent clientSecret={clientSecret} />
         </Elements>
       ) : (
-        <div className="flex h-screen items-center justify-center">
-          <Loader2 className="animate-spin text-indigo-600" size={40} />
-        </div>
+        <CheckoutSkeleton />
       )}
     </>
   );

@@ -17,6 +17,7 @@ interface CartStore {
   items: CartItem[];
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -50,13 +51,30 @@ export const useCart = create<CartStore>()(
           toast.success("Product added to cart 🛒");
         }
       },
+      // ✅ নতুন ফাংশন: সরাসরি কোয়ান্টিটি সেট করার জন্য
+      updateQuantity: (id, quantity) => {
+        const item = get().items.find((i) => i.id === id);
+        if (item && quantity > item.maxStock) {
+          toast.error(`Only ${item.maxStock} items available in stock`);
+          return;
+        }
+        if (quantity < 1) return;
 
+        set({
+          items: get().items.map((item) =>
+            item.id === id ? { ...item, quantity: quantity } : item
+          ),
+        });
+      },
       removeItem: (id) => {
         set({ items: get().items.filter((item) => item.id !== id) });
         toast.error("Item removed from cart");
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        set({ items: [] });
+        toast.success("Cart cleared"); // ✅ টোস্ট এড করা হলো
+      },
     }),
     {
       name: "shopping-cart-storage", // লোকাল স্টোরেজে এই নামে সেভ হবে

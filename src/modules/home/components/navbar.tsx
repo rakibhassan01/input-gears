@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
   Search,
-  ShoppingBag,
   User,
   Menu,
   X,
@@ -12,6 +11,7 @@ import {
   ChevronRight,
   Zap,
   ChevronDown,
+  ShoppingBag,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import UserNav from "./user-nav";
@@ -20,7 +20,11 @@ import dynamic from "next/dynamic";
 // CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
 const CartNav = dynamic(() => import("./cart-nav"), {
   ssr: false,
-  loading: () => <div className="w-10 h-10 rounded-full bg-gray-100" />, // লোডিং এর সময় প্লেসহোল্ডার
+  loading: () => (
+    <button className="relative p-2 text-gray-300 bg-gray-50 rounded-full animate-pulse cursor-wait">
+      <ShoppingBag size={24} />
+    </button>
+  ), // লোডিং এর সময় প্লেসহোল্ডার
 });
 
 export default function Navbar() {
@@ -135,34 +139,6 @@ export default function Navbar() {
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
             <CartNav />
-            {/* <Link
-              href={session ? "/account" : "/sign-in"}
-              aria-disabled={isPending}
-              className={`p-2 rounded-full transition-all duration-300 ${
-                isPending
-                  ? "text-gray-300 cursor-not-allowed bg-transparent" // লোডিং স্টেট
-                  : session
-                  ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" // লগইন
-                  : "text-gray-800 hover:bg-gray-100" // লগআউট
-              }`}
-            >
-              <User size={24} />
-            </Link> */}
-            {/* Show Loader if absolutely necessary, otherwise keep clean
-            {isPending ? (
-              <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
-            ) : session ? (
-              // ✅ UserNav Component বসালাম
-              <UserNav session={session} />
-            ) : (
-              // Login Button
-              <Link
-                href="/sign-in"
-                className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
-              >
-                <User size={24} />
-              </Link>
-            )} */}
             {isPending ? (
               // ✅ Recommended Loading State (Static Placeholder)
               <div className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-gray-100 opacity-60 cursor-wait">

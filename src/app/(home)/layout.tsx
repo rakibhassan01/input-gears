@@ -1,5 +1,5 @@
-import { Footer } from "@/modules/home/components/footer";
-import Navbar from "@/modules/home/components/navbar";
+import { Footer } from "@/components/layout/footer";
+import Navbar from "@/components/layout/navbar";
 import { Toaster } from "sonner";
 
 export default function RootLayout({

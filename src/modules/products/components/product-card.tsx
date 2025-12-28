@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ShoppingCart, Check } from "lucide-react";
-import { useCart, CartItem } from "@/hooks/use-cart";
+import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
 
 interface ProductCardProps {

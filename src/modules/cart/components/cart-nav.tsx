@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom"; // ✅ ১. এটা ইমপোর্ট করুন
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/hooks/use-cart";
+import { useCart } from "@/modules/cart/hooks/use-cart";
 import { ShoppingBag, X, Trash2, ArrowRight, Truck } from "lucide-react";
 
 export default function CartNav() {

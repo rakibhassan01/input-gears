@@ -5,11 +5,11 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCart } from "@/hooks/use-cart";
+import { useCart } from "@/modules/cart/hooks/use-cart";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { placeOrder } from "@/app/actions/place-order"; // আপনার অ্যাকশন পাথ
+import { placeOrder } from "@/modules/checkout/place-order"; // আপনার অ্যাকশন পাথ
 import { stripePromise } from "@/lib/stripe"; // ✅ 1. Stripe Promise Import
 import {
   Elements,

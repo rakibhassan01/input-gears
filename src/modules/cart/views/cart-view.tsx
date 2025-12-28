@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/hooks/use-cart";
+import { useCart } from "@/modules/cart/hooks/use-cart";
 import {
   Trash2,
   Minus,

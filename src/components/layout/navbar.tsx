@@ -14,18 +14,21 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
-import UserNav from "./user-nav";
+import UserNav from "../../modules/auth/components/user-nav";
 import dynamic from "next/dynamic";
 
 // CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
-const CartNav = dynamic(() => import("./cart-nav"), {
-  ssr: false,
-  loading: () => (
-    <button className="relative p-2 text-gray-300 bg-gray-50 rounded-full animate-pulse cursor-wait">
-      <ShoppingBag size={24} />
-    </button>
-  ), // লোডিং এর সময় প্লেসহোল্ডার
-});
+const CartNav = dynamic(
+  () => import("../../modules/cart/components/cart-nav"),
+  {
+    ssr: false,
+    loading: () => (
+      <button className="relative p-2 text-gray-300 bg-gray-50 rounded-full animate-pulse cursor-wait">
+        <ShoppingBag size={24} />
+      </button>
+    ), // লোডিং এর সময় প্লেসহোল্ডার
+  }
+);
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);

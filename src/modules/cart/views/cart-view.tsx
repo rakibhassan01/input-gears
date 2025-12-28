@@ -68,7 +68,7 @@ export default function CartView() {
             >
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
                 {/* Image */}
-                <div className="relative h-24 w-24 sm:h-28 sm:w-28 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100">
+                <div className="relative h-24 w-24 sm:h-28 sm:w-28 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100">
                   {item.image ? (
                     <Image
                       src={item.image}
@@ -133,7 +133,7 @@ export default function CartView() {
 
                     <button
                       onClick={() => cart.removeItem(item.id)}
-                      className="flex items-center justify-center w-9 h-9 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all flex-shrink-0"
+                      className="flex items-center justify-center w-9 h-9 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shrink-0"
                       title="Remove Item"
                     >
                       <Trash2 size={16} />

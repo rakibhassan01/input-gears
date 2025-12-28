@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link"; // ✅ Link ইমপোর্ট
 import { ShoppingCart, Check } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
@@ -19,29 +20,26 @@ interface ProductCardProps {
 
 export default function ProductCard({ data }: ProductCardProps) {
   const cart = useCart();
-
-  // ✅ নতুন স্টেট: শুধুমাত্র কিছুক্ষণের জন্য Success দেখানোর জন্য
   const [isAdded, setIsAdded] = useState(false);
-
   const isOutOfStock = data.stock === 0;
 
-  // ২ সেকেন্ড পর অটোমেটিক রিসেট হওয়ার লজিক
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (isAdded) {
-      timeout = setTimeout(() => {
-        setIsAdded(false);
-      }, 2000); // ২ সেকেন্ড (2000ms) পর আগের অবস্থায় ফিরবে
+      timeout = setTimeout(() => setIsAdded(false), 1000);
     }
     return () => clearTimeout(timeout);
   }, [isAdded]);
 
   const onAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
+    // ✅ বাটন ক্লিকের ইভেন্ট বাবদ বন্ধ করা (যাতে Link কাজ না করে বাটনে চাপলে)
+    event.preventDefault();
     event.stopPropagation();
 
     const cartItem: CartItem = {
       id: data.id,
       name: data.name,
+      slug: data.slug, // ✅ Slug পাস করা হলো
       price: data.price,
       image: data.image || "",
       quantity: 1,
@@ -49,8 +47,6 @@ export default function ProductCard({ data }: ProductCardProps) {
     };
 
     cart.addItem(cartItem);
-
-    // ✅ বাটনকে ট্রিগার করা হলো
     setIsAdded(true);
   };
 
@@ -61,8 +57,11 @@ export default function ProductCard({ data }: ProductCardProps) {
 
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-indigo-200 overflow-hidden flex flex-col h-full">
-      {/* Image Container */}
-      <div className="aspect-square relative bg-gray-100/50 overflow-hidden">
+      {/* ✅ LINK ADDED: পুরো ইমেজ এরিয়া ক্লিকেবল হবে */}
+      <Link
+        href={`/products/${data.slug}`}
+        className="block aspect-square relative bg-gray-100/50 overflow-hidden"
+      >
         {data.image ? (
           <Image
             src={data.image}
@@ -86,14 +85,17 @@ export default function ProductCard({ data }: ProductCardProps) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Content */}
       <div className="p-5 flex flex-col grow justify-between">
         <div>
-          <h3 className="font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors text-lg tracking-tight">
-            {data.name}
-          </h3>
+          {/* ✅ LINK ADDED: টাইটেল ক্লিকেবল হবে */}
+          <Link href={`/products/${data.slug}`}>
+            <h3 className="font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors text-lg tracking-tight">
+              {data.name}
+            </h3>
+          </Link>
           <p className="text-sm text-gray-500 line-clamp-2 mt-1.5 leading-relaxed">
             {data.description || "No description available."}
           </p>
@@ -112,9 +114,8 @@ export default function ProductCard({ data }: ProductCardProps) {
           <button
             onClick={onAddToCart}
             disabled={isOutOfStock}
-            // ✅ পরিবর্তন: এখন 'isAdded' এর ওপর ভিত্তি করে স্টাইল চেঞ্জ হবে
             className={`
-                h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm active:scale-95
+                h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm active:scale-95 z-10
                 ${
                   isOutOfStock
                     ? "bg-gray-100 text-gray-300 cursor-not-allowed shadow-none border border-gray-200"

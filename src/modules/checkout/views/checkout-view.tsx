@@ -34,7 +34,9 @@ const checkoutSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
   phone: z.string().min(11, "Valid phone number required"),
   address: z.string().min(10, "Full shipping address is required"),
-  email: z.string().email().optional(),
+  // email: z.string().email().optional(),
+  // ✅ FIX: খালি স্ট্রিং অথবা ভ্যালিড ইমেইল - দুটিই এক্সেপ্ট করবে
+  email: z.union([z.literal(""), z.string().email()]),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;

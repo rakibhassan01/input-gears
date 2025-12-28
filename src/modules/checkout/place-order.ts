@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-// ✅ 1. Strong Type Definitions
 interface PlaceOrderFormData {
   fullName: string;
   phone: string;
@@ -20,8 +19,22 @@ interface CartItemInput {
   image?: string | null;
 }
 
-// ফ্রন্টএন্ড থেকে পেমেন্ট মেথড সাধারণত lowercase এ আসে
 type PaymentMethodInput = "cod" | "stripe";
+
+async function generateOrderNumber() {
+  const lastOrder = await prisma.order.findFirst({
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!lastOrder || !lastOrder.orderNumber) {
+    return "IG-0001";
+  }
+
+  const lastNumber = parseInt(lastOrder.orderNumber.split("-")[1]);
+  const newNumber = lastNumber + 1;
+
+  return `IG-${newNumber}`;
+}
 
 export async function placeOrder(
   formData: PlaceOrderFormData,
@@ -36,7 +49,6 @@ export async function placeOrder(
 
     const user = session?.user;
 
-    // Price Calculation
     const subtotal = cartItems.reduce(
       (acc, item) => acc + item.price * item.quantity,
       0
@@ -44,26 +56,26 @@ export async function placeOrder(
     const shipping = subtotal > 1000 ? 0 : 60;
     const total = subtotal + shipping;
 
-    // ✅ 2. Map Payment Method (frontend 'cod' -> database 'COD')
     const dbPaymentMethod = paymentMethod === "cod" ? "COD" : "STRIPE";
-    const isPaid = dbPaymentMethod === "STRIPE" && paymentIntentId;
+    const isPaid = dbPaymentMethod === "STRIPE" && !!paymentIntentId;
+
+    const newOrderNumber = await generateOrderNumber();
+
     const order = await prisma.order.create({
       data: {
+        orderNumber: newOrderNumber,
         userId: user?.id || null,
         name: formData.fullName,
         phone: formData.phone,
         address: formData.address,
         email: formData.email || null,
-
         totalAmount: total,
-        // ✅ Status Logic Update
         status: isPaid ? "PROCESSING" : "PENDING",
         paymentStatus: isPaid ? "PAID" : "PENDING",
         paymentMethod: dbPaymentMethod,
-
-        // ✅ Stripe ID Save
         stripePaymentIntentId: paymentIntentId || null,
 
+        // ✅ FIX: স্কিমা অনুযায়ী নাম 'items' ব্যবহার করা হলো (আগে orderItems ছিল)
         items: {
           create: cartItems.map((item) => ({
             productId: item.id,
@@ -76,9 +88,8 @@ export async function placeOrder(
       },
     });
 
-    return { success: true, orderId: order.id };
+    return { success: true, orderId: order.orderNumber };
   } catch (error) {
-    // Type checking for error message
     const errorMessage =
       error instanceof Error ? error.message : "Failed to place order";
     console.error("Order Error:", errorMessage);

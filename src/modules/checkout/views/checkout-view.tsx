@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,8 +10,7 @@ import { useCart } from "@/modules/cart/hooks/use-cart";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { placeOrder } from "@/modules/checkout/place-order"; // আপনার অ্যাকশন পাথ
-import { stripePromise } from "@/lib/stripe"; // ✅ 1. Stripe Promise Import
+import { stripePromise } from "@/lib/stripe";
 import {
   Elements,
   PaymentElement,
@@ -24,31 +24,33 @@ import {
   ShieldCheck,
   User,
   Phone,
-  CheckCircle2,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CheckoutSkeleton from "../components/checkout-skeleton";
+import { placeOrder } from "../place-order";
 
 // --- Validation Schema ---
 const checkoutSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
   phone: z.string().min(11, "Valid phone number required"),
   address: z.string().min(10, "Full shipping address is required"),
-  // email: z.string().email().optional(),
-  // ✅ FIX: খালি স্ট্রিং অথবা ভ্যালিড ইমেইল - দুটিই এক্সেপ্ট করবে
+  // খালি স্ট্রিং অথবা ভ্যালিড ইমেইল - দুটিই এক্সেপ্ট করবে
   email: z.union([z.literal(""), z.string().email()]),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 // =========================================================
-// 🟢 MAIN COMPONENT (Parent) - Handles Client Secret & Wrapper
+// 🟢 MAIN COMPONENT (Parent)
 // =========================================================
 export default function CheckoutForm() {
   const cart = useCart();
   const [clientSecret, setClientSecret] = useState("");
+  // ✅ ১. অর্ডার সফল হয়েছে কিনা ট্র্যাক করার জন্য স্টেট
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  // ১. কার্টে আইটেম থাকলে পেমেন্ট ইনটেন্ট ফেচ করা
+  // কার্টে আইটেম থাকলে পেমেন্ট ইনটেন্ট ফেচ করা
   useEffect(() => {
     if (cart.items.length > 0) {
       fetch("/api/create-payment-intent", {
@@ -61,36 +63,72 @@ export default function CheckoutForm() {
     }
   }, [cart.items]);
 
-  // অপশনস ফর স্ট্রাইপ
   const options = {
     clientSecret,
-    appearance: { theme: "stripe" as const }, // 'stripe' | 'night' | 'flat'
+    appearance: { theme: "stripe" as const },
   };
 
+  // -------------------------------------------------------
+  // 🛡️ Conditional Rendering Logic (UX Priority)
+  // -------------------------------------------------------
+
+  // ২. যদি অর্ডার সাকসেস হয় (রিডাইরেক্টের আগ মুহূর্ত), স্কেলিটন দেখান
+  // এতে কার্ট খালি হওয়ার পরেও "Cart Empty" মেসেজ দেখাবে না
+  if (isSuccess) {
+    return <CheckoutSkeleton />;
+  }
+
+  // ৩. যদি আসলেই কার্ট খালি হয় (এবং অর্ডার প্রসেসিং না চলে), তবেই এরর UI দেখান
   if (cart.items.length === 0) {
     return (
-      <div className="text-center py-20 font-bold">Your cart is empty</div>
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-6 animate-in fade-in zoom-in duration-500">
+        <div className="bg-gray-100 p-6 rounded-full">
+          <ShoppingCart size={48} className="text-gray-400" />
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Your cart is empty
+          </h2>
+          <p className="text-gray-500 max-w-sm mx-auto">
+            Looks like you haven&apos;t added anything to your cart yet.
+          </p>
+        </div>
+        <Link
+          href="/products"
+          className="px-8 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-indigo-600 transition-colors"
+        >
+          Start Shopping
+        </Link>
+      </div>
     );
   }
 
-  // ✅ Client Secret না আসা পর্যন্ত লোডিং দেখাবে, তারপর ফর্ম রেন্ডার করবে
+  // ৪. ডাটা রেডি না হওয়া পর্যন্ত (Stripe Secret) স্কেলিটন দেখান
+  if (!clientSecret) {
+    return <CheckoutSkeleton />;
+  }
+
+  // ৫. সব রেডি থাকলে ফর্ম রেন্ডার
   return (
-    <>
-      {clientSecret ? (
-        <Elements options={options} stripe={stripePromise}>
-          <CheckoutContent clientSecret={clientSecret} />
-        </Elements>
-      ) : (
-        <CheckoutSkeleton />
-      )}
-    </>
+    <Elements options={options} stripe={stripePromise}>
+      <CheckoutContent
+        clientSecret={clientSecret}
+        onPaymentSuccess={() => setIsSuccess(true)}
+      />
+    </Elements>
   );
 }
 
 // =========================================================
-// 🟡 CONTENT COMPONENT (Child) - Uses Stripe Hooks
+// 🟡 CONTENT COMPONENT (Child)
 // =========================================================
-function CheckoutContent({ clientSecret }: { clientSecret: string }) {
+function CheckoutContent({
+  clientSecret,
+  onPaymentSuccess,
+}: {
+  clientSecret: string;
+  onPaymentSuccess: () => void;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const cart = useCart();
@@ -119,7 +157,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
     mode: "onChange",
   });
 
-  // Autofill
+  // Autofill User Data
   useEffect(() => {
     if (session?.user) {
       form.setValue("fullName", session.user.name);
@@ -128,28 +166,31 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
   }, [session, form]);
 
   // --- 🚀 SUBMIT HANDLER ---
-  // components/checkout/CheckoutForm.tsx এর ভেতরে
-
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsProcessing(true);
 
     try {
       if (paymentMethod === "cod") {
-        // COD এর জন্য কোনো ID লাগবে না
+        // --- COD FLOW ---
         const result = await placeOrder(data, cart.items, "cod");
 
         if (result.success) {
           toast.success("Order confirmed via COD! 🎉");
+
+          // ✅ সাকসেস স্টেট আপডেট (UI Skeleton মোডে যাবে)
+          onPaymentSuccess();
+
+          // এরপর কার্ট ক্লিয়ার এবং রিডাইরেক্ট
           cart.clearCart();
           router.push(`/order-confirmation/${result.orderId}`);
         } else {
           toast.error("Failed to place order.");
+          setIsProcessing(false);
         }
       } else {
-        // Stripe Logic
+        // --- STRIPE FLOW ---
         if (!stripe || !elements) return;
 
-        // ১. পেমেন্ট কনফার্ম করা
         const { error, paymentIntent } = await stripe.confirmPayment({
           elements,
           redirect: "if_required",
@@ -157,11 +198,11 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
 
         if (error) {
           toast.error(error.message || "Payment failed");
+          setIsProcessing(false);
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
           toast.success("Payment Successful!");
 
-          // ✅ ২. সাকসেস হওয়ার পর পেমেন্ট আইডি সহ অর্ডার প্লেস করা
-          // paymentIntent.id টি এখানে পাঠানো হচ্ছে
+          // পেমেন্ট সাকসেস হলে অর্ডার ডাটাবেসে সেভ করা
           const result = await placeOrder(
             data,
             cart.items,
@@ -170,34 +211,37 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
           );
 
           if (result.success) {
+            // ✅ সাকসেস স্টেট আপডেট
+            onPaymentSuccess();
+
             cart.clearCart();
             router.push(`/order-confirmation/${result.orderId}`);
           } else {
             toast.error(
-              "Order saving failed. Please contact support with ID: " +
-                paymentIntent.id
+              `Payment success but order save failed. ID: ${paymentIntent.id}`
             );
+            setIsProcessing(false);
           }
         }
       }
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong.");
-    } finally {
       setIsProcessing(false);
     }
   };
+
   const isFormValid = form.formState.isValid;
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Secure Checkout</h1>
 
       <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-start">
         {/* --- LEFT SIDE: INPUTS --- */}
         <div className="lg:col-span-7 space-y-8">
           <form id="checkout-form" onSubmit={form.handleSubmit(onSubmit)}>
-            {/* Delivery Details (Same as before) */}
+            {/* Delivery Details */}
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-sm">
               <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
                 <MapPin className="text-indigo-600" />
@@ -206,6 +250,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                 </h2>
               </div>
               <div className="space-y-5">
+                {/* Full Name */}
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                     Full Name
@@ -225,6 +270,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                     />
                   </div>
                 </div>
+                {/* Phone */}
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                     Phone
@@ -244,6 +290,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                     />
                   </div>
                 </div>
+                {/* Address */}
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                     Address
@@ -271,6 +318,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* COD Option */}
                 <div
                   onClick={() => setPaymentMethod("cod")}
                   className={cn(
@@ -282,7 +330,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                 >
                   <div
                     className={cn(
-                      "h-5 w-5 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0",
+                      "h-5 w-5 rounded-full border-2 flex items-center justify-center mt-1 shrink-0",
                       paymentMethod === "cod"
                         ? "border-gray-900"
                         : "border-gray-300"
@@ -302,6 +350,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                   </div>
                 </div>
 
+                {/* Stripe Option */}
                 <div
                   onClick={() => setPaymentMethod("stripe")}
                   className={cn(
@@ -313,7 +362,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                 >
                   <div
                     className={cn(
-                      "h-5 w-5 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0",
+                      "h-5 w-5 rounded-full border-2 flex items-center justify-center mt-1 shrink-0",
                       paymentMethod === "stripe"
                         ? "border-indigo-600"
                         : "border-gray-300"
@@ -345,19 +394,27 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
               <div className="space-y-4 max-h-[240px] overflow-y-auto custom-scrollbar pr-2 mb-6">
                 {cart.items.map((item) => (
                   <div key={item.id} className="flex gap-4 items-center">
-                    <div className="h-14 w-14 bg-gray-50 rounded-xl relative overflow-hidden">
-                      <Image
-                        src={item.image || ""}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="h-14 w-14 bg-gray-50 rounded-xl relative overflow-hidden shrink-0 border border-gray-100">
+                      {item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                          No Img
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-medium truncate">
                         {item.name}
                       </h4>
-                      <p className="text-xs text-gray-500">${item.price}</p>
+                      <p className="text-xs text-gray-500">
+                        Qty: {item.quantity}
+                      </p>
                     </div>
                     <p className="text-sm font-bold">
                       ${(item.price * item.quantity).toFixed(2)}
@@ -384,13 +441,12 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                 </div>
               </div>
 
-              {/* ✅ STRIPE PAYMENT ELEMENT */}
+              {/* Stripe Element (Conditional) */}
               {paymentMethod === "stripe" && (
                 <div className="mt-6 p-4 bg-white rounded-xl border border-indigo-200 shadow-inner animate-in fade-in">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
                     Card Information
                   </label>
-                  {/* 👇 আসল Stripe Element */}
                   <PaymentElement
                     id="payment-element"
                     options={{ layout: "tabs" }}
@@ -411,7 +467,7 @@ function CheckoutContent({ clientSecret }: { clientSecret: string }) {
                   "w-full mt-6 py-4 rounded-xl font-bold text-lg shadow-lg transition-all flex items-center justify-center",
                   isProcessing || !isFormValid
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-900 text-white hover:bg-indigo-600"
+                    : "bg-gray-900 text-white hover:bg-indigo-600 hover:shadow-indigo-500/30 active:scale-[0.98]"
                 )}
               >
                 {isProcessing ? (

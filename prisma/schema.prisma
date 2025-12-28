@@ -114,12 +114,12 @@ enum PaymentMethod {
 
 // 2. Order Model
 model Order {
-  id String @id @default(cuid())
-
+  id          String  @id @default(cuid())
+  orderNumber String  @unique
   // ✅ User Relation (Optional)
   // যদি ইউজার লগড-ইন থাকে, তাহলে ID থাকবে। গেস্ট হলে null থাকবে।
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
+  userId      String?
+  user        User?   @relation(fields: [userId], references: [id])
 
   // ✅ Shipping Info (Snapshot)
   // লগড-ইন বা গেস্ট, যেই হোক না কেন, এই অর্ডারের জন্য ঠিকানা এখানে ফিক্সড থাকবে।

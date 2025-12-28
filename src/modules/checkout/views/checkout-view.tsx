@@ -175,12 +175,7 @@ function CheckoutContent({
         const result = await placeOrder(data, cart.items, "cod");
 
         if (result.success) {
-          toast.success("Order confirmed via COD! 🎉");
-
-          // ✅ সাকসেস স্টেট আপডেট (UI Skeleton মোডে যাবে)
           onPaymentSuccess();
-
-          // এরপর কার্ট ক্লিয়ার এবং রিডাইরেক্ট
           cart.clearCart();
           router.push(`/order-confirmation/${result.orderId}`);
         } else {

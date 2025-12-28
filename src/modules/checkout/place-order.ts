@@ -27,10 +27,10 @@ async function generateOrderNumber() {
   });
 
   if (!lastOrder || !lastOrder.orderNumber) {
-    return "IG-0001";
+    return "IG0001";
   }
 
-  const lastNumber = parseInt(lastOrder.orderNumber.split("-")[1]);
+  const lastNumber = parseInt(lastOrder.orderNumber);
   const newNumber = lastNumber + 1;
 
   return `IG-${newNumber}`;

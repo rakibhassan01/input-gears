@@ -74,7 +74,7 @@ export const useCart = create<CartStore>()(
 
       clearCart: () => {
         set({ items: [] });
-        toast.success("Cart cleared"); // ✅ টোস্ট এড করা হলো
+        // toast.success("Cart cleared"); // ✅ টোস্ট এড করা হলো
       },
     }),
     {

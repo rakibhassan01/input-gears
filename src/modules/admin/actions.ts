@@ -1,10 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-// Validation Schema
+// --- 1. Product Schema Update ---
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   slug: z.string().min(3, "Slug is required"),
@@ -12,11 +13,13 @@ const productSchema = z.object({
   price: z.coerce.number().min(0.01, "Price must be greater than 0"),
   stock: z.coerce.number().min(0, "Stock cannot be negative"),
   image: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  // categoryId: z.string().optional(), // যদি ক্যাটাগরি থাকে
+  // ✅ FIX: Category ID এখন Required
+  categoryId: z.string().min(1, "Category is required"),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
 
+// --- 2. Create Product (Updated) ---
 export async function createProduct(data: ProductFormValues) {
   try {
     const validatedData = productSchema.parse(data);
@@ -41,6 +44,8 @@ export async function createProduct(data: ProductFormValues) {
         price: validatedData.price,
         stock: validatedData.stock,
         image: validatedData.image || null,
+        // ✅ FIX: ডাটাবেসে categoryId সেভ করা হচ্ছে
+        categoryId: validatedData.categoryId,
       },
     });
 
@@ -57,18 +62,18 @@ export async function createProduct(data: ProductFormValues) {
     return { success: false, message: "Failed to create product" };
   }
 }
-// ... আগের কোডের নিচে যোগ করুন
 
+// --- 3. Update Product (Updated) ---
 export async function updateProduct(id: string, data: ProductFormValues) {
   try {
     // Validation
     const validatedData = productSchema.parse(data);
 
-    // Slug unique check (নিজের slug বাদে অন্য কারো সাথে মিলছে কিনা)
+    // Slug unique check
     const existingProduct = await prisma.product.findFirst({
       where: {
         slug: validatedData.slug,
-        NOT: { id: id }, // নিজের ID বাদ দিয়ে চেক করবে
+        NOT: { id: id },
       },
     });
 
@@ -89,6 +94,8 @@ export async function updateProduct(id: string, data: ProductFormValues) {
         price: validatedData.price,
         stock: validatedData.stock,
         image: validatedData.image || null,
+        // ✅ FIX: আপডেটের সময়ও categoryId আপডেট হবে
+        categoryId: validatedData.categoryId,
       },
     });
 
@@ -99,5 +106,73 @@ export async function updateProduct(id: string, data: ProductFormValues) {
   } catch (error) {
     console.error("Update Product Error:", error);
     return { success: false, message: "Failed to update product" };
+  }
+}
+
+// --- Category Actions (Same as before) ---
+const categorySchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  slug: z.string().min(1, "Slug is required"),
+  description: z.string().optional(),
+  image: z.string().optional().or(z.literal("")),
+});
+
+export async function createCategory(data: z.infer<typeof categorySchema>) {
+  try {
+    const validated = categorySchema.parse(data);
+
+    // Check slug uniqueness
+    const existing = await prisma.category.findUnique({
+      where: { slug: validated.slug },
+    });
+
+    if (existing) {
+      return { success: false, message: "Slug already exists!" };
+    }
+
+    await prisma.category.create({
+      data: {
+        name: validated.name,
+        slug: validated.slug,
+        description: validated.description,
+        image: validated.image || null,
+        isActive: true,
+      },
+    });
+
+    revalidatePath("/admin/categories");
+    // ✅ Dropdown রিফ্রেশ করার জন্য এটি জরুরি হতে পারে যদি আমরা সার্ভার কম্পোনেন্ট ব্যবহার করি
+    revalidatePath("/admin/products/create");
+
+    return { success: true, message: "Category created successfully!" };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Failed to create category" };
+  }
+}
+
+export async function getCategoriesOptions() {
+  const categories = await prisma.category.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  return categories;
+}
+
+// --- Order Actions (Same as before) ---
+export async function updateOrderStatus(orderId: string, newStatus: string) {
+  try {
+    const status = newStatus as OrderStatus;
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: status },
+    });
+
+    revalidatePath("/admin/orders");
+    return { success: true, message: "Order status updated successfully!" };
+  } catch (error) {
+    console.error("Status Update Error:", error);
+    return { success: false, message: "Failed to update status." };
   }
 }

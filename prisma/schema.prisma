@@ -87,6 +87,8 @@ model Product {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   orderItems OrderItem[]
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  categoryId String?
 
   @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
 }
@@ -169,4 +171,36 @@ model OrderItem {
   image    String?
 
   @@map("order_items")
+}
+
+model Category {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique // URL এর জন্য (e.g. /electronics/laptops)
+  description String? @db.Text // বড় ডেসক্রিপশন সাপোর্ট করার জন্য
+  image       String? // Cloudinary URL
+
+  // --- Advanced Features ---
+
+  // 1. Hierarchy (Sub-categories Support)
+  // এটি Self-Relation। যেমন: "Electronics" (Parent) -> "Laptops" (Child)
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  // 2. Control Flags
+  isActive   Boolean @default(true) // সাময়িকভাবে ক্যাটাগরি বন্ধ রাখার জন্য
+  isFeatured Boolean @default(false) // হোমপেজে দেখানোর জন্য
+
+  // 3. SEO Fields (Optional but Recommended)
+  seoTitle       String?
+  seoDescription String?
+
+  // 4. Relations
+  products Product[] // One-to-Many relation (Product model আপডেট করতে হবে)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId]) // পারফরম্যান্সের জন্য ইনডেক্সিং
 }

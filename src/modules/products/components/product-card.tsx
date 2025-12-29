@@ -12,9 +12,14 @@ interface ProductCardProps {
     name: string;
     price: number;
     image: string | null;
-    description: string | null;
+    description: string | null; // বা string | undefined
     stock: number;
     slug: string;
+    // ✅ এই লাইনটি যোগ করুন (Optional হিসেবে)
+    category?: {
+      name: string;
+      slug?: string; // slug অপশনাল রাখতে পারেন
+    } | null;
   };
 }
 
@@ -77,7 +82,12 @@ export default function ProductCard({ data }: ProductCardProps) {
             No Image
           </div>
         )}
-
+        {/* ✅ Category Badge (যদি ক্যাটাগরি থাকে তবে দেখাবে) */}
+        {data.category && (
+          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-800 shadow-sm z-10">
+            {data.category.name}
+          </div>
+        )}
         {isOutOfStock && (
           <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[2px]">
             <span className="bg-red-500/90 text-white px-4 py-1.5 text-xs font-bold rounded-full shadow-sm tracking-wider">

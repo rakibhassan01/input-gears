@@ -92,13 +92,6 @@ export default async function AdminDashboardPage() {
   ];
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* 1. Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-500 text-sm">
-          Welcome back! Here's what's happening today.
-        </p>
-      </div>
 
       {/* 2. Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -26,7 +26,6 @@ const sidebarItems = [
   {
     title: "Products",
     icon: ShoppingBag,
-    // সাব-মেনু (Dropdown)
     submenu: [
       { title: "All Products", href: "/admin/products", icon: List },
       { title: "Add New", href: "/admin/products/create", icon: PackagePlus },
@@ -62,7 +61,7 @@ export default function AdminSidebar() {
       )}
     >
       {/* 1. Logo Area */}
-      <div className="h-16 flex items-center justify-center border-b border-gray-800 relative">
+      <div className="h-16 flex items-center justify-center border-b border-gray-800 relative shrink-0">
         {isCollapsed ? (
           <span className="font-bold text-xl text-indigo-500">IG</span>
         ) : (
@@ -74,24 +73,22 @@ export default function AdminSidebar() {
         {/* Collapse Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-6 bg-indigo-600 rounded-full p-1 text-white shadow-lg hover:bg-indigo-500 transition-colors"
+          className="absolute -right-3 top-6 bg-indigo-600 rounded-full p-1 text-white shadow-lg hover:bg-indigo-500 transition-colors z-50"
         >
           {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
       {/* 2. Navigation Items */}
-      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 custom-scrollbar">
+      {/* ✅ FIX: scrollbar-none ক্লাস ব্যবহার করা হয়েছে (Tailwind Plugin বা Custom CSS লাগবে) */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-2 scrollbar-hide">
         {sidebarItems.map((item, idx) => {
           const isActive = item.href ? pathname === item.href : false;
-          const isSubmenuActive = item.submenu?.some(
-            (sub) => pathname === sub.href
-          );
 
           return (
             <div key={idx}>
               {item.submenu ? (
-                // Dropdown Logic (Simplified for now)
+                // Dropdown Logic
                 <div className={cn("mb-2", isCollapsed && "hidden")}>
                   <p className="px-4 text-xs font-semibold text-gray-500 uppercase mb-2 mt-4">
                     {item.title}
@@ -119,19 +116,25 @@ export default function AdminSidebar() {
                     "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all group relative",
                     isActive
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                    // ✅ FIX: কলাপস অবস্থায় আইকন সেন্টারে রাখা
+                    isCollapsed && "justify-center px-2"
                   )}
                 >
                   <item.icon
                     size={20}
-                    className={cn(isCollapsed && "mx-auto")}
+                    className="shrink-0" // আইকন যেন চ্যাপ্টা না হয়ে যায়
                   />
+
                   {!isCollapsed && <span>{item.title}</span>}
 
                   {/* Tooltip for Collapsed State */}
+                  {/* ✅ FIX: z-index বাড়িয়ে দেওয়া হয়েছে */}
                   {isCollapsed && (
-                    <div className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-50">
+                    <div className="absolute left-full ml-6 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-[100] shadow-xl">
                       {item.title}
+                      {/* ছোট্ট অ্যারো সাইন */}
+                      <div className="absolute top-1/2 -left-1 -mt-1 border-4 border-transparent border-r-gray-700" />
                     </div>
                   )}
                 </Link>
@@ -142,17 +145,28 @@ export default function AdminSidebar() {
       </nav>
 
       {/* 3. Footer / Logout */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 border-t border-gray-800 shrink-0">
         <button
           className={cn(
             "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-all",
-            isCollapsed && "justify-center"
+            isCollapsed && "justify-center px-2"
           )}
         >
           <LogOut size={20} />
           {!isCollapsed && "Sign Out"}
         </button>
       </div>
+
+      {/* ✅ CSS Hack for Hiding Scrollbar inside the component */}
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </aside>
   );
 }

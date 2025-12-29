@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -17,7 +17,8 @@ import {
 import Link from "next/link";
 import ProductCard from "@/modules/products/components/product-card";
 import { createProduct } from "@/modules/admin/actions"; // ⚠️ পাথ চেক করুন
-import { cn } from "@/lib/utils";
+import { cn, generateSlug } from "@/lib/utils";
+import ImageUpload from "@/components/ui/image-upload";
 
 // --- Validation Schema ---
 const formSchema = z.object({
@@ -84,7 +85,12 @@ export default function CreateProductPage() {
       setIsPending(false);
     }
   };
+  type FormValues = z.infer<typeof formSchema>;
 
+  const onInvalid = (errors: FieldErrors) => {
+    console.log("Validation Errors:", errors);
+    toast.error("Please fill all required fields correctly.");
+  };
   return (
     <div className="max-w-[1600px] mx-auto pb-20">
       {/* 1. Top Action Bar */}
@@ -115,7 +121,7 @@ export default function CreateProductPage() {
             Cancel
           </button>
           <button
-            onClick={form.handleSubmit(onSubmit)}
+            onClick={form.handleSubmit(onSubmit, onInvalid)}
             disabled={isPending}
             className="px-6 py-2.5 text-sm font-bold text-white bg-gray-900 rounded-xl hover:bg-indigo-600 transition-all shadow-lg shadow-gray-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
@@ -145,8 +151,17 @@ export default function CreateProductPage() {
                     Product Name
                   </label>
                   <input
-                    {...form.register("name")}
-                    onChange={handleNameChange} // Custom handler for slug auto-gen
+                    {...form.register("name", {
+                      onChange: (e) => {
+                        const nameValue = e.target.value;
+                        // অটোমেটিক স্লাগ তৈরি
+                        const slugValue = generateSlug(nameValue);
+                        // স্লাগ ফিল্ডে ভ্যালু সেট করা এবং ভ্যালিডেশন ট্রিগার করা
+                        form.setValue("slug", slugValue, {
+                          shouldValidate: true,
+                        });
+                      },
+                    })}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
                     placeholder="e.g. Premium Leather Jacket"
                   />
@@ -171,9 +186,14 @@ export default function CreateProductPage() {
                       className="w-full pl-24 pr-10 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-mono text-sm text-indigo-600"
                     />
                     <button
+                      onClick={() => {
+                        const currentName = form.getValues("name");
+                        const slug = generateSlug(currentName);
+                        form.setValue("slug", slug, { shouldValidate: true });
+                      }}
                       type="button"
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600"
-                      title="Regenerate"
+                      title="Regenerate from Name"
                     >
                       <RefreshCw size={16} />
                     </button>
@@ -208,29 +228,34 @@ export default function CreateProductPage() {
             {/* B. Media (Image) */}
             <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
               <h2 className="text-lg font-bold text-gray-900 mb-6">Media</h2>
+
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col items-center">
-                    <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4">
-                      <ImageIcon size={24} />
-                    </div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">
-                      Image URL
-                    </p>
-                    <input
-                      {...form.register("image")}
-                      className="w-full max-w-md text-center text-sm border-b border-gray-300 focus:border-indigo-500 outline-none bg-transparent py-2"
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <p className="text-xs text-gray-400 mt-4">
-                      Enter a direct link to your image (Unsplash, Cloudinary,
-                      etc.)
-                    </p>
-                  </div>
-                </div>
+                {/* ✅ আমাদের কাস্টম Cloudinary আপলোডার */}
+                <ImageUpload
+                  value={watchedValues.image ? [watchedValues.image] : []} // Array হিসেবে পাঠাতে হয়
+                  disabled={isPending}
+                  onChange={(url) =>
+                    form.setValue("image", url, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                  onRemove={() =>
+                    form.setValue("image", "", {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                />
+
+                {/* Hidden Input Validation Message */}
+                {form.formState.errors.image && (
+                  <p className="text-red-500 text-xs mt-2">
+                    {form.formState.errors.image.message}
+                  </p>
+                )}
               </div>
             </div>
-
             {/* C. Pricing & Inventory */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">

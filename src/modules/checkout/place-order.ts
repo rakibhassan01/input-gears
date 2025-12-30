@@ -4,13 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-interface PlaceOrderFormData {
-  fullName: string;
-  phone: string;
-  address: string;
-  email?: string | null;
-}
-
 interface CartItemInput {
   id: string;
   name: string;
@@ -21,21 +14,30 @@ interface CartItemInput {
 
 type PaymentMethodInput = "cod" | "stripe";
 
-async function generateOrderNumber() {
-  const lastOrder = await prisma.order.findFirst({
-    orderBy: { createdAt: "desc" },
-  });
+export async function generateOrderNumber() {
+  let orderNumber = "";
+  let isUnique = false;
 
-  if (!lastOrder || !lastOrder.orderNumber) {
-    return "IG0001";
+  while (!isUnique) {
+    const year = new Date().getFullYear().toString().slice(-2);
+    const random = Math.floor(1000 + Math.random() * 9000);
+    orderNumber = `IG${year}${random}`;
+    const existingOrder = await prisma.order.findUnique({
+      where: { orderNumber },
+    });
+    if (!existingOrder) {
+      isUnique = true;
+    }
   }
 
-  const lastNumber = parseInt(lastOrder.orderNumber);
-  const newNumber = lastNumber + 1;
-
-  return `IG-${newNumber}`;
+  return orderNumber;
 }
-
+interface PlaceOrderFormData {
+  fullName: string;
+  phone: string;
+  address: string;
+  email?: string | null;
+}
 export async function placeOrder(
   formData: PlaceOrderFormData,
   cartItems: CartItemInput[],
@@ -75,7 +77,6 @@ export async function placeOrder(
         paymentMethod: dbPaymentMethod,
         stripePaymentIntentId: paymentIntentId || null,
 
-        // ✅ FIX: স্কিমা অনুযায়ী নাম 'items' ব্যবহার করা হলো (আগে orderItems ছিল)
         items: {
           create: cartItems.map((item) => ({
             productId: item.id,

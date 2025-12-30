@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // ✅ useRouter যোগ করা হয়েছে
 import { cn } from "@/lib/utils";
+import { toast } from "sonner"; // ✅ toast যোগ করা হয়েছে
+import { authClient } from "@/lib/auth-client"; // ⚠️ আপনার authClient এর পাথ চেক করুন
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -15,6 +17,7 @@ import {
   List,
   LogOut,
   Layers,
+  Loader2,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -51,7 +54,22 @@ const sidebarItems = [
 
 export default function AdminSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authClient.signOut();
+      toast.success("Logged out successfully");
+      router.replace("/sign-in");
+    } catch (error) {
+      console.error("Logout Error:", error);
+      toast.error("Failed to log out");
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <aside
@@ -80,7 +98,6 @@ export default function AdminSidebar() {
       </div>
 
       {/* 2. Navigation Items */}
-      {/* ✅ FIX: scrollbar-none ক্লাস ব্যবহার করা হয়েছে (Tailwind Plugin বা Custom CSS লাগবে) */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-2 scrollbar-hide">
         {sidebarItems.map((item, idx) => {
           const isActive = item.href ? pathname === item.href : false;
@@ -117,23 +134,17 @@ export default function AdminSidebar() {
                     isActive
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20"
                       : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                    // ✅ FIX: কলাপস অবস্থায় আইকন সেন্টারে রাখা
                     isCollapsed && "justify-center px-2"
                   )}
                 >
-                  <item.icon
-                    size={20}
-                    className="shrink-0" // আইকন যেন চ্যাপ্টা না হয়ে যায়
-                  />
+                  <item.icon size={20} className="shrink-0" />
 
                   {!isCollapsed && <span>{item.title}</span>}
 
                   {/* Tooltip for Collapsed State */}
-                  {/* ✅ FIX: z-index বাড়িয়ে দেওয়া হয়েছে */}
                   {isCollapsed && (
-                    <div className="absolute left-full ml-6 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-[100] shadow-xl">
+                    <div className="absolute left-full ml-6 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-100 shadow-xl">
                       {item.title}
-                      {/* ছোট্ট অ্যারো সাইন */}
                       <div className="absolute top-1/2 -left-1 -mt-1 border-4 border-transparent border-r-gray-700" />
                     </div>
                   )}
@@ -147,17 +158,23 @@ export default function AdminSidebar() {
       {/* 3. Footer / Logout */}
       <div className="p-4 border-t border-gray-800 shrink-0">
         <button
+          onClick={handleSignOut}
+          disabled={isLoggingOut}
           className={cn(
-            "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-all",
+            "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed",
             isCollapsed && "justify-center px-2"
           )}
         >
-          <LogOut size={20} />
-          {!isCollapsed && "Sign Out"}
+          {isLoggingOut ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : (
+            <LogOut size={20} />
+          )}
+
+          {!isCollapsed && (isLoggingOut ? "Signing out..." : "Sign Out")}
         </button>
       </div>
 
-      {/* ✅ CSS Hack for Hiding Scrollbar inside the component */}
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;

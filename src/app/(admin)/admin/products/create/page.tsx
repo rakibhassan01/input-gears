@@ -39,11 +39,13 @@ type FormValues = z.infer<typeof formSchema>;
 export default function CreateProductPage() {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   // React Hook Form
-  const form = useForm<FormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -90,24 +92,20 @@ export default function CreateProductPage() {
     try {
       const res = await createProduct(data);
       if (res.success) {
-        // ✅ Change 1: No Redirect, just toast and reset
         toast.success("Product added successfully! Ready for next one.");
-        
-        // ফর্ম রিসেট করা (Category বাদে বাকি সব ক্লিয়ার হবে, যাতে দ্রুত অ্যাড করা যায়)
-        // আপনি চাইলে পুরো form.reset() দিতে পারেন।
-        form.reset({
-            name: "",
-            slug: "",
-            description: "",
-            price: 0,
-            stock: 10,
-            image: "",
-            categoryId: data.categoryId, // ক্যাটাগরিটা রেখে দিলাম যাতে সুবিধা হয়
-        });
-        
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
 
+        form.reset({
+          name: "",
+          slug: "",
+          description: "",
+          price: 0,
+          stock: 10,
+          image: "",
+          categoryId: data.categoryId,
+        });
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         if (res.message.toLowerCase().includes("slug")) {
           form.setError("slug", { type: "manual", message: res.message });
@@ -124,7 +122,7 @@ export default function CreateProductPage() {
     }
   };
 
-  const onInvalid = (errors: FieldErrors<FormValues>) => {
+  const onInvalid = (errors: FieldErrors) => {
     console.log("Validation Errors:", errors);
     if (errors.categoryId) {
       toast.error("Don't forget to select a category!");
@@ -135,9 +133,7 @@ export default function CreateProductPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-32">
-      
       <div className="max-w-[1600px] mx-auto">
-        
         {/* Header */}
         <div className="pt-8 pb-6 px-6">
           <div className="flex items-center gap-4">
@@ -148,36 +144,44 @@ export default function CreateProductPage() {
               <ArrowLeft size={20} className="text-gray-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
-              <p className="text-sm text-gray-500">Create a new product for your store inventory.</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Add New Product
+              </h1>
+              <p className="text-sm text-gray-500">
+                Create a new product for your store inventory.
+              </p>
             </div>
           </div>
         </div>
 
         {/* ✅ Change 2: Removed 'items-start' to fix Sticky height issue */}
         <div className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           {/* --- LEFT SIDE: FORM --- */}
           <div className="lg:col-span-2 space-y-8">
             <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
-              
               {/* General Info */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                   <Info size={20} className="text-indigo-600"/> General Information
+                  <Info size={20} className="text-indigo-600" /> General
+                  Information
                 </h2>
                 <div className="space-y-6">
-                  
                   {/* Name */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Product Name <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Product Name <span className="text-red-500">*</span>
+                    </label>
                     <input
                       {...form.register("name")}
                       onChange={handleNameChange}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
                       placeholder="e.g. Wireless Noise Cancelling Headphones"
                     />
-                    {form.formState.errors.name && <p className="text-red-500 text-xs">{form.formState.errors.name.message}</p>}
+                    {form.formState.errors.name && (
+                      <p className="text-red-500 text-xs">
+                        {form.formState.errors.name.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Slug */}
@@ -187,105 +191,131 @@ export default function CreateProductPage() {
                     </label>
                     <div className="relative group flex items-center gap-2">
                       <div className="relative flex-1">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">/products/</span>
-                          <input
-                            {...form.register("slug")}
-                            className={`w-full pl-24 pr-10 py-3 rounded-xl border bg-gray-50 focus:bg-white outline-none font-mono text-sm text-indigo-600 transition-all ${
-                                form.formState.errors.slug ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
-                            }`}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const currentName = form.getValues("name");
-                              if(currentName) {
-                                  const slug = generateSlug(currentName);
-                                  form.setValue("slug", slug, { shouldValidate: true, shouldDirty: true });
-                                  toast.info("Slug regenerated from name");
-                              }
-                            }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
-                            title="Regenerate from Name"
-                          >
-                            <RefreshCw size={16} />
-                          </button>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+                          /products/
+                        </span>
+                        <input
+                          {...form.register("slug")}
+                          className={`w-full pl-24 pr-10 py-3 rounded-xl border bg-gray-50 focus:bg-white outline-none font-mono text-sm text-indigo-600 transition-all ${
+                            form.formState.errors.slug
+                              ? "border-red-300 focus:border-red-500"
+                              : "border-gray-200 focus:border-indigo-500"
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentName = form.getValues("name");
+                            if (currentName) {
+                              const slug = generateSlug(currentName);
+                              form.setValue("slug", slug, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                              toast.info("Slug regenerated from name");
+                            }
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                          title="Regenerate from Name"
+                        >
+                          <RefreshCw size={16} />
+                        </button>
                       </div>
-                      
+
                       {/* ✅ Change 3: External Link Icon */}
                       {watchedValues.slug && (
-                          <Link 
-                            href={`/products/${watchedValues.slug}`} 
-                            target="_blank"
-                            className="p-3 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 text-indigo-600 transition-colors"
-                            title="Preview URL in new tab"
-                          >
-                            <ExternalLink size={18} />
-                          </Link>
+                        <Link
+                          href={`/products/${watchedValues.slug}`}
+                          target="_blank"
+                          className="p-3 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 text-indigo-600 transition-colors"
+                          title="Preview URL in new tab"
+                        >
+                          <ExternalLink size={18} />
+                        </Link>
                       )}
                     </div>
-                    
+
                     {form.formState.errors.slug && (
-                        <div className="flex items-center gap-1.5 text-red-500 text-xs mt-1">
-                            <AlertCircle size={12} />
-                            <span>{form.formState.errors.slug.message}</span>
-                        </div>
+                      <div className="flex items-center gap-1.5 text-red-500 text-xs mt-1">
+                        <AlertCircle size={12} />
+                        <span>{form.formState.errors.slug.message}</span>
+                      </div>
                     )}
                   </div>
 
                   {/* Category Selection */}
                   <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Category <span className="text-red-500">*</span></label>
-                      <div className="flex gap-3">
-                          <div className="relative flex-1">
-                              <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                              <select
-                                  {...form.register("categoryId")}
-                                  className={`w-full pl-10 pr-4 py-3 rounded-xl border bg-gray-50 focus:bg-white outline-none appearance-none transition-all cursor-pointer ${
-                                    form.formState.errors.categoryId ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
-                                  }`}
-                              >
-                                  <option value="">Select a category...</option>
-                                  {categories.map((cat) => (
-                                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                  ))}
-                              </select>
-                              {isLoadingCategories && (
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                      <Loader2 className="animate-spin text-indigo-600" size={16} />
-                                  </div>
-                              )}
+                    <label className="text-sm font-medium text-gray-700">
+                      Category <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-3">
+                      <div className="relative flex-1">
+                        <Layers
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={18}
+                        />
+                        <select
+                          {...form.register("categoryId")}
+                          className={`w-full pl-10 pr-4 py-3 rounded-xl border bg-gray-50 focus:bg-white outline-none appearance-none transition-all cursor-pointer ${
+                            form.formState.errors.categoryId
+                              ? "border-red-300 focus:border-red-500"
+                              : "border-gray-200 focus:border-indigo-500"
+                          }`}
+                        >
+                          <option value="">Select a category...</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                        {isLoadingCategories && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2
+                              className="animate-spin text-indigo-600"
+                              size={16}
+                            />
                           </div>
-                          
-                          <div className="shrink-0">
-                             <CategoryModal /> 
-                          </div>
-                          
-                          <button 
-                              type="button"
-                              onClick={fetchCategories}
-                              className="p-3 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 text-gray-500 transition-colors"
-                              title="Refresh Categories"
-                          >
-                              <RefreshCw size={18} />
-                          </button>
+                        )}
                       </div>
-                      {form.formState.errors.categoryId && (
-                          <p className="text-red-500 text-xs">{form.formState.errors.categoryId.message}</p>
-                      )}
+
+                      <div className="shrink-0">
+                        <CategoryModal />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={fetchCategories}
+                        className="p-3 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 text-gray-500 transition-colors"
+                        title="Refresh Categories"
+                      >
+                        <RefreshCw size={18} />
+                      </button>
+                    </div>
+                    {form.formState.errors.categoryId && (
+                      <p className="text-red-500 text-xs">
+                        {form.formState.errors.categoryId.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Description */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Description</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Description
+                    </label>
                     <textarea
                       {...form.register("description")}
                       rows={5}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none resize-none"
                       placeholder="Detailed description of the product..."
                     />
-                    {form.formState.errors.description && <p className="text-red-500 text-xs">{form.formState.errors.description.message}</p>}
+                    {form.formState.errors.description && (
+                      <p className="text-red-500 text-xs">
+                        {form.formState.errors.description.message}
+                      </p>
+                    )}
                   </div>
-
                 </div>
               </div>
 
@@ -296,19 +326,31 @@ export default function CreateProductPage() {
                   <ImageUpload
                     value={watchedValues.image ? [watchedValues.image] : []}
                     disabled={isPending}
-                    onChange={(url) => form.setValue("image", url, { shouldValidate: true })}
-                    onRemove={() => form.setValue("image", "", { shouldValidate: true })}
+                    onChange={(url) =>
+                      form.setValue("image", url, { shouldValidate: true })
+                    }
+                    onRemove={() =>
+                      form.setValue("image", "", { shouldValidate: true })
+                    }
                   />
-                  {form.formState.errors.image && <p className="text-red-500 text-xs mt-2">{form.formState.errors.image.message}</p>}
+                  {form.formState.errors.image && (
+                    <p className="text-red-500 text-xs mt-2">
+                      {form.formState.errors.image.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Pricing & Inventory */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
-                  <h2 className="text-lg font-bold text-gray-900 mb-6">Pricing</h2>
+                  <h2 className="text-lg font-bold text-gray-900 mb-6">
+                    Pricing
+                  </h2>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">
+                      $
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -317,24 +359,35 @@ export default function CreateProductPage() {
                       placeholder="0.00"
                     />
                   </div>
-                  {form.formState.errors.price && <p className="text-red-500 text-xs mt-2">{form.formState.errors.price.message}</p>}
+                  {form.formState.errors.price && (
+                    <p className="text-red-500 text-xs mt-2">
+                      {form.formState.errors.price.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
-                  <h2 className="text-lg font-bold text-gray-900 mb-6">Inventory</h2>
+                  <h2 className="text-lg font-bold text-gray-900 mb-6">
+                    Inventory
+                  </h2>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Stock Quantity</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Stock Quantity
+                    </label>
                     <input
-                        type="number"
-                        {...form.register("stock")}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none"
-                        placeholder="0"
+                      type="number"
+                      {...form.register("stock")}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none"
+                      placeholder="0"
                     />
-                     {form.formState.errors.stock && <p className="text-red-500 text-xs">{form.formState.errors.stock.message}</p>}
+                    {form.formState.errors.stock && (
+                      <p className="text-red-500 text-xs">
+                        {form.formState.errors.stock.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
-
             </form>
           </div>
 
@@ -343,7 +396,9 @@ export default function CreateProductPage() {
             <div className="sticky top-6 space-y-6">
               <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-2xl p-6 text-white shadow-xl">
                 <h3 className="font-bold text-lg mb-1">Live Preview</h3>
-                <p className="text-indigo-200 text-xs">This is how customers will see your product.</p>
+                <p className="text-indigo-200 text-xs">
+                  This is how customers will see your product.
+                </p>
               </div>
 
               <div className="pointer-events-none opacity-100 ring-4 ring-gray-100 rounded-3xl overflow-hidden bg-white shadow-lg">
@@ -356,59 +411,71 @@ export default function CreateProductPage() {
                     description: watchedValues.description,
                     stock: Number(watchedValues.stock),
                     slug: watchedValues.slug || "slug",
-                    category: { 
-                      name: categories.find(c => c.id === watchedValues.categoryId)?.name || "Uncategorized", 
-                      slug: "cat" 
-                    }
+                    category: {
+                      name:
+                        categories.find(
+                          (c) => c.id === watchedValues.categoryId
+                        )?.name || "Uncategorized",
+                      slug: "cat",
+                    },
                   }}
                 />
               </div>
 
               <div className="bg-white p-5 rounded-xl border border-gray-200 text-sm space-y-3 shadow-sm">
-                <h4 className="font-semibold text-gray-900 border-b border-gray-100 pb-2">Quick Summary</h4>
+                <h4 className="font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                  Quick Summary
+                </h4>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Status</span>
-                  <span className="font-bold text-xs text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-md">Active</span>
+                  <span className="font-bold text-xs text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-md">
+                    Active
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Category</span>
                   <span className="font-medium text-gray-900">
-                      {categories.find(c => c.id === watchedValues.categoryId)?.name || "—"}
+                    {categories.find((c) => c.id === watchedValues.categoryId)
+                      ?.name || "—"}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* Sticky Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-200 p-4 z-40">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-            <div className="hidden sm:block text-sm text-gray-500">
-                {form.formState.isDirty ? "You have unsaved changes." : "Ready to save."}
-            </div>
-            <div className="flex gap-3 ml-auto">
-                <button
-                    type="button"
-                    onClick={() => router.back()}
-                    className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                    Cancel
-                </button>
-                <button
-                    onClick={form.handleSubmit(onSubmit, onInvalid)}
-                    disabled={isPending}
-                    className="px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                    {isPending ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                    Save Product
-                </button>
-            </div>
+          <div className="hidden sm:block text-sm text-gray-500">
+            {form.formState.isDirty
+              ? "You have unsaved changes."
+              : "Ready to save."}
+          </div>
+          <div className="flex gap-3 ml-auto">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={form.handleSubmit(onSubmit, onInvalid)}
+              disabled={isPending}
+              className="px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isPending ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                <Save size={18} />
+              )}
+              Save Product
+            </button>
+          </div>
         </div>
       </div>
-
     </div>
   );
 }

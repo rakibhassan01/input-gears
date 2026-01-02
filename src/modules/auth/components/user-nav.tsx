@@ -144,14 +144,16 @@ export default function UserNav({ session }: UserNavProps) {
           </div>
 
           <div className="p-2 space-y-1">
-            <Link
-              href="/dashboard"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
-            >
-              <LayoutDashboard className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-              Overview
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+              >
+                <LayoutDashboard className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
+                Admin Dashboard
+              </Link>
+            )}
 
             <Link
               href="/account"

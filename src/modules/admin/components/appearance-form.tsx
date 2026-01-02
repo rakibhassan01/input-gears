@@ -99,8 +99,6 @@ export default function AppearancePage({
     return new Date(date).toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
   };
 
-  // --- Forms Setup (Initialized directly with props) ---
-
   // 1. Top Bar Form
   const barForm = useForm<TopBarFormValues>({
     resolver: zodResolver(topBarSchema),
@@ -163,9 +161,7 @@ export default function AppearancePage({
       );
     }, 3000);
     return () => clearInterval(interval);
-  }, [watchedSlides.slides.length]);
-
-  // --- Handlers ---
+  }, [watchedSlides.slides.length, watchedSlides.slides]);
 
   const onSaveBar = async (data: TopBarFormValues) => {
     setSavingBar(true);
@@ -175,7 +171,6 @@ export default function AppearancePage({
         link: data.link || "",
         isActive: data.isActive,
         useSchedule: data.useSchedule,
-        // Logic: Schedule বন্ধ থাকলে ডেট রিমুভ করে দিব (empty string পাঠাবো)
         topBarStart: data.useSchedule ? data.topBarStart || "" : "",
         topBarEnd: data.useSchedule ? data.topBarEnd || "" : "",
       });
@@ -564,7 +559,7 @@ export default function AppearancePage({
 
                 {/* Hero Banner Preview */}
                 <div className="p-4 md:p-6 bg-white">
-                  <div className="relative w-full aspect-[16/8] md:aspect-[21/8] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm bg-gray-100 group">
+                  <div className="relative w-full aspect-16/8 md:aspect-21/8 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm bg-gray-100 group">
                     {watchedSlides.slides.map((slide, index) => {
                       const hasText = slide.title || slide.subtitle;
                       return (

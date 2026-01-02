@@ -176,3 +176,99 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
     return { success: false, message: "Failed to update status." };
   }
 }
+//Site Settings Actions
+interface HeroSlideInput {
+  title?: string;
+  subtitle?: string;
+  image: string;
+  link?: string;
+}
+
+// Top Bar Input (Schedule Kept)
+interface TopBarInput {
+  text: string;
+  link: string;
+  isActive: boolean;
+  topBarStart?: string;
+  topBarEnd?: string;
+}
+
+// --- 1. Get Data ---
+export async function getStoreAppearance() {
+  const settings = await prisma.siteSettings.findUnique({
+    where: { id: "general" },
+  });
+
+  // --- Top Bar Logic (Kept as is) ---
+  let isTopBarActive = settings?.topBarActive ?? false;
+
+  if (settings?.topBarStart || settings?.topBarEnd) {
+    const now = new Date();
+    if (settings.topBarStart && now < settings.topBarStart)
+      isTopBarActive = false;
+    if (settings.topBarEnd && now > settings.topBarEnd) isTopBarActive = false;
+  }
+
+  const finalSettings = settings
+    ? { ...settings, topBarActive: isTopBarActive }
+    : null;
+
+  // --- Hero Slides (Simple Fetch) ---
+  const slides = await prisma.heroSlide.findMany({
+    orderBy: { order: "asc" },
+  });
+
+  return {
+    settings: finalSettings,
+    slides: slides, // এখন আর activeSlides আলাদা করার দরকার নেই
+  };
+}
+
+// --- 2. Update Top Bar ---
+export async function updateTopBar(data: TopBarInput) {
+  const startDate = data.topBarStart ? new Date(data.topBarStart) : null;
+  const endDate = data.topBarEnd ? new Date(data.topBarEnd) : null;
+
+  await prisma.siteSettings.upsert({
+    where: { id: "general" },
+    update: {
+      topBarText: data.text,
+      topBarLink: data.link,
+      topBarActive: data.isActive,
+      topBarStart: startDate,
+      topBarEnd: endDate,
+    },
+    create: {
+      id: "general",
+      topBarText: data.text,
+      topBarLink: data.link,
+      topBarActive: data.isActive,
+      topBarStart: startDate,
+      topBarEnd: endDate,
+    },
+  });
+
+  revalidatePath("/");
+  return { success: true };
+}
+
+// --- 3. Update Hero Slides (Reverted to Simple Version) ---
+export async function updateHeroSlides(slides: HeroSlideInput[]) {
+  await prisma.heroSlide.deleteMany();
+
+  if (slides.length > 0) {
+    await prisma.heroSlide.createMany({
+      data: slides.map((s, i) => ({
+        title: s.title || "",
+        subtitle: s.subtitle,
+        image: s.image,
+        link: s.link,
+        order: i,
+        // ❌ No scheduledStart/End here
+      })),
+    });
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}

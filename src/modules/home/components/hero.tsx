@@ -5,140 +5,120 @@ import React, {
   useEffect,
   useCallback,
   useRef,
-  TouchEvent, // TouchEvent টাইপ ইমপোর্ট
+  TouchEvent,
 } from "react";
 import Link from "next/link";
-import NextImage from "next/image";
+import { CldImage } from "next-cloudinary";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// --- Type Definitions ---
-
-interface SlideData {
-  id: number;
-  imageSrc: string;
-  altText: string;
-  link?: string; // Optional Link Property added
+// --- Types ---
+interface HeroSlide {
+  id: string;
+  image: string;
+  title?: string; // Optional
+  subtitle?: string | null; // Optional
+  link?: string | null;
 }
 
-// --- Configuration ---
+interface HeroBannerProps {
+  slides: HeroSlide[];
+}
+
+// --- Config ---
 const AUTO_SLIDE_INTERVAL = 5000;
-const MIN_SWIPE_DISTANCE = 50; // Swipe sensitivity
+const MIN_SWIPE_DISTANCE = 50;
 
-// Mock Data (Real world scenario te eta props hisebe ashbe)
-const SLIDES: SlideData[] = [
-  {
-    id: 1,
-    imageSrc:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop",
-    altText: "Global Network",
-    link: "/network", // Example Link
-  },
-  {
-    id: 2,
-    imageSrc:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2670&auto=format&fit=crop",
-    altText: "Chip Circuitry",
-    // No link here
-  },
-  {
-    id: 3,
-    imageSrc:
-      "https://images.unsplash.com/photo-1496065187959-7f07b8353c55?q=80&w=2670&auto=format&fit=crop",
-    altText: "Tech Lab",
-    link: "/tech-lab",
-  },
-];
-
-export default function HeroBanner() {
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+export default function HeroBanner({ slides }: HeroBannerProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- Touch Swipe States ---
+  // --- Touch States ---
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-  // --- Navigation Logic (useCallback fixed) ---
-
+  // --- Navigation Logic ---
   const goToSlide = useCallback((index: number) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setCurrentIndex(index);
   }, []);
 
   const nextSlide = useCallback(() => {
-    goToSlide(currentIndex === SLIDES.length - 1 ? 0 : currentIndex + 1);
-  }, [currentIndex, goToSlide]);
+    goToSlide(currentIndex === slides.length - 1 ? 0 : currentIndex + 1);
+  }, [currentIndex, slides.length, goToSlide]);
 
   const prevSlide = useCallback(() => {
-    goToSlide(currentIndex === 0 ? SLIDES.length - 1 : currentIndex - 1);
-  }, [currentIndex, goToSlide]);
+    goToSlide(currentIndex === 0 ? slides.length - 1 : currentIndex - 1);
+  }, [currentIndex, slides.length, goToSlide]);
 
-  // --- Auto Play Effect ---
+  // --- Autoplay ---
   useEffect(() => {
-    if (SLIDES.length <= 1) return; // Logic fix: Don't autoplay if 1 slide
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      nextSlide();
-    }, AUTO_SLIDE_INTERVAL);
-
+    if (slides.length <= 1) return;
+    timerRef.current = setTimeout(() => nextSlide(), AUTO_SLIDE_INTERVAL);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [currentIndex, nextSlide]);
+  }, [currentIndex, nextSlide, slides.length]);
 
-  // --- Touch Event Handlers (Swipe Logic) ---
-
+  // --- Touch Handlers ---
   const onTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
-
   const onTouchMove = (e: TouchEvent<HTMLDivElement>) => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
-
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
-    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
-
-    if (isLeftSwipe) nextSlide();
-    if (isRightSwipe) prevSlide();
+    if (distance > MIN_SWIPE_DISTANCE) nextSlide();
+    if (distance < -MIN_SWIPE_DISTANCE) prevSlide();
   };
 
-  // Guard Clause
-  if (!SLIDES.length) return null;
+  if (!slides || slides.length === 0) return null;
 
   return (
-    // 🎨 UI Update based on Logic Source:
-    // Container width restricted to 1440px and padding added
     <section className="w-full max-w-[1440px] mx-auto px-4 md:px-6 mt-4 md:mt-6">
       <div
-        className="relative w-full aspect-[16/8] md:aspect-[21/8] lg:aspect-[24/8] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm bg-gray-100 select-none group isolate border border-gray-100"
-        // Touch Handlers attached here
+        className="relative w-full aspect-16/8 md:aspect-21/8 lg:aspect-24/8 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm select-none group isolate border border-gray-100"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* Slides Loop */}
-        {SLIDES.map((slide, index) => {
+        {slides.map((slide, index) => {
           const isActive = index === currentIndex;
 
-          // Inner Content (Image)
+          const hasText = slide.title || slide.subtitle;
+
           const SlideContent = (
             <>
-              <NextImage
-                src={slide.imageSrc}
-                alt={slide.altText}
+              <CldImage
+                src={slide.image}
+                alt={slide.title || "Banner Image"}
                 fill
                 priority={index === 0}
                 className="object-cover object-center"
-                quality={90}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1440px"
+                sizes="(max-width: 768px) 100vw, 1440px"
               />
-              {/* Subtle Overlay */}
-              <div className="absolute inset-0 bg-black/5 pointer-events-none" />
+
+              {/* ✅ শুধুমাত্র টেক্সট থাকলেই ওভারলে এবং লেখা দেখাবে */}
+              {hasText && (
+                <>
+                  <div className="absolute inset-0 bg-black/20" />{" "}
+                  {/* হালকা ওভারলে যাতে টেক্সট পড়া যায় */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-4">
+                    {slide.subtitle && (
+                      <p className="text-[10px] md:text-xs font-medium tracking-widest uppercase mb-2 opacity-90 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                        {slide.subtitle}
+                      </p>
+                    )}
+                    {slide.title && (
+                      <h2 className="text-2xl md:text-5xl font-bold animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                        {slide.title}
+                      </h2>
+                    )}
+                  </div>
+                </>
+              )}
             </>
           );
 
@@ -149,7 +129,6 @@ export default function HeroBanner() {
                 isActive ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
             >
-              {/* 🔗 Link Logic Implementation */}
               {slide.link ? (
                 <Link
                   href={slide.link}
@@ -164,49 +143,39 @@ export default function HeroBanner() {
           );
         })}
 
-        {/* --- Controls (Arrows hidden on mobile touch, visible on desktop hover) --- */}
-
-        {SLIDES.length > 1 && (
+        {/* Controls */}
+        {slides.length > 1 && (
           <>
-            {/* Left Arrow */}
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering link click
+                e.stopPropagation();
                 prevSlide();
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-white/30 text-white hover:bg-white/50 backdrop-blur-md border border-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 hidden md:flex"
-              aria-label="Previous slide"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-white/30 text-white rounded-full hover:bg-white/50 backdrop-blur-md hidden md:block"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft />
             </button>
-
-            {/* Right Arrow */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 nextSlide();
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-white/30 text-white hover:bg-white/50 backdrop-blur-md border border-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 hidden md:flex"
-              aria-label="Next slide"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-white/30 text-white rounded-full hover:bg-white/50 backdrop-blur-md hidden md:block"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight />
             </button>
 
-            {/* Dots Indicator */}
-            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-black/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              {SLIDES.map((_, index) => (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+              {slides.map((_, i) => (
                 <button
-                  key={index}
+                  key={i}
                   onClick={(e) => {
                     e.stopPropagation();
-                    goToSlide(index);
+                    goToSlide(i);
                   }}
-                  className={`h-1.5 md:h-2 rounded-full transition-all duration-300 shadow-sm ${
-                    index === currentIndex
-                      ? "w-6 md:w-8 bg-white"
-                      : "w-1.5 md:w-2 bg-white/50 hover:bg-white/80"
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/50"
                   }`}
-                  aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>

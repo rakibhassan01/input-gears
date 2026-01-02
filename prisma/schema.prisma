@@ -204,3 +204,30 @@ model Category {
 
   @@index([parentId]) // পারফরম্যান্সের জন্য ইনডেক্সিং
 }
+
+model SiteSettings {
+  id           String    @id @default("general")
+  topBarText   String?
+  topBarLink   String? // নতুন: "Shop Now" এ ক্লিক করলে কই যাবে
+  topBarActive Boolean   @default(true)
+  topBarStart  DateTime?
+  topBarEnd    DateTime?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model HeroSlide {
+  id       String  @id @default(cuid())
+  title    String
+  subtitle String?
+  image    String // Cloudinary Public ID
+  link     String?
+  order    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hero_slides")
+}

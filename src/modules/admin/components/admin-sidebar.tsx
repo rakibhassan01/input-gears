@@ -18,6 +18,7 @@ import {
   LogOut,
   Layers,
   Loader2,
+  Paintbrush,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -44,6 +45,11 @@ const sidebarItems = [
     title: "Customers",
     href: "/admin/customers",
     icon: Users,
+  },
+  {
+    title: "Store Appearance",
+    icon: Paintbrush, // lucide-react থেকে import করবেন
+    href: "/admin/appearance",
   },
   {
     title: "Settings",

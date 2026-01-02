@@ -56,12 +56,12 @@ export default function Navbar() {
   return (
     <>
       {/* 1. TOP ANNOUNCEMENT BAR */}
-      <div className="bg-indigo-900 text-white text-[11px] font-medium tracking-widest text-center py-2.5 uppercase">
+      {/* <div className="bg-indigo-900 text-white text-[11px] font-medium tracking-widest text-center py-2.5 uppercase">
         Free Shipping on Orders Over $100 —{" "}
         <span className="text-gray-400 border-b border-gray-400 pb-0.5 cursor-pointer hover:text-white transition">
           Shop Now
         </span>
-      </div>
+      </div> */}
 
       {/* 2. MAIN NAVBAR */}
       <nav

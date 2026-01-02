@@ -223,11 +223,28 @@ export async function getStoreAppearance() {
     slides: slides, // এখন আর activeSlides আলাদা করার দরকার নেই
   };
 }
+interface TopBarInput {
+  text: string;
+  link: string;
+  isActive: boolean;
+  // UI logic field
+  useSchedule: boolean;
+  topBarStart?: string;
+  topBarEnd?: string;
+}
+
+// ... getStoreAppearance code (same as before) ...
 
 // --- 2. Update Top Bar ---
 export async function updateTopBar(data: TopBarInput) {
-  const startDate = data.topBarStart ? new Date(data.topBarStart) : null;
-  const endDate = data.topBarEnd ? new Date(data.topBarEnd) : null;
+  // Logic:
+  // যদি useSchedule TRUE হয় -> তাহলে ডেট নিব।
+  // যদি useSchedule FALSE হয় -> ডেট NULL করে দিব (Permanent Active)।
+
+  const startDate =
+    data.useSchedule && data.topBarStart ? new Date(data.topBarStart) : null;
+  const endDate =
+    data.useSchedule && data.topBarEnd ? new Date(data.topBarEnd) : null;
 
   await prisma.siteSettings.upsert({
     where: { id: "general" },
@@ -251,7 +268,6 @@ export async function updateTopBar(data: TopBarInput) {
   revalidatePath("/");
   return { success: true };
 }
-
 // --- 3. Update Hero Slides (Reverted to Simple Version) ---
 export async function updateHeroSlides(slides: HeroSlideInput[]) {
   await prisma.heroSlide.deleteMany();

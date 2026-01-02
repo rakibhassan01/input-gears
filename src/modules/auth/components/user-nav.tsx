@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner"; // ✅ Toast Import
+import { toast } from "sonner";
 import {
   User,
   Settings,
@@ -44,17 +44,6 @@ export default function UserNav({ session }: UserNavProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // const handleLogout = async () => {
-  //   await authClient.signOut({
-  //     fetchOptions: {
-  //       onSuccess: () => {
-  //         toast.success("Logged out successfully"); // ✅ Added Toast
-  //         router.push("/sign-in"); // বা '/'
-  //         router.refresh();
-  //       },
-  //     },
-  //   });
-  // };
   const handleLogout = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -68,6 +57,7 @@ export default function UserNav({ session }: UserNavProps) {
             "/account",
             "/settings",
             "/billing",
+            "/admin",
           ];
           const isOnProtectedRoute = protectedRoutes.some((route) =>
             pathname.startsWith(route)
@@ -77,15 +67,12 @@ export default function UserNav({ session }: UserNavProps) {
             router.push("/sign-in"); // প্রোটেক্টেড হলে সাইন-ইনে যাও
           } else {
             router.refresh(); // পাবলিক পেজে থাকলে শুধু রিফ্রেশ দাও (UI আপডেট হবে)
-            // অথবা: window.location.reload(); // একদম হার্ড রিলোড
           }
         },
       },
     });
   };
-  // ✅ Admin Check Logic
-  // যদি ডাটাবেসে role সেট না করে থাকেন, টেস্টিংয়ের জন্য
-  // || session.user.email === "আপনার_ইমেইল" যোগ করে দেখতে পারেন
+
   const isAdmin = session.user.role === "admin";
 
   return (
@@ -99,11 +86,14 @@ export default function UserNav({ session }: UserNavProps) {
             : "bg-white border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
         }`}
       >
-        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 overflow-hidden">
+        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 overflow-hidden relative">
           {session.user.image ? (
+            // ✅ FIX: Added width and height props to satisfy Next.js Image
             <Image
               src={session.user.image}
-              alt={session.user.name}
+              alt={session.user.name || "User Avatar"}
+              width={32}
+              height={32}
               className="h-full w-full object-cover"
             />
           ) : (
@@ -156,6 +146,25 @@ export default function UserNav({ session }: UserNavProps) {
             )}
 
             <Link
+              href="/account/orders"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+            >
+              <CreditCard className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
+              Orders
+            </Link>
+
+            <div className="h-px bg-gray-100 my-1 mx-2" />
+
+            <Link
+              href="/account/profile" // ✅ FIX: Added leading slash
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+            >
+              <Settings className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
+              Settings
+            </Link>
+            <Link
               href="/account"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
@@ -163,27 +172,6 @@ export default function UserNav({ session }: UserNavProps) {
               <User className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
               Account
             </Link>
-
-            <Link
-              href="/billing"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
-            >
-              <CreditCard className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-              Billing
-            </Link>
-
-            <div className="h-px bg-gray-100 my-1 mx-2" />
-
-            <Link
-              href="/settings"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
-            >
-              <Settings className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-              Settings
-            </Link>
-
             <div className="h-px bg-gray-100 my-1 mx-2" />
 
             <button

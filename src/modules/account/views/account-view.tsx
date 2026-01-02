@@ -21,18 +21,25 @@ interface AccountViewProps {
       name: string;
       email: string;
       image?: string | null;
-      role?: string | null; // ✅ Role থাকতে পারে (schema তে থাকলে)
+      role?: string | null;
+      createdAt?: Date;
     };
   };
-  // ✅ Server থেকে আসা ডাটার টাইপ
   dashboardData: {
     totalOrders: number;
     pendingOrders: number;
     totalSpent: number;
-    recentOrders: Order[]; // টাইপ safe করতে চাইলে Order টাইপ ইমপোর্ট করবেন
+    recentOrders: Order[];
   };
 }
-
+const formatJoinDate = (date: Date | string | undefined) => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString("en-US", {
+    // month: "long", // January
+    month: "short", // Jan
+    year: "numeric", // 2024
+  });
+};
 export default function AccountView({
   session,
   dashboardData,
@@ -41,7 +48,6 @@ export default function AccountView({
   const { totalOrders, pendingOrders, totalSpent, recentOrders } =
     dashboardData;
 
-  // ✅ Real Stats Data
   const stats = [
     {
       label: "Total Orders",
@@ -66,7 +72,7 @@ export default function AccountView({
     },
   ];
 
-  const isAdmin = user.role === "admin"; // আপনার ডাটাবেসে role field থাকলে
+  const isAdmin = user.role === "admin";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -119,7 +125,7 @@ export default function AccountView({
               </div>
               <p className="text-gray-500">{user.email}</p>
               <p className="text-xs text-gray-400 mt-1">
-                Member since {new Date().getFullYear()}
+                Member since {formatJoinDate(user.createdAt)}
               </p>
             </div>
           </div>

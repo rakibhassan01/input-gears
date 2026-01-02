@@ -1,0 +1,111 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { AddressFormValues, addressSchema } from "./address-schema";
+// ✅ নতুন ফাইল থেকে স্কিমা এবং টাইপ ইমপোর্ট করুন
+
+// --- Actions ---
+
+// 1. Get Addresses
+export async function getUserAddresses() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.email) return [];
+
+  return await prisma.address.findMany({
+    where: { user: { email: session.user.email } },
+    orderBy: { isDefault: "desc" },
+  });
+}
+
+// 2. Save (Create or Update)
+export async function saveAddress(data: AddressFormValues) {
+  // ✅ সার্ভার সাইডে ডাটা ভ্যালিডেট করা ভালো প্র্যাকটিস
+  const validated = addressSchema.parse(data);
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.email) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  if (validated.isDefault) {
+    await prisma.address.updateMany({
+      where: { userId: user.id },
+      data: { isDefault: false },
+    });
+  }
+
+  const count = await prisma.address.count({ where: { userId: user.id } });
+  const shouldBeDefault = count === 0 ? true : validated.isDefault;
+
+  if (validated.id) {
+    await prisma.address.update({
+      where: { id: validated.id, userId: user.id },
+      data: { ...validated, isDefault: shouldBeDefault },
+    });
+  } else {
+    await prisma.address.create({
+      data: { ...validated, userId: user.id, isDefault: shouldBeDefault },
+    });
+  }
+
+  revalidatePath("/account/addresses");
+  return { success: true };
+}
+
+// 3. Delete
+export async function deleteAddress(id: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.email) throw new Error("Unauthorized");
+
+  await prisma.address.delete({
+    where: { id },
+  });
+
+  revalidatePath("/account/addresses");
+  return { success: true };
+}
+
+// 4. Set Default
+export async function setDefaultAddress(id: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.email) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user) return;
+
+  await prisma.$transaction([
+    prisma.address.updateMany({
+      where: { userId: user.id },
+      data: { isDefault: false },
+    }),
+    prisma.address.update({
+      where: { id, userId: user.id },
+      data: { isDefault: true },
+    }),
+  ]);
+
+  revalidatePath("/account/addresses");
+  return { success: true };
+}

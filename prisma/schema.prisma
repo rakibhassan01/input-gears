@@ -13,6 +13,7 @@ model User {
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
+  phone         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -22,9 +23,10 @@ model User {
   banExpires DateTime?
 
   // Relations
-  sessions Session[]
-  accounts Account[]
-  orders   Order[]
+  sessions  Session[]
+  accounts  Account[]
+  orders    Order[]
+  addresses Address[]
 
   @@map("user") // Better Auth table name lowercase 'user' prefer kore
 }
@@ -230,4 +232,24 @@ model HeroSlide {
   updatedAt DateTime @updatedAt
 
   @@map("hero_slides")
+}
+
+model Address {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name    String
+  phone   String
+  street  String?
+  city    String
+  state   String?
+  zip     String?
+  country String  @default("Bangladesh")
+
+  isDefault Boolean @default(false)
+  type      String  @default("HOME") // HOME or WORK
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

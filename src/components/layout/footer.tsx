@@ -72,7 +72,7 @@ export function Footer() {
 
   return (
     <footer className="w-full bg-zinc-950 border-t border-zinc-800 text-zinc-400 font-sans">
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-8">
+      <div className="max-w-[1440px] mx-auto px-6 pt-16 pb-8">
         {/* Top Section: Brand & Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
           {/* Brand Column */}

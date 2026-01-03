@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import {
   Plus,
   MapPin,
-  MoreVertical,
   Trash2,
   Edit2,
   CheckCircle2,
@@ -15,6 +14,7 @@ import {
   Briefcase,
   Loader2,
   X,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -24,26 +24,71 @@ import {
 } from "@/modules/account/address-actions";
 import { AddressFormValues, addressSchema } from "../address-schema";
 
-// Types
+// ✅ 1. Prisma Interface (Database Shape)
+// ডাটাবেস থেকে state 'null' আসতে পারে, তাই এখানে null এলাউ করতে হবে।
 interface Address {
   id: string;
   name: string;
   phone: string;
   street: string;
   city: string;
-  state: string | null;
+  state: string | null; // Prisma returns null
   zip: string;
-  type: string;
+  type: string; // Prisma returns string
   isDefault: boolean;
 }
 
 export default function AddressView({ addresses }: { addresses: Address[] }) {
   const [isModalOpen, setModalOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
-  const openModal = (address?: Address) => {
-    setEditingAddress(address || null);
+  // ✅ 2. State Type Fix
+  // এখানে আমরা ফর্মের ভ্যালু স্টোর করব, যা Zod স্কিমার সাথে মিলবে
+  const [editingAddress, setEditingAddress] =
+    useState<AddressFormValues | null>(null);
+
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
+
+  // --- Handlers ---
+  const openFormModal = (address?: Address) => {
+    if (address) {
+      // ✅ 3. Data Transformation (Prisma -> Form)
+      // Prisma এর ডাটাকে ফর্মের উপযোগী করে কনভার্ট করছি
+      setEditingAddress({
+        id: address.id,
+        name: address.name,
+        phone: address.phone,
+        street: address.street,
+        city: address.city,
+        zip: address.zip,
+        isDefault: address.isDefault,
+        // Fix: null কে empty string এ কনভার্ট করা হলো
+        state: address.state ?? "",
+        // Fix: string কে নির্দিষ্ট টাইপে ফোর্স করা হলো
+        type: (address.type as "HOME" | "WORK") || "HOME",
+      });
+    } else {
+      setEditingAddress(null);
+    }
     setModalOpen(true);
+  };
+
+  const openDeleteModal = (id: string) => {
+    setAddressToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!addressToDelete) return;
+
+    try {
+      await deleteAddress(addressToDelete);
+      toast.success("Address deleted successfully");
+      setDeleteModalOpen(false);
+      setAddressToDelete(null);
+    } catch (e) {
+      toast.error("Failed to delete address");
+    }
   };
 
   const handleSetDefault = async (id: string) => {
@@ -52,16 +97,6 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
       success: "Default address updated!",
       error: "Failed to update",
     });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
-    try {
-      await deleteAddress(id);
-      toast.success("Address deleted");
-    } catch (e) {
-      toast.error("Failed to delete");
-    }
   };
 
   return (
@@ -76,7 +111,7 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
             </p>
           </div>
           <button
-            onClick={() => openModal()}
+            onClick={() => openFormModal()}
             className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-indigo-600 transition-all shadow-md"
           >
             <Plus size={18} /> Add New Address
@@ -90,13 +125,12 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
               <AddressCard
                 key={address.id}
                 address={address}
-                onEdit={() => openModal(address)}
-                onDelete={() => handleDelete(address.id)}
+                onEdit={() => openFormModal(address)}
+                onDelete={() => openDeleteModal(address.id)}
                 onSetDefault={() => handleSetDefault(address.id)}
               />
             ))
           ) : (
-            // Empty State
             <div className="col-span-1 md:col-span-2 py-16 text-center bg-white rounded-3xl border border-dashed border-gray-200">
               <div className="w-16 h-16 bg-indigo-50 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPin size={32} />
@@ -111,7 +145,7 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
           )}
         </div>
 
-        {/* Modal Form */}
+        {/* Form Modal */}
         {isModalOpen && (
           <AddressModal
             isOpen={isModalOpen}
@@ -119,13 +153,32 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
             initialData={editingAddress}
           />
         )}
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={confirmDelete}
+        />
       </div>
     </div>
   );
 }
 
 // --- SUB COMPONENT: Address Card ---
-function AddressCard({ address, onEdit, onDelete, onSetDefault }: any) {
+interface AddressCardProps {
+  address: Address;
+  onEdit: () => void;
+  onDelete: () => void;
+  onSetDefault: () => void;
+}
+
+function AddressCard({
+  address,
+  onEdit,
+  onDelete,
+  onSetDefault,
+}: AddressCardProps) {
   return (
     <div
       className={`relative p-6 rounded-2xl border transition-all duration-200 group ${
@@ -134,7 +187,6 @@ function AddressCard({ address, onEdit, onDelete, onSetDefault }: any) {
           : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
       }`}
     >
-      {/* Badge & Type */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-2">
           <span
@@ -158,24 +210,22 @@ function AddressCard({ address, onEdit, onDelete, onSetDefault }: any) {
           )}
         </div>
 
-        {/* Actions Dropdown Simulation */}
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onEdit}
-            className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg"
+            className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <Edit2 size={16} />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-50 rounded-lg"
+            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
             <Trash2 size={16} />
           </button>
         </div>
       </div>
 
-      {/* Details */}
       <div className="space-y-1">
         <h3 className="font-bold text-gray-900">{address.name}</h3>
         <p className="text-sm text-gray-600 font-medium">{address.phone}</p>
@@ -189,7 +239,6 @@ function AddressCard({ address, onEdit, onDelete, onSetDefault }: any) {
         </p>
       </div>
 
-      {/* Set Default Button */}
       {!address.isDefault && (
         <button
           onClick={onSetDefault}
@@ -203,18 +252,18 @@ function AddressCard({ address, onEdit, onDelete, onSetDefault }: any) {
 }
 
 // --- SUB COMPONENT: Address Modal Form ---
-function AddressModal({
-  isOpen,
-  onClose,
-  initialData,
-}: {
+interface AddressModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // ✅ Form Values Type ব্যবহার করছি
   initialData: AddressFormValues | null;
-}) {
+}
+
+function AddressModal({ isOpen, onClose, initialData }: AddressModalProps) {
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<AddressFormValues>({
+  // ✅ 4. Generics Fix: useForm এর ভেতরে সঠিক টাইপ বলে দেওয়া হলো
+  const form = useForm({
     resolver: zodResolver(addressSchema),
     defaultValues: initialData || {
       name: "",
@@ -231,7 +280,6 @@ function AddressModal({
   const onSubmit = async (data: AddressFormValues) => {
     setLoading(true);
     try {
-      // id থাকলে আপডেট, না থাকলে ক্রিয়েট
       await saveAddress({ ...data, id: initialData?.id });
       toast.success(
         initialData ? "Address updated!" : "Address added successfully!"
@@ -390,7 +438,6 @@ function AddressModal({
             </label>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -409,6 +456,54 @@ function AddressModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// --- SUB COMPONENT: Delete Confirmation Modal ---
+interface DeleteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+function DeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+}: DeleteModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200 scale-100">
+        <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle size={24} />
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mb-2">
+          Delete Address?
+        </h3>
+        <p className="text-sm text-gray-500 mb-6">
+          Are you sure you want to remove this address? This action cannot be
+          undone.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition shadow-lg shadow-red-200"
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );

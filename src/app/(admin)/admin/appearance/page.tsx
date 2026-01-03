@@ -1,5 +1,5 @@
 import { getStoreAppearance } from "@/modules/admin/actions";
-import AppearanceForm from "@/modules/admin/components/appearance-form";
+import AppearanceForm from "@/modules/admin/appearance/appearance-form";
 
 export default async function AppearancePage() {
   const data = await getStoreAppearance();

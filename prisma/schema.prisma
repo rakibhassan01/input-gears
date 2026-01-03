@@ -241,10 +241,10 @@ model Address {
 
   name    String
   phone   String
-  street  String?
+  street  String
   city    String
   state   String?
-  zip     String?
+  zip     String
   country String  @default("Bangladesh")
 
   isDefault Boolean @default(false)

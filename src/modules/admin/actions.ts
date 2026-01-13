@@ -201,15 +201,6 @@ interface HeroSlideInput {
   link?: string;
 }
 
-// Top Bar Input (Schedule Kept)
-interface TopBarInput {
-  text: string;
-  link: string;
-  isActive: boolean;
-  topBarStart?: string;
-  topBarEnd?: string;
-}
-
 // --- 1. Get Data ---
 export async function getStoreAppearance() {
   const settings = await prisma.siteSettings.findUnique({
@@ -240,6 +231,7 @@ export async function getStoreAppearance() {
     slides: slides, // এখন আর activeSlides আলাদা করার দরকার নেই
   };
 }
+
 interface TopBarInput {
   text: string;
   link: string;
@@ -249,8 +241,6 @@ interface TopBarInput {
   topBarStart?: string;
   topBarEnd?: string;
 }
-
-// ... getStoreAppearance code (same as before) ...
 
 // --- 2. Update Top Bar ---
 export async function updateTopBar(data: TopBarInput) {

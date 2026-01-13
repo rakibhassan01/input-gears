@@ -30,8 +30,8 @@ const topBarSchema = z
   .object({
     text: z.string().optional(),
     link: z.string().optional(),
-    isActive: z.boolean().default(true),
-    useSchedule: z.boolean().default(false),
+    isActive: z.boolean(),
+    useSchedule: z.boolean(),
     topBarStart: z.string().optional(),
     topBarEnd: z.string().optional(),
   })

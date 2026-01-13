@@ -73,9 +73,17 @@ export async function deleteAddress(id: string) {
 
   if (!session?.user?.email) throw new Error("Unauthorized");
 
-  await prisma.address.delete({
-    where: { id },
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
   });
+
+  if (!user) throw new Error("Unauthorized");
+
+  const result = await prisma.address.deleteMany({
+    where: { id, userId: user.id },
+  });
+
+  if (result.count === 0) throw new Error("Not found");
 
   revalidatePath("/account/addresses");
   return { success: true };

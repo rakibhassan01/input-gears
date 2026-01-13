@@ -1,9 +1,21 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { OrderStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
+
+async function requireAdmin() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session?.user?.role !== "admin") {
+    throw new Error("Unauthorized");
+  }
+}
 
 // --- 1. Product Schema Update ---
 const productSchema = z.object({
@@ -22,6 +34,7 @@ export type ProductFormValues = z.infer<typeof productSchema>;
 // --- 2. Create Product (Updated) ---
 export async function createProduct(data: ProductFormValues) {
   try {
+    await requireAdmin();
     const validatedData = productSchema.parse(data);
 
     // Check if slug exists
@@ -66,6 +79,7 @@ export async function createProduct(data: ProductFormValues) {
 // --- 3. Update Product (Updated) ---
 export async function updateProduct(id: string, data: ProductFormValues) {
   try {
+    await requireAdmin();
     // Validation
     const validatedData = productSchema.parse(data);
 
@@ -119,6 +133,7 @@ const categorySchema = z.object({
 
 export async function createCategory(data: z.infer<typeof categorySchema>) {
   try {
+    await requireAdmin();
     const validated = categorySchema.parse(data);
 
     // Check slug uniqueness
@@ -152,6 +167,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
 }
 
 export async function getCategoriesOptions() {
+  await requireAdmin();
   const categories = await prisma.category.findMany({
     select: { id: true, name: true },
     orderBy: { name: "asc" },
@@ -162,7 +178,8 @@ export async function getCategoriesOptions() {
 // --- Order Actions (Same as before) ---
 export async function updateOrderStatus(orderId: string, newStatus: string) {
   try {
-    const status = newStatus as OrderStatus;
+    await requireAdmin();
+    const status = z.nativeEnum(OrderStatus).parse(newStatus);
 
     await prisma.order.update({
       where: { id: orderId },
@@ -237,6 +254,7 @@ interface TopBarInput {
 
 // --- 2. Update Top Bar ---
 export async function updateTopBar(data: TopBarInput) {
+  await requireAdmin();
   // Logic:
   // যদি useSchedule TRUE হয় -> তাহলে ডেট নিব।
   // যদি useSchedule FALSE হয় -> ডেট NULL করে দিব (Permanent Active)।
@@ -270,6 +288,7 @@ export async function updateTopBar(data: TopBarInput) {
 }
 // --- 3. Update Hero Slides (Reverted to Simple Version) ---
 export async function updateHeroSlides(slides: HeroSlideInput[]) {
+  await requireAdmin();
   await prisma.heroSlide.deleteMany();
 
   if (slides.length > 0) {

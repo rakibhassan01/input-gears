@@ -58,8 +58,19 @@ export default function CheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cart.items }),
       })
-        .then((res) => res.json())
-        .then((data) => setClientSecret(data.clientSecret));
+        .then(async (res) => {
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            toast.error(data?.error || "Failed to start payment");
+            setClientSecret("");
+            return;
+          }
+          setClientSecret(data?.clientSecret || "");
+        })
+        .catch(() => {
+          toast.error("Failed to start payment");
+          setClientSecret("");
+        });
     }
   }, [cart.items]);
 

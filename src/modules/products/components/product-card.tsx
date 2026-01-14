@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link"; // ✅ Link ইমপোর্ট
-import { ShoppingCart, Check } from "lucide-react";
+import Link from "next/link";
+import { ShoppingCart, Check, Heart, Eye } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
 
@@ -12,13 +12,12 @@ interface ProductCardProps {
     name: string;
     price: number;
     image: string | null;
-    description: string | null; // বা string | undefined
+    description: string | null;
     stock: number;
     slug: string;
-    // ✅ এই লাইনটি যোগ করুন (Optional হিসেবে)
     category?: {
       name: string;
-      slug?: string; // slug অপশনাল রাখতে পারেন
+      slug?: string;
     } | null;
   };
 }
@@ -26,25 +25,25 @@ interface ProductCardProps {
 export default function ProductCard({ data }: ProductCardProps) {
   const cart = useCart();
   const [isAdded, setIsAdded] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const isOutOfStock = data.stock === 0;
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (isAdded) {
-      timeout = setTimeout(() => setIsAdded(false), 1000);
+      timeout = setTimeout(() => setIsAdded(false), 1500);
     }
     return () => clearTimeout(timeout);
   }, [isAdded]);
 
   const onAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
-    // ✅ বাটন ক্লিকের ইভেন্ট বাবদ বন্ধ করা (যাতে Link কাজ না করে বাটনে চাপলে)
     event.preventDefault();
     event.stopPropagation();
 
     const cartItem: CartItem = {
       id: data.id,
       name: data.name,
-      slug: data.slug, // ✅ Slug পাস করা হলো
+      slug: data.slug,
       price: data.price,
       image: data.image || "",
       quantity: 1,
@@ -55,68 +54,91 @@ export default function ProductCard({ data }: ProductCardProps) {
     setIsAdded(true);
   };
 
+  const onToggleWishlist: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+  };
+
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(data.price);
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-indigo-200 overflow-hidden flex flex-col h-full">
-      {/* ✅ LINK ADDED: পুরো ইমেজ এরিয়া ক্লিকেবল হবে */}
+    <div className="group relative bg-white rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] md:hover:border-indigo-100/50 overflow-hidden flex flex-col h-full active:scale-[0.98]">
+      {/* Image Container */}
       <Link
         href={`/products/${data.slug}`}
-        className="block aspect-square relative bg-gray-100/50 overflow-hidden"
+        className="block aspect-4/5 relative bg-gray-50 overflow-hidden"
       >
         {data.image ? (
           <Image
             src={data.image}
             alt={data.name}
             fill
-            className={`object-cover transition-transform duration-700 ${
-              isOutOfStock ? "opacity-50" : "group-hover:scale-105"
+            className={`object-cover transition-transform duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${
+              isOutOfStock ? "opacity-40 grayscale" : "md:group-hover:scale-110"
             }`}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 font-medium bg-gray-50">
+          <div className="w-full h-full flex items-center justify-center text-gray-300 font-medium italic">
             No Image
           </div>
         )}
-        {/* ✅ Category Badge (যদি ক্যাটাগরি থাকে তবে দেখাবে) */}
-        {data.category && (
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-800 shadow-sm z-10">
-            {data.category.name}
+
+        {/* Floating Actions - Static on Mobile, Hover on Desktop */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 transform transition-all duration-500 delay-75 md:translate-x-12 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100">
+          <button
+            onClick={onToggleWishlist}
+            className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
+              isWishlisted
+                ? "bg-red-500 text-white"
+                : "bg-white/90 text-gray-900 hover:bg-indigo-600 hover:text-white"
+            }`}
+          >
+            <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
+          </button>
+          <div className="h-10 w-10 bg-white/90 backdrop-blur-md text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
+            <Eye size={18} />
           </div>
-        )}
-        {isOutOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[2px]">
-            <span className="bg-red-500/90 text-white px-4 py-1.5 text-xs font-bold rounded-full shadow-sm tracking-wider">
-              SOLD OUT
-            </span>
-          </div>
-        )}
+        </div>
+
+        {/* Badges */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {data.category && (
+            <div className="bg-gray-900/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm">
+              {data.category.name}
+            </div>
+          )}
+          {isOutOfStock && (
+            <div className="bg-red-500/95 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg animate-pulse">
+              Sold Out
+            </div>
+          )}
+        </div>
       </Link>
 
       {/* Content */}
-      <div className="p-5 flex flex-col grow justify-between">
-        <div>
-          {/* ✅ LINK ADDED: টাইটেল ক্লিকেবল হবে */}
-          <Link href={`/products/${data.slug}`}>
-            <h3 className="font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors text-lg tracking-tight">
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1">
+        <div className="grow mb-3 sm:mb-4">
+          <Link href={`/products/${data.slug}`} className="block">
+            <h3 className="font-bold text-gray-900 text-sm sm:text-lg group-hover:text-indigo-600 transition-colors line-clamp-1 tracking-tight">
               {data.name}
             </h3>
           </Link>
-          <p className="text-sm text-gray-500 line-clamp-2 mt-1.5 leading-relaxed">
-            {data.description || "No description available."}
+          <p className="text-[10px] sm:text-sm text-gray-400 line-clamp-2 mt-1 sm:mt-1.5 leading-relaxed font-medium">
+            {data.description || "Premium gadget for enthusiasts."}
           </p>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-gray-100 flex items-end justify-between">
+        <div className="pt-3 sm:pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
+            <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-0.5">
               Price
             </span>
-            <span className="font-extrabold text-xl text-gray-900 leading-none">
+            <span className="font-black text-base sm:text-xl text-indigo-600 tabular-nums">
               {formattedPrice}
             </span>
           </div>
@@ -125,27 +147,27 @@ export default function ProductCard({ data }: ProductCardProps) {
             onClick={onAddToCart}
             disabled={isOutOfStock}
             className={`
-                h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm active:scale-95 z-10
+                relative h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm active:scale-90 overflow-hidden z-10
                 ${
                   isOutOfStock
-                    ? "bg-gray-100 text-gray-300 cursor-not-allowed shadow-none border border-gray-200"
+                    ? "bg-gray-50 text-gray-300 cursor-not-allowed shadow-none border border-gray-100"
                     : isAdded
-                    ? "bg-green-500 text-white shadow-green-200 scale-110"
-                    : "bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700 hover:shadow-md group-hover:scale-110"
+                    ? "bg-emerald-500 text-white shadow-emerald-200"
+                    : "bg-gray-950 text-white shadow-gray-200 hover:bg-indigo-600 hover:shadow-indigo-100 group-hover:-translate-y-1"
                 }
             `}
           >
             {isAdded ? (
               <Check
-                size={20}
+                size={18}
                 strokeWidth={3}
-                className="animate-in fade-in zoom-in duration-300"
+                className="animate-in zoom-in duration-500"
               />
             ) : (
               <ShoppingCart
-                size={20}
-                strokeWidth={2.5}
-                className="transition-transform duration-300"
+                size={18}
+                strokeWidth={2}
+                className="group-hover:rotate-[-10deg] transition-transform"
               />
             )}
           </button>

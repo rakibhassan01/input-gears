@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ShoppingCart, Check, Heart, Eye } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
+import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 
 interface ProductCardProps {
   data: {
@@ -24,11 +25,16 @@ interface ProductCardProps {
 
 export default function ProductCard({ data }: ProductCardProps) {
   const cart = useCart();
+  const wishlist = useWishlist();
   const [isAdded, setIsAdded] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Hydration fix: only check wishlist state after mounting on client
+  const isWishlisted = isMounted ? wishlist.isInWishlist(data.id) : false;
   const isOutOfStock = data.stock === 0;
 
   useEffect(() => {
+    setIsMounted(true);
     let timeout: NodeJS.Timeout;
     if (isAdded) {
       timeout = setTimeout(() => setIsAdded(false), 1500);
@@ -57,7 +63,15 @@ export default function ProductCard({ data }: ProductCardProps) {
   const onToggleWishlist: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    wishlist.toggleItem({
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      price: data.price,
+      image: data.image || "",
+      stock: data.stock,
+      category: data.category ? { name: data.category.name } : null,
+    });
   };
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
@@ -94,7 +108,7 @@ export default function ProductCard({ data }: ProductCardProps) {
             onClick={onToggleWishlist}
             className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
               isWishlisted
-                ? "bg-red-500 text-white"
+                ? "bg-indigo-600 text-white"
                 : "bg-white/90 text-gray-900 hover:bg-indigo-600 hover:text-white"
             }`}
           >

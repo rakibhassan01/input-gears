@@ -21,6 +21,7 @@ import {
 import { useSession } from "@/lib/auth-client";
 import UserNav from "../../modules/auth/components/user-nav";
 import dynamic from "next/dynamic";
+import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 
 // CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
 const CartNav = dynamic(
@@ -45,10 +46,13 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: session, isPending } = useSession();
+  const wishlist = useWishlist();
 
   useEffect(() => {
+    setIsMounted(true);
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -64,101 +68,134 @@ export default function Navbar() {
     }
   }, [isMobileMenuOpen]);
 
+  // Only show badge/active state after mounting
+  const wishlistCount = isMounted ? wishlist.items.length : 0;
+  const hasWishlistItems = wishlistCount > 0;
+
   return (
     <>
-      <nav
-        className={`sticky top-0 z-50 w-full transition-all duration-500 ${
-          isScrolled
-            ? "bg-white/80 backdrop-blur-xl py-3 border-b border-gray-200/50 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)]"
-            : "bg-white py-5 border-b border-transparent"
-        }`}
-      >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 md:gap-8">
-          {/* LEFT: Logo & Mobile Trigger */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2.5 -ml-2 text-gray-900 hover:bg-gray-100 rounded-xl transition-all active:scale-95"
-              aria-label="Open menu"
-            >
-              <Menu size={24} />
-            </button>
-
-            <Link href="/" className="flex items-center gap-2 group relative">
-              <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
-                <Zap size={20} fill="currentColor" />
-              </div>
-              <span className="text-xl sm:text-2xl font-black tracking-tight font-sans text-gray-900">
-                Input<span className="text-indigo-600">Gears</span>
-              </span>
-            </Link>
-
-            {/* Desktop Navigation Links */}
-            <div className="hidden lg:flex items-center gap-1 ml-10">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="px-4 py-2 text-[14px] font-semibold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all duration-300"
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* MIDDLE: Search Bar (Desktop Only) */}
-          <div className="hidden md:flex flex-1 max-w-md lg:max-w-lg">
-            <div className="relative w-full group">
-              <input
-                type="text"
-                placeholder="Search gadgets (e.g. Mechanical Keyboard)..."
-                className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-12 pr-4 py-2.5 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-500"
-              />
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* RIGHT: Actions */}
-          <div className="flex items-center gap-1 sm:gap-3">
-            <button className="md:hidden p-2.5 text-gray-700 hover:bg-gray-100 rounded-xl transition-all" aria-label="Search">
-              <Search size={22} />
-            </button>
-
-            <Link
-              href="/wishlist"
-              className="hidden sm:flex p-2.5 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all relative group"
-            >
-              <Heart size={22} className="group-hover:scale-110 transition-transform" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </Link>
-
-            <CartNav />
-
-            <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block" />
-
-            {isPending ? (
-              <div className="flex items-center gap-2 p-1.5 rounded-full border border-gray-100 opacity-60 cursor-wait">
-                <div className="h-8 w-8 rounded-full bg-gray-100 animate-pulse" />
-                <div className="h-4 w-16 bg-gray-100 rounded animate-pulse hidden lg:block" />
-              </div>
-            ) : session ? (
-              <UserNav session={session} />
-            ) : (
-              <Link
-                href="/sign-in"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-indigo-600 transition-all active:scale-95 shadow-lg shadow-gray-200 hover:shadow-indigo-100"
+      <header className="sticky top-0 z-50 w-full group/nav">
+        {/* PRIMARY NAVBAR */}
+        <nav
+          className={`w-full transition-all duration-500 border-b border-gray-200/50 ${
+            isScrolled
+              ? "bg-white/90 backdrop-blur-xl py-3 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)]"
+              : "bg-white py-4"
+          }`}
+        >
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 md:gap-8">
+            {/* LEFT: Logo & Mobile Trigger */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-2.5 -ml-2 text-gray-900 hover:bg-gray-100 rounded-xl transition-all active:scale-95"
+                aria-label="Open menu"
               >
-                <User size={18} />
-                <span className="hidden lg:block">Sign In</span>
+                <Menu size={24} />
+              </button>
+
+              <Link href="/" className="flex items-center gap-2 group relative">
+                <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
+                  <Zap size={20} fill="currentColor" />
+                </div>
+                <span className="text-xl sm:text-2xl font-black tracking-tight font-sans text-gray-900">
+                  Input<span className="text-indigo-600">Gears</span>
+                </span>
               </Link>
-            )}
+            </div>
+
+            {/* MIDDLE: Search Bar (Desktop Only) */}
+            <div className="hidden md:flex flex-1 max-w-md lg:max-w-lg">
+              <div className="relative w-full group">
+                <input
+                  type="text"
+                  placeholder="Search gadgets (e.g. Mechanical Keyboard)..."
+                  className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-12 pr-4 py-2.5 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-500"
+                />
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* RIGHT: Actions */}
+            <div className="flex items-center gap-1 sm:gap-3">
+              <button
+                className="md:hidden p-2.5 text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+                aria-label="Search"
+              >
+                <Search size={22} />
+              </button>
+
+              <Link
+                href="/wishlist"
+                className="hidden sm:flex p-2.5 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all relative group"
+              >
+                <Heart
+                  size={22}
+                  className={`transition-all duration-300 ${
+                    hasWishlistItems
+                      ? "fill-indigo-600 text-indigo-600 scale-110"
+                      : "group-hover:scale-110"
+                  }`}
+                />
+                {hasWishlistItems && (
+                  <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in duration-300">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+
+              <CartNav />
+
+              <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block" />
+
+              {isPending ? (
+                <div className="flex items-center gap-2 p-1.5 rounded-full border border-gray-100 opacity-60 cursor-wait">
+                  <div className="h-8 w-8 rounded-full bg-gray-100 animate-pulse" />
+                  <div className="h-4 w-16 bg-gray-100 rounded animate-pulse hidden lg:block" />
+                </div>
+              ) : session ? (
+                <UserNav session={session} />
+              ) : (
+                <Link
+                  href="/sign-in"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-indigo-600 transition-all active:scale-95 shadow-lg shadow-gray-200 hover:shadow-indigo-100"
+                >
+                  <User size={18} />
+                  <span className="hidden lg:block">Sign In</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        {/* SECONDARY NAVBAR (Desktop Categories Row) */}
+        <div
+          className={`hidden lg:block w-full bg-white transition-all duration-300 border-b border-gray-100 ${
+            isScrolled
+              ? "h-0 overflow-hidden opacity-0 border-none"
+              : "h-12 opacity-100"
+          }`}
+        >
+          <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center gap-8">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="group flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-widest transition-all"
+              >
+                <link.icon
+                  size={14}
+                  className="text-gray-300 group-hover:text-indigo-400 transition-colors"
+                />
+                {link.name}
+              </Link>
+            ))}
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* MOBILE MENU DRAWER */}
       <div
@@ -176,11 +213,17 @@ export default function Navbar() {
         <div className="flex flex-col h-full overflow-hidden">
           {/* Mobile Header */}
           <div className="p-6 flex items-center justify-between border-b border-gray-50">
-            <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link
+              href="/"
+              className="flex items-center gap-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm">
                 <Zap size={18} fill="currentColor" />
               </div>
-              <span className="text-xl font-black tracking-tight">InputGears</span>
+              <span className="text-xl font-black tracking-tight">
+                InputGears
+              </span>
             </Link>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -207,7 +250,9 @@ export default function Navbar() {
 
           {/* Multi-category Links */}
           <div className="flex-1 overflow-y-auto p-6 space-y-2">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Categories</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+              Categories
+            </p>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.name}
@@ -221,7 +266,10 @@ export default function Navbar() {
                 <span className="text-[17px] font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
                   {link.name}
                 </span>
-                <ChevronRight size={16} className="ml-auto text-gray-300 group-hover:text-indigo-400 transform group-hover:translate-x-1 transition-all" />
+                <ChevronRight
+                  size={16}
+                  className="ml-auto text-gray-300 group-hover:text-indigo-400 transform group-hover:translate-x-1 transition-all"
+                />
               </Link>
             ))}
 

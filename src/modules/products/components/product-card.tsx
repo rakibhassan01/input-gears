@@ -6,6 +6,9 @@ import { ShoppingCart, Check, Heart, Eye } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
+import { useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   data: {
@@ -26,15 +29,22 @@ interface ProductCardProps {
 export default function ProductCard({ data }: ProductCardProps) {
   const cart = useCart();
   const wishlist = useWishlist();
+  const { data: session } = useSession();
+  const router = useRouter();
+
   const [isAdded, setIsAdded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Hydration fix: only check wishlist state after mounting on client
-  const isWishlisted = isMounted ? wishlist.isInWishlist(data.id) : false;
+  // Hydration fix & Auth check
+  const isWishlisted =
+    isMounted && session ? wishlist.isInWishlist(data.id) : false;
   const isOutOfStock = data.stock === 0;
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (isAdded) {
       timeout = setTimeout(() => setIsAdded(false), 1500);
@@ -63,6 +73,16 @@ export default function ProductCard({ data }: ProductCardProps) {
   const onToggleWishlist: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.preventDefault();
     event.stopPropagation();
+
+    // Guard: Only allow logged-in users to wishlist
+    if (!session) {
+      toast.error("Please sign in to save items", {
+        description: "Join our community to keep track of your favorite gears!",
+      });
+      router.push("/sign-in");
+      return;
+    }
+
     wishlist.toggleItem({
       id: data.id,
       name: data.name,

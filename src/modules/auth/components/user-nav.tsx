@@ -11,7 +11,6 @@ import {
   LogOut,
   LayoutDashboard,
   BadgeCheck,
-  ChevronDown,
   CreditCard,
 } from "lucide-react";
 import Image from "next/image";
@@ -50,8 +49,6 @@ export default function UserNav({ session }: UserNavProps) {
         onSuccess: () => {
           toast.success("Logged out successfully");
 
-          // 👇 Advanced Redirect Logic
-          // যেসব রাউট প্রোটেক্টেড, সেখান থেকে বের করে সাইন-ইনে পাঠাবো
           const protectedRoutes = [
             "/dashboard",
             "/account",
@@ -64,9 +61,9 @@ export default function UserNav({ session }: UserNavProps) {
           );
 
           if (isOnProtectedRoute) {
-            router.push("/sign-in"); // প্রোটেক্টেড হলে সাইন-ইনে যাও
+            router.push("/sign-in");
           } else {
-            router.refresh(); // পাবলিক পেজে থাকলে শুধু রিফ্রেশ দাও (UI আপডেট হবে)
+            router.refresh();
           }
         },
       },
@@ -77,21 +74,20 @@ export default function UserNav({ session }: UserNavProps) {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Trigger Button */}
+      {/* Trigger Button - Simple Avatar Only */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border transition-all duration-200 ${
+        className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all duration-300 ${
           isOpen
-            ? "bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100"
-            : "bg-white border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
+            ? "bg-indigo-50 border-indigo-200 ring-4 ring-indigo-50"
+            : "bg-white border-gray-100 hover:border-indigo-200 hover:bg-gray-50 shadow-sm"
         }`}
       >
-        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 overflow-hidden relative">
+        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200/50 overflow-hidden relative">
           {session.user.image ? (
-            // ✅ FIX: Added width and height props to satisfy Next.js Image
             <Image
               src={session.user.image}
-              alt={session.user.name || "User Avatar"}
+              alt={session.user.name || "User"}
               width={32}
               height={32}
               className="h-full w-full object-cover"
@@ -100,45 +96,31 @@ export default function UserNav({ session }: UserNavProps) {
             <User className="h-4 w-4 text-indigo-600" />
           )}
         </div>
-
-        <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate hidden sm:block">
-          {session.user.name}
-        </span>
-
-        <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-gray-100 ring-1 ring-black/5 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-          <div className="p-4 bg-gray-50/50 border-b border-gray-100">
-            <div className="flex items-center gap-1.5 mb-1">
-              <p className="font-semibold text-gray-900 truncate max-w-[150px]">
+        <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] border border-gray-100 ring-1 ring-black/5 overflow-hidden z-[100] animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300 origin-top-right">
+          <div className="p-5 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-bold text-gray-900 truncate">
                 {session.user.name}
               </p>
-
-              {/* ✅ Badge Rendering */}
               {isAdmin && (
-                <div className="relative group flex items-center justify-center">
-                  <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500/10" />
-                </div>
+                <BadgeCheck className="w-4 h-4 text-indigo-600 fill-indigo-600/10" />
               )}
             </div>
-            <p className="text-xs text-gray-500 truncate font-mono">
+            <p className="text-xs text-gray-500 truncate font-medium">
               {session.user.email}
             </p>
           </div>
 
-          <div className="p-2 space-y-1">
+          <div className="p-2 space-y-0.5">
             {isAdmin && (
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+                className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold text-gray-700 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
               >
                 <LayoutDashboard className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
                 Admin Dashboard
@@ -148,38 +130,39 @@ export default function UserNav({ session }: UserNavProps) {
             <Link
               href="/account/orders"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold text-gray-700 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
             >
               <CreditCard className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-              Orders
+              My Orders
             </Link>
 
-            <div className="h-px bg-gray-100 my-1 mx-2" />
+            <div className="h-px bg-gray-50 my-1.5 mx-2" />
 
             <Link
-              href="/account/profile" // ✅ FIX: Added leading slash
+              href="/account/profile"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold text-gray-700 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
             >
               <Settings className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-              Settings
+              Profile Settings
             </Link>
             <Link
               href="/account"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold text-gray-700 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
             >
               <User className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-              Account
+              Account Overview
             </Link>
-            <div className="h-px bg-gray-100 my-1 mx-2" />
+
+            <div className="h-px bg-gray-50 my-1.5 mx-2" />
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors group"
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50 transition-all group"
             >
-              <LogOut className="w-4 h-4 text-red-400 group-hover:text-red-600" />
-              Log out
+              <LogOut className="w-4 h-4 text-red-400 group-hover:text-red-500" />
+              Sign Out
             </button>
           </div>
         </div>

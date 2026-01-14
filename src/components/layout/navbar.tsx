@@ -10,7 +10,6 @@ import {
   Heart,
   ChevronRight,
   Zap,
-  ChevronDown,
   ShoppingBag,
   Keyboard,
   Mouse,
@@ -22,6 +21,7 @@ import { useSession } from "@/lib/auth-client";
 import UserNav from "../../modules/auth/components/user-nav";
 import dynamic from "next/dynamic";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
+import MobileBottomNav from "./mobile-bottom-nav";
 
 // CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
 const CartNav = dynamic(
@@ -53,6 +53,9 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -84,29 +87,33 @@ export default function Navbar() {
           }`}
         >
           <div className="max-w-[1440px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 md:gap-8">
-            {/* LEFT: Logo & Mobile Trigger */}
-            <div className="flex items-center gap-3">
+            {/* Desktop Left / Mobile Side: Menu & Logo Container */}
+            <div className="flex items-center gap-4 flex-1">
+              {/* Hamburger Menu (Mobile Only) */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden p-2.5 -ml-2 text-gray-900 hover:bg-gray-100 rounded-xl transition-all active:scale-95"
+                className="flex md:hidden p-2 text-gray-900 hover:bg-gray-100 rounded-xl transition-all active:scale-95 z-10"
                 aria-label="Open menu"
               >
-                <Menu size={24} />
+                <Menu size={20} />
               </button>
 
-              <Link href="/" className="flex items-center gap-2 group relative">
-                <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
-                  <Zap size={20} fill="currentColor" />
-                </div>
-                <span className="text-xl sm:text-2xl font-black tracking-tight font-sans text-gray-900">
-                  Input<span className="text-indigo-600">Gears</span>
-                </span>
-              </Link>
+              {/* Logo: Centered on mobile, Left-aligned on Desktop */}
+              <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
+                <Link href="/" className="flex items-center gap-2 group relative">
+                  <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
+                    <Zap size={20} fill="currentColor" />
+                  </div>
+                  <span className="text-xl sm:text-2xl font-black tracking-tight font-sans text-gray-900">
+                    Input<span className="text-indigo-600">Gears</span>
+                  </span>
+                </Link>
+              </div>
             </div>
 
-            {/* MIDDLE: Search Bar (Desktop Only) */}
-            <div className="hidden md:flex flex-1 max-w-md lg:max-w-lg">
-              <div className="relative w-full group">
+            {/* MIDDLE: Search Bar (Desktop Only) - Perfectly Centered */}
+            <div className="hidden md:flex flex-initial items-center">
+              <div className="relative w-[450px] group">
                 <input
                   type="text"
                   placeholder="Search gadgets (e.g. Mechanical Keyboard)..."
@@ -120,7 +127,7 @@ export default function Navbar() {
             </div>
 
             {/* RIGHT: Actions */}
-            <div className="flex items-center gap-1 sm:gap-3">
+            <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
               <button
                 className="md:hidden p-2.5 text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
                 aria-label="Search"
@@ -130,7 +137,7 @@ export default function Navbar() {
 
               <Link
                 href="/wishlist"
-                className="hidden sm:flex p-2.5 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all relative group"
+                className="hidden md:flex p-2.5 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all relative group"
               >
                 <Heart
                   size={22}
@@ -152,16 +159,18 @@ export default function Navbar() {
               <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block" />
 
               {isPending ? (
-                <div className="flex items-center gap-2 p-1.5 rounded-full border border-gray-100 opacity-60 cursor-wait">
-                  <div className="h-8 w-8 rounded-full bg-gray-100 animate-pulse" />
-                  <div className="h-4 w-16 bg-gray-100 rounded animate-pulse hidden lg:block" />
+                <div className="hidden sm:flex items-center gap-2 p-1 rounded-full border border-gray-100 bg-gray-50/50">
+                  <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse border border-white shrink-0" />
+                  <div className="h-3 w-16 bg-gray-200 rounded-full animate-pulse hidden lg:block mr-2" />
                 </div>
               ) : session ? (
-                <UserNav session={session} />
+                <div className="hidden sm:block">
+                  <UserNav session={session} />
+                </div>
               ) : (
                 <Link
                   href="/sign-in"
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-indigo-600 transition-all active:scale-95 shadow-lg shadow-gray-200 hover:shadow-indigo-100"
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-indigo-600 transition-all active:scale-95 shadow-lg shadow-gray-200 hover:shadow-indigo-100"
                 >
                   <User size={18} />
                   <span className="hidden lg:block">Sign In</span>
@@ -215,14 +224,14 @@ export default function Navbar() {
           <div className="p-6 flex items-center justify-between border-b border-gray-50">
             <Link
               href="/"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 group"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm">
+              <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-100 transform group-active:scale-95 transition-all">
                 <Zap size={18} fill="currentColor" />
               </div>
-              <span className="text-xl font-black tracking-tight">
-                InputGears
+              <span className="text-xl font-black tracking-tight text-gray-900">
+                Input<span className="text-indigo-600">Gears</span>
               </span>
             </Link>
             <button
@@ -312,6 +321,7 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+      <MobileBottomNav />
     </>
   );
 }

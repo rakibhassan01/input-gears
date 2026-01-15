@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import OrderDetailsView from "@/modules/account/views/order-details-view";
+import OrderDetailsView, { Order } from "@/modules/account/views/order-details-view";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
@@ -35,7 +35,7 @@ export default async function OrderDetailsPage({
 
   return (
     <div className="md:py-4">
-      <OrderDetailsView order={order as any} />
+      <OrderDetailsView order={order as unknown as Order} />
     </div>
   );
 }

@@ -10,15 +10,13 @@ import {
   Calendar,
   CreditCard,
   ShoppingBag,
-  MoreVertical,
   ChevronRight,
   Clock,
-  Filter,
 } from "lucide-react";
 import StatusBadge from "@/components/shared/status-badge";
 import { cn } from "@/lib/utils";
 
-interface OrderItem {
+export interface OrderItem {
   id: string;
   name: string;
   price: number;
@@ -26,7 +24,7 @@ interface OrderItem {
   image: string | null;
 }
 
-interface Order {
+export interface Order {
   id: string;
   orderNumber: string;
   createdAt: Date;

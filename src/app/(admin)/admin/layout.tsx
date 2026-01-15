@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminLayoutWrapper, { AdminHeaderSkeleton } from "@/modules/admin/components/admin-layout-wrapper";
 import { Suspense } from "react";
+import { User } from "@prisma/client";
 
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
@@ -23,7 +24,7 @@ export default async function AdminLayout({
   return (
     <NuqsAdapter>
       <Suspense fallback={<AdminHeaderSkeleton />}>
-        <AdminLayoutWrapper user={session.user as any}>
+        <AdminLayoutWrapper user={session.user as User}>
           {children}
         </AdminLayoutWrapper>
       </Suspense>

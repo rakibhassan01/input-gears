@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import OrderHistoryView from "@/modules/account/views/order-history-view";
+import OrderHistoryView, { Order } from "@/modules/account/views/order-history-view";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -33,7 +33,7 @@ export default async function OrderHistoryPage() {
 
   return (
     <div className="md:py-4">
-      <OrderHistoryView orders={orders as any} />
+      <OrderHistoryView orders={orders as unknown as Order[]} />
     </div>
   );
 }

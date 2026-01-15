@@ -17,6 +17,7 @@ import {
 import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { User } from "@prisma/client";
 
 export default function MobileAccountMenu({
   isOpen,
@@ -34,7 +35,7 @@ export default function MobileAccountMenu({
     if (isOpen) {
       onClose();
     }
-  }, [pathname]); // Only depend on pathname to avoid infinite loops if onClose is unstable
+  }, [pathname, isOpen, onClose]); // Only depend on pathname to avoid infinite loops if onClose is unstable
 
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function MobileAccountMenu({
     return null;
   }
 
-  const user = session.user as any;
+  const user = session.user as User;
   const isAdmin = user.role === "admin";
 
   const menuItems = [
@@ -104,7 +105,7 @@ export default function MobileAccountMenu({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-999 transition-opacity duration-300 lg:hidden ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
@@ -112,7 +113,7 @@ export default function MobileAccountMenu({
 
       {/* Drop-up Menu */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-[1000] bg-white rounded-t-[32px] shadow-2xl transition-transform duration-500 ease-out lg:hidden ${
+        className={`fixed bottom-0 left-0 right-0 z-1000 bg-white rounded-t-[32px] shadow-2xl transition-transform duration-500 ease-out lg:hidden ${
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
         style={{ maxHeight: "85vh" }}
@@ -123,7 +124,7 @@ export default function MobileAccountMenu({
         </div>
 
         {/* Header with User Info */}
-        <div className="px-6 py-6 border-b border-gray-100 bg-gradient-to-br from-indigo-50/30 to-white">
+        <div className="px-6 py-6 border-b border-gray-100 bg-linear-to-br from-indigo-50/30 to-white">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-black text-gray-900 tracking-tight">
               Your Account

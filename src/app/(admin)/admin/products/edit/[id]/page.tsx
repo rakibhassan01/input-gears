@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import ProductEditForm from "@/modules/admin/views/product-edit-form";
 
 interface EditPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditProductPage({ params }: EditPageProps) {

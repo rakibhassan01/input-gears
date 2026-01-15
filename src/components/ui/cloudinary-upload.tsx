@@ -1,122 +1,139 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CldUploadWidget, CldImage } from "next-cloudinary";
-import { ImagePlus, Trash } from "lucide-react";
+import { CldUploadWidget, CldImage, type CloudinaryUploadWidgetResults } from "next-cloudinary";
+import { Trash2, UploadCloud } from "lucide-react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface CloudinaryUploadProps {
-  disabled?: boolean;
-  onChange: (value: string) => void;
-  onRemove: (value: string) => void;
   value: string;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+  disabled?: boolean;
 }
 
 export default function CloudinaryUpload({
-  disabled,
+  value,
   onChange,
   onRemove,
-  value,
+  disabled,
 }: CloudinaryUploadProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    const frame = requestAnimationFrame(() => setIsMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
-  const onUpload = (result: any) => {
-    if (result.info && result.info.secure_url) {
+  const onSuccess = (result: CloudinaryUploadWidgetResults) => {
+    if (result.info && typeof result.info !== "string" && result.info.secure_url) {
       onChange(result.info.secure_url);
     }
   };
 
   if (!isMounted) return null;
 
+  const isFullUrl = value.startsWith("http");
+
   return (
-    <div className="space-y-4 w-full">
-      {/* 1. Image Preview Section (ইমেজ থাকলে এটি দেখাবে) */}
-      {value && (
-        <div className="relative w-full h-[200px] rounded-xl overflow-hidden border border-gray-200 group bg-gray-50">
-          <div className="z-10 absolute top-2 right-2">
-            <button
-              type="button"
-              onClick={() => onRemove(value)}
-              className="bg-red-500 text-white p-2 rounded-lg shadow-sm hover:bg-red-600 transition-colors"
-            >
-              <Trash className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Image Rendering Logic */}
-          {value.startsWith("http") || value.startsWith("data:") ? (
-            <Image
-              fill
-              className="object-cover"
-              alt="Uploaded Image"
-              src={value}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          ) : (
-            <CldImage
-              fill
-              src={value}
-              alt="Uploaded Image"
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          )}
-        </div>
-      )}
-
-      {/* 2. Upload Button Section (ইমেজ না থাকলে তবেই এটি দেখাবে) */}
-      {/* ✅ FIX: '!value' কন্ডিশন যোগ করা হয়েছে */}
-      {!value && (
-        <CldUploadWidget
-          onSuccess={onUpload}
-          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-          options={{
-            maxFiles: 1,
-            resourceType: "image",
-            clientAllowedFormats: ["png", "jpeg", "jpg", "webp", "svg"],
-          }}
-        >
-          {({ open }) => {
-            const onClick = () => {
-              if (disabled) return;
-              open();
-            };
-
-            return (
-              <div
-                onClick={onClick}
-                className={`
-                  flex flex-col items-center justify-center gap-4 
-                  w-full h-[200px] 
-                  border-2 border-dashed border-gray-300 rounded-xl
-                  transition-all cursor-pointer bg-white
-                  ${
-                    disabled
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-gray-50 hover:border-indigo-400"
-                  }
-                `}
+    <div className="w-full">
+      <AnimatePresence mode="wait">
+        {value ? (
+          <motion.div
+            key="preview"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="relative w-full aspect-video md:aspect-21/9 rounded-[32px] overflow-hidden border border-gray-100 group bg-gray-50 shadow-inner"
+          >
+            <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+              <button
+                type="button"
+                onClick={() => onRemove()}
+                className="p-4 bg-white/90 hover:bg-white text-red-600 rounded-full shadow-2xl transform hover:scale-110 active:scale-95 transition-all"
               >
-                <div className="p-4 bg-indigo-50 rounded-full text-indigo-600">
-                  <ImagePlus size={30} />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-gray-700">
-                    Click to upload image
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    SVG, PNG, JPG or GIF (max 5MB)
-                  </p>
-                </div>
-              </div>
-            );
-          }}
-        </CldUploadWidget>
-      )}
+                <Trash2 size={24} />
+              </button>
+            </div>
+            
+            {isFullUrl ? (
+              <Image
+                fill
+                src={value}
+                alt="Image Preview"
+                className="object-cover"
+                unoptimized
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            ) : (
+              <CldImage
+                fill
+                src={value}
+                alt="Image Preview"
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="upload"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <CldUploadWidget
+              onSuccess={onSuccess}
+              uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+              options={{
+                maxFiles: 1,
+                resourceType: "image",
+                clientAllowedFormats: ["png", "jpeg", "jpg", "webp", "svg"],
+                styles: {
+                  palette: {
+                    window: "#FFFFFF",
+                    windowBorder: "#F3F4F6",
+                    tabIcon: "#4F46E5",
+                    menuIcons: "#1F2937",
+                    textDark: "#111827",
+                    textLight: "#FFFFFF",
+                    link: "#4F46E5",
+                    action: "#4F46E5",
+                    inactiveTabIcon: "#9CA3AF",
+                    error: "#EF4444",
+                    inProgress: "#4F46E5",
+                    complete: "#10B981",
+                    sourceBg: "#F9FAFB",
+                  },
+                },
+              }}
+            >
+              {({ open }) => (
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => open()}
+                  className={cn(
+                    "w-full aspect-video md:aspect-21/9 flex flex-col items-center justify-center gap-4 rounded-[32px] border-2 border-dashed border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-indigo-300 hover:text-indigo-600 transition-all group relative overflow-hidden",
+                    disabled && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="p-5 bg-white rounded-3xl shadow-sm text-gray-400 group-hover:text-indigo-600 group-hover:shadow-indigo-100 transition-all">
+                    <UploadCloud size={32} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-900">Deploy Visual Asset</p>
+                    <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase">Recommended: 21:9 ratio</p>
+                  </div>
+                </button>
+              )}
+            </CldUploadWidget>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

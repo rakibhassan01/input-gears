@@ -20,6 +20,7 @@ import {
   Search,
   ShoppingBag,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import CloudinaryUpload from "@/components/ui/cloudinary-upload";
 import StatusBadge from "@/modules/admin/components/status-badge";
@@ -93,10 +94,13 @@ export default function AppearancePage({
   const [savingSlides, setSavingSlides] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
 
-  // --- Helper: Date Conversion (Date Object -> Input String) ---
+  // --- Helper: Date Conversion (Date Object -> Local Input String) ---
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return "";
-    return new Date(date).toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+    // 🌏 Convert to local time string for the datetime-local input
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16); 
   };
 
   // 1. Top Bar Form
@@ -159,20 +163,24 @@ export default function AppearancePage({
       setCurrentPreviewIndex((prev) =>
         prev === watchedSlides.slides.length - 1 ? 0 : prev + 1
       );
-    }, 3000);
+    }, 4000); // 4 seconds interval for smoother preview
     return () => clearInterval(interval);
   }, [watchedSlides.slides.length, watchedSlides.slides]);
 
   const onSaveBar = async (data: TopBarFormValues) => {
     setSavingBar(true);
     try {
+      // 🌏 Convert local time string to absolute ISO string for the server
+      const topBarStart = data.topBarStart ? new Date(data.topBarStart).toISOString() : "";
+      const topBarEnd = data.topBarEnd ? new Date(data.topBarEnd).toISOString() : "";
+
       await updateTopBar({
         text: data.text || "",
         link: data.link || "",
         isActive: data.isActive,
         useSchedule: data.useSchedule,
-        topBarStart: data.useSchedule ? data.topBarStart || "" : "",
-        topBarEnd: data.useSchedule ? data.topBarEnd || "" : "",
+        topBarStart,
+        topBarEnd,
       });
       toast.success("Notification bar updated!");
     } catch (error) {
@@ -515,6 +523,7 @@ export default function AppearancePage({
         {showPreview && (
           <div className="relative">
             <div className="sticky top-24 z-10 animate-in fade-in slide-in-from-right-8 duration-500">
+              {/* Browser Mockup Bar */}
               <div className="bg-[#1e1e1e] rounded-t-xl px-4 py-3 flex items-center gap-4 shadow-2xl border-b border-gray-700">
                 <div className="flex gap-2">
                   <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]" />
@@ -529,108 +538,115 @@ export default function AppearancePage({
                 <div className="w-10"></div>
               </div>
 
+              {/* Viewport Area */}
               <div className="bg-white border-x border-b border-gray-200 rounded-b-xl shadow-2xl overflow-hidden h-[70vh] overflow-y-auto no-scrollbar relative">
-                {/* Top Bar Preview */}
-                {watchedBar.isActive && (
-                  <div className="bg-indigo-900 text-white text-[10px] md:text-[11px] font-medium tracking-widest text-center py-2.5 uppercase">
-                    {watchedBar.text || "Announcement Text"} —{" "}
-                    <span className="text-gray-400 border-b border-gray-400 pb-0.5 cursor-pointer hover:text-white transition">
-                      Shop Now
-                    </span>
-                  </div>
-                )}
-                {/* Navbar Mock */}
-                <div className="border-b border-gray-100 py-4 px-6 flex items-center justify-between sticky top-0 bg-white z-50">
+                {/* 🌏 Top Bar Preview */}
+                <AnimatePresence>
+                  {watchedBar.isActive && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="bg-indigo-900 text-white text-[10px] md:text-[11px] font-medium tracking-widest text-center py-2.5 uppercase px-4 truncate"
+                    >
+                      {watchedBar.text || "Announcement Text"} —{" "}
+                      <span className="text-gray-400 border-b border-gray-400 pb-0.5">
+                        Shop Now
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Navbar Mockup */}
+                <div className="border-b border-gray-100 py-4 px-6 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-50">
                   <span className="font-bold text-xl tracking-tighter">
                     INPUT<span className="text-indigo-600">GEARS</span>
                   </span>
-                  <div className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
-                    <span>Home</span>
+                  <div className="hidden lg:flex gap-6 text-xs font-bold uppercase tracking-widest text-gray-400">
+                    <span className="text-gray-900">Home</span>
                     <span>Shop</span>
-                    <span>Categories</span>
-                    <span>Deals</span>
+                    <span>Drop</span>
                   </div>
                   <div className="flex gap-4 text-gray-600">
-                    <Search size={20} />
-                    <ShoppingBag size={20} />
-                    <Menu size={20} className="md:hidden" />
+                    <Search size={18} />
+                    <ShoppingBag size={18} />
+                    <Menu size={18} className="lg:hidden" />
                   </div>
                 </div>
 
-                {/* Hero Banner Preview */}
+                {/* 🎭 Hero Banner Preview (Animated) */}
                 <div className="p-4 md:p-6 bg-white">
-                  <div className="relative w-full aspect-16/8 md:aspect-21/8 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm bg-gray-100 group">
-                    {watchedSlides.slides.map((slide, index) => {
-                      const hasText = slide.title || slide.subtitle;
-                      return (
-                        <div
-                          key={index}
-                          className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
-                            index === currentPreviewIndex
-                              ? "opacity-100 z-10"
-                              : "opacity-0 z-0"
-                          }`}
-                        >
-                          {slide.image ? (
-                            <>
-                              {slide.image.startsWith("http") ? (
-                                <img
-                                  src={slide.image}
-                                  className="w-full h-full object-cover"
-                                  alt="Preview"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src =
-                                      "https://placehold.co/800x400?text=Invalid+Link";
-                                  }}
-                                />
-                              ) : (
-                                <img
-                                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${slide.image}`}
-                                  className="w-full h-full object-cover"
-                                  alt="Preview"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src =
-                                      "https://placehold.co/800x400?text=Invalid+Image+ID";
-                                  }}
-                                />
-                              )}
-                              {hasText && (
-                                <>
-                                  <div className="absolute inset-0 bg-black/20" />
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-4">
-                                    {slide.subtitle && (
-                                      <p className="text-[10px] md:text-xs font-medium tracking-widest uppercase mb-2 opacity-90">
-                                        {slide.subtitle}
-                                      </p>
-                                    )}
-                                    {slide.title && (
-                                      <h2 className="text-2xl md:text-4xl font-bold">
-                                        {slide.title}
-                                      </h2>
-                                    )}
-                                  </div>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 bg-gray-50">
-                              <span className="text-xs font-medium">
-                                Add an image to preview
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                  <div className="relative w-full aspect-16/8 md:aspect-21/8 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm bg-gray-50 group isolate border border-gray-100">
+                    <AnimatePresence mode="wait">
+                      {watchedSlides.slides.map((slide, index) => {
+                        if (index !== currentPreviewIndex) return null;
+                        const hasText = slide.title || slide.subtitle;
+                        
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="absolute inset-0 w-full h-full"
+                          >
+                            {slide.image ? (
+                              <>
+                                {slide.image.startsWith("http") ? (
+                                  <img
+                                    src={slide.image}
+                                    className="w-full h-full object-cover"
+                                    alt="Preview"
+                                  />
+                                ) : (
+                                  <img
+                                    src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${slide.image}`}
+                                    className="w-full h-full object-cover"
+                                    alt="Preview"
+                                  />
+                                )}
+                                {hasText && (
+                                  <>
+                                    <div className="absolute inset-0 bg-black/20" />
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-4">
+                                      {slide.subtitle && (
+                                        <p className="text-[10px] md:text-xs font-bold tracking-widest uppercase mb-2 opacity-90">
+                                          {slide.subtitle}
+                                        </p>
+                                      )}
+                                      {slide.title && (
+                                        <h2 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter leading-none">
+                                          {slide.title}
+                                        </h2>
+                                      )}
+                                      <div className="mt-4 px-6 py-2 bg-white text-black rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                                         Explore Now
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 bg-gray-50">
+                                <span className="text-[10px] font-black uppercase tracking-widest">Awaiting Visual Asset</span>
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+
+                    {/* Progress Indicators */}
                     {watchedSlides.slides.length > 1 && (
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                         {watchedSlides.slides.map((_, i) => (
                           <div
                             key={i}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                            className={`h-1 rounded-full transition-all duration-300 ${
                               i === currentPreviewIndex
-                                ? "w-6 bg-white"
-                                : "w-1.5 bg-white/50"
+                                ? "w-8 bg-white"
+                                : "w-2 bg-white/40"
                             }`}
                           />
                         ))}
@@ -639,29 +655,29 @@ export default function AppearancePage({
                   </div>
                 </div>
 
-                {/* Skeleton */}
-                <div className="px-6 pb-8 space-y-8">
-                  <div className="space-y-4">
-                    <div className="h-6 w-32 bg-gray-100 rounded-md" />
-                    <div className="flex gap-4 overflow-hidden">
+                {/* Page Skeleton for Context */}
+                <div className="px-6 pb-12 space-y-12">
+                  <div className="space-y-6">
+                    <div className="h-4 w-48 bg-gray-100 rounded-full" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="shrink-0 w-32 h-10 bg-gray-50 rounded-full border border-gray-100"
-                        />
+                        <div key={i} className="aspect-square bg-gray-50 rounded-2xl border border-gray-100" />
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="space-y-3">
-                        <div className="aspect-square bg-gray-100 rounded-2xl" />
-                        <div className="h-4 w-3/4 bg-gray-100 rounded" />
-                        <div className="h-4 w-1/4 bg-gray-100 rounded" />
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 gap-8">
+                    <div className="h-64 bg-gray-50 rounded-[40px] border border-gray-100 flex items-center justify-center">
+                       <span className="text-[10px] font-black text-gray-200 uppercase tracking-widest">Content Container</span>
+                    </div>
                   </div>
                 </div>
+              </div>
+              
+              {/* Preview Footer Info */}
+              <div className="mt-4 p-4 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-100 text-center">
+                 <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                   Live Preview Synchronized
+                 </p>
               </div>
             </div>
           </div>

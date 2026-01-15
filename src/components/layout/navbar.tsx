@@ -116,7 +116,10 @@ export default function Navbar() {
 
               {/* Logo: Centered on mobile, Left-aligned on Desktop */}
               <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
-                <Link href="/" className="flex items-center gap-2 group relative">
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 group relative"
+                >
                   <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-10 group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
                     <Zap size={20} fill="currentColor" />
                   </div>
@@ -129,7 +132,10 @@ export default function Navbar() {
 
             {/* MIDDLE: Search Bar (Desktop Only) - Perfectly Centered */}
             <div className="hidden md:flex flex-initial items-center">
-              <form onSubmit={handleSearch} className="relative w-[450px] group">
+              <form
+                onSubmit={handleSearch}
+                className="relative w-[450px] group"
+              >
                 <input
                   type="text"
                   value={searchQuery}
@@ -226,14 +232,14 @@ export default function Navbar() {
 
       {/* MOBILE MENU DRAWER */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity duration-500 ${
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-100 transition-opacity duration-500 ${
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
       <div
-        className={`fixed inset-y-0 left-0 z-[101] w-[85%] max-w-[320px] bg-white shadow-2xl transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
+        className={`fixed inset-y-0 left-0 z-101 w-[85%] max-w-[320px] bg-white shadow-2xl transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -343,5 +349,44 @@ export default function Navbar() {
       </div>
       <MobileBottomNav />
     </>
+  );
+}
+
+export function NavbarSkeleton() {
+  return (
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200/50">
+      <nav className="w-full py-4">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 md:gap-8">
+          {/* Logo Skeleton */}
+          <div className="flex items-center gap-4 flex-1">
+            <div className="h-10 w-32 bg-gray-100 animate-pulse rounded-xl" />
+          </div>
+
+          {/* Search Skeleton */}
+          <div className="hidden md:flex flex-initial items-center">
+            <div className="h-10 w-[450px] bg-gray-50 animate-pulse rounded-2xl" />
+          </div>
+
+          {/* Actions Skeleton */}
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <div className="h-10 w-10 bg-gray-100 animate-pulse rounded-xl" />
+            <div className="h-10 w-10 bg-gray-100 animate-pulse rounded-xl" />
+            <div className="h-10 w-px bg-gray-100 mx-1 hidden sm:block" />
+            <div className="h-10 w-24 bg-gray-100 animate-pulse rounded-xl hidden sm:block" />
+          </div>
+        </div>
+      </nav>
+      {/* Secondary Nav Skeleton */}
+      <div className="hidden lg:block w-full h-12 border-t border-gray-50">
+        <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center gap-8">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="h-3 w-20 bg-gray-100 animate-pulse rounded-full"
+            />
+          ))}
+        </div>
+      </div>
+    </header>
   );
 }

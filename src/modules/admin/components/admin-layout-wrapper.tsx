@@ -15,7 +15,10 @@ interface AdminLayoutWrapperProps {
   };
 }
 
-export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrapperProps) {
+export default function AdminLayoutWrapper({
+  children,
+  user,
+}: AdminLayoutWrapperProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,7 +71,10 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
       />
 
       {/* 1. Sidebar */}
-      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <AdminSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* 2. Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -77,7 +83,7 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
           {/* Left: Mobile Toggle & Breadcrumb Placeholder */}
           <div className="flex items-center gap-4">
             {/* Mobile Menu Button (Visible only on mobile/tablet) */}
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all active:scale-95"
             >
@@ -108,7 +114,7 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
           {/* Right: Actions & Profile */}
           <div className="flex items-center gap-2 md:gap-6">
             {/* Search Toggle (Mobile) */}
-            <button 
+            <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
             >
@@ -140,21 +146,34 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
                   )}
                 </div>
                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-px shadow-sm ring-1 ring-gray-100">
-                  <BadgeCheck size={14} className="text-blue-600 fill-blue-50" />
+                  <BadgeCheck
+                    size={14}
+                    className="text-blue-600 fill-blue-50"
+                  />
                 </div>
               </div>
-              <ChevronDown size={14} className="text-gray-400 hidden sm:block" />
+              <ChevronDown
+                size={14}
+                className="text-gray-400 hidden sm:block"
+              />
             </div>
           </div>
         </header>
 
         {/* Mobile Search Overlay */}
-        <div className={cn(
-          "lg:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-200 p-4 z-30 transition-all duration-300",
-          isSearchOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-4 invisible"
-        )}>
+        <div
+          className={cn(
+            "lg:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-200 p-4 z-30 transition-all duration-300",
+            isSearchOpen
+              ? "opacity-100 translate-y-0 visible"
+              : "opacity-0 -translate-y-4 invisible"
+          )}
+        >
           <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
             <input
               type="text"
               value={searchQuery}
@@ -169,6 +188,39 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
         {/* Dynamic Page Content */}
         <main className="p-4 md:p-6 overflow-y-auto h-[calc(100vh-64px)]">
           {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export function AdminHeaderSkeleton() {
+  return (
+    <div className="flex min-h-screen bg-gray-50/50">
+      {/* Sidebar Placeholder */}
+      <div className="hidden lg:block w-64 bg-white border-r border-gray-200 h-full fixed" />
+
+      <div className="flex-1 flex flex-col lg:pl-64">
+        <header className="h-16 sticky top-0 z-40 flex items-center justify-between px-4 md:px-6 border-b border-gray-200/80 bg-white/80 backdrop-blur-md shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="h-8 w-8 bg-gray-100 animate-pulse rounded-xl lg:hidden" />
+            <div className="h-4 w-32 bg-gray-100 animate-pulse rounded-full hidden md:block" />
+          </div>
+
+          <div className="flex-1 max-w-md mx-4 hidden lg:block">
+            <div className="h-10 w-full bg-gray-100/50 animate-pulse rounded-xl" />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="h-8 w-8 bg-gray-100 animate-pulse rounded-full" />
+            <div className="h-9 w-24 bg-gray-100 animate-pulse rounded-xl" />
+          </div>
+        </header>
+        <main className="p-4 md:p-6">
+          <div className="space-y-4">
+            <div className="h-8 w-1/4 bg-gray-100 animate-pulse rounded-full" />
+            <div className="h-64 w-full bg-gray-100 animate-pulse rounded-3xl" />
+          </div>
         </main>
       </div>
     </div>

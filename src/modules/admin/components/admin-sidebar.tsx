@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation"; // ✅ useRouter যোগ করা হয়েছে
 import { cn } from "@/lib/utils";
@@ -19,6 +19,8 @@ import {
   Layers,
   Loader2,
   Paintbrush,
+  Zap,
+  X,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -58,7 +60,12 @@ const sidebarItems = [
   },
 ];
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
@@ -80,26 +87,43 @@ export default function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "h-screen bg-gray-900 text-white transition-all duration-300 sticky top-0 flex flex-col border-r border-gray-800 z-50",
-        isCollapsed ? "w-20" : "w-72"
+        "h-screen bg-gray-900 text-white transition-all duration-300 flex flex-col border-r border-gray-800 z-50",
+        isCollapsed ? "w-20" : "w-72",
+        "fixed lg:sticky top-0 left-0",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
     >
       {/* 1. Logo Area */}
       <div className="h-16 flex items-center justify-center border-b border-gray-800 relative shrink-0">
         {isCollapsed ? (
-          <span className="font-bold text-xl text-indigo-500">IG</span>
+          <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-900/40">
+            <Zap size={20} fill="currentColor" />
+          </div>
         ) : (
-          <span className="font-bold text-xl tracking-wider">
-            INPUT<span className="text-indigo-500">GEARS</span>
-          </span>
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="bg-indigo-600 text-white p-1.5 rounded-lg transform group-hover:rotate-[10deg] transition-all duration-300">
+               <Zap size={18} fill="currentColor" />
+            </div>
+            <span className="font-bold text-lg tracking-tight">
+              INPUT<span className="text-indigo-500 font-black">GEARS</span>
+            </span>
+          </Link>
         )}
 
-        {/* Collapse Button */}
+        {/* Collapse Button (Hidden on Mobile) */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-6 bg-indigo-600 rounded-full p-1 text-white shadow-lg hover:bg-indigo-500 transition-colors z-50"
+          className="absolute -right-3 top-6 bg-indigo-600 rounded-full p-1 text-white shadow-lg hover:bg-indigo-500 transition-colors z-50 hidden lg:block"
         >
           {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
+
+        {/* Close Button (Mobile Only) */}
+        <button
+          onClick={onClose}
+          className="lg:hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white"
+        >
+          <X size={20} />
         </button>
       </div>
 
@@ -120,6 +144,7 @@ export default function AdminSidebar() {
                     <Link
                       key={subIdx}
                       href={sub.href}
+                      onClick={onClose}
                       className={cn(
                         "flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl transition-all mb-1",
                         pathname === sub.href
@@ -135,6 +160,7 @@ export default function AdminSidebar() {
               ) : (
                 <Link
                   href={item.href!}
+                  onClick={onClose}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all group relative",
                     isActive

@@ -21,12 +21,19 @@ export default async function OrderHistoryPage() {
     orderBy: {
       createdAt: "desc",
     },
-    // include: { items: true } // যদি আইটেম প্রিভিউ দেখাতে চান
+    include: {
+      _count: {
+        select: { items: true }
+      },
+      items: {
+        take: 3 // Preview first 3 items
+      }
+    }
   });
+
   return (
-    <div className="max-w-[1000px] mx-auto py-10 px-4">
-      {/* এখানে আপনি চাইলে সাইডবার যোগ করতে পারেন */}
-      <OrderHistoryView orders={orders} />
+    <div className="md:py-4">
+      <OrderHistoryView orders={orders as any} />
     </div>
   );
 }

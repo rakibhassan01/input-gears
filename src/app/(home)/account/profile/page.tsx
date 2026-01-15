@@ -16,10 +16,10 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-sm text-gray-500">
+    <div className="p-4 sm:p-0">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
+        <p className="text-sm text-gray-500 font-medium">
           Manage your public profile and account details.
         </p>
       </div>

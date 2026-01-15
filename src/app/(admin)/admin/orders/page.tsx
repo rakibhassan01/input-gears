@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
-  Search,
-  Filter,
   Eye,
   MoreHorizontal,
   ArrowUpDown,
@@ -12,16 +10,38 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  XCircle,
   Truck,
 } from "lucide-react";
 import OrderStatusSelector from "@/modules/admin/components/order-status-selector";
+import AdminSearch from "@/modules/admin/components/admin-search";
+import OrderStatusFilter from "@/modules/admin/components/order-status-filter";
+import { OrderStatus } from "@prisma/client";
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status } = await searchParams;
+
   // ১. প্যারালাল ডাটা ফেচিং (High Performance)
   const [orders, stats] = await Promise.all([
     // A. Orders Fetching
     prisma.order.findMany({
+      where: {
+        AND: [
+          q
+            ? {
+                OR: [
+                  { orderNumber: { contains: q, mode: "insensitive" } },
+                  { user: { name: { contains: q, mode: "insensitive" } } },
+                  { user: { email: { contains: q, mode: "insensitive" } } },
+                ],
+              }
+            : {},
+          status ? { status: status as OrderStatus } : {},
+        ],
+      },
       take: 20, // Pagination এর জন্য পরে limit বাড়াতে পারেন
       orderBy: { createdAt: "desc" },
       include: {
@@ -145,23 +165,11 @@ export default async function OrdersPage() {
         {/* Toolbar */}
         <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
           {/* Search */}
-          <div className="relative max-w-sm w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search Order ID, Customer..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
-            />
-          </div>
+          <AdminSearch placeholder="Search Order ID, Customer..." />
 
           {/* Filters */}
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-              <Filter size={16} /> Status
-            </button>
+            <OrderStatusFilter />
             <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               <ArrowUpDown size={16} /> Date
             </button>
@@ -199,7 +207,7 @@ export default async function OrdersPage() {
                     {/* Customer Info */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 border border-gray-200">
+                        <div className="h-9 w-9 rounded-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 border border-gray-200">
                           {order.user?.name ? order.user.name.charAt(0) : "G"}
                         </div>
                         <div className="flex flex-col">

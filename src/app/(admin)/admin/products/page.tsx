@@ -3,9 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import {
   Plus,
-  Search,
   Filter,
-  MoreHorizontal,
   Edit,
   Trash2,
   Eye,
@@ -15,11 +13,26 @@ import {
   DollarSign,
   Box,
 } from "lucide-react";
+import AdminSearch from "@/modules/admin/components/admin-search";
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+
   // ১. প্যারালাল ডাটা ফেচিং
   const [products, totalCount, lowStockCount] = await Promise.all([
     prisma.product.findMany({
+      where: q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { slug: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {},
       orderBy: { createdAt: "desc" },
     }),
     prisma.product.count(),
@@ -41,7 +54,7 @@ export default async function ProductsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
           <p className="text-sm text-gray-500">
-            Manage your store's inventory and catalog.
+            Manage your store&apos;s inventory and catalog.
           </p>
         </div>
         <Link
@@ -104,17 +117,7 @@ export default async function ProductsPage() {
         {/* A. Toolbar (Search & Filter) */}
         <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
           {/* Search */}
-          <div className="relative max-w-sm w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search by name, SKU..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
-            />
-          </div>
+          <AdminSearch placeholder="Search by name, SKU..." />
 
           {/* Filters */}
           <div className="flex items-center gap-2">

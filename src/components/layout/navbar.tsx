@@ -22,8 +22,10 @@ import UserNav from "../../modules/auth/components/user-nav";
 import dynamic from "next/dynamic";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import MobileBottomNav from "./mobile-bottom-nav";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
+// ... (CartNav stays same)
 const CartNav = dynamic(
   () => import("../../modules/cart/components/cart-nav"),
   {
@@ -48,8 +50,15 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: session, isPending } = useSession();
   const wishlist = useWishlist();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "");
+  }, [searchParams]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -74,6 +83,13 @@ export default function Navbar() {
   // Only show badge/active state after mounting
   const wishlistCount = isMounted ? wishlist.items.length : 0;
   const hasWishlistItems = wishlistCount > 0;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    router.push(`/products?q=${encodeURIComponent(searchQuery)}`);
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <>
@@ -101,7 +117,7 @@ export default function Navbar() {
               {/* Logo: Centered on mobile, Left-aligned on Desktop */}
               <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
                 <Link href="/" className="flex items-center gap-2 group relative">
-                  <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
+                  <div className="bg-indigo-600 text-white p-2 rounded-xl transform group-hover:rotate-10 group-hover:scale-110 transition-all duration-500 shadow-lg shadow-indigo-200">
                     <Zap size={20} fill="currentColor" />
                   </div>
                   <span className="text-xl sm:text-2xl font-black tracking-tight font-sans text-gray-900">
@@ -113,9 +129,11 @@ export default function Navbar() {
 
             {/* MIDDLE: Search Bar (Desktop Only) - Perfectly Centered */}
             <div className="hidden md:flex flex-initial items-center">
-              <div className="relative w-[450px] group">
+              <form onSubmit={handleSearch} className="relative w-[450px] group">
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search gadgets (e.g. Mechanical Keyboard)..."
                   className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-12 pr-4 py-2.5 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-500"
                 />
@@ -123,7 +141,7 @@ export default function Navbar() {
                   size={18}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
                 />
-              </div>
+              </form>
             </div>
 
             {/* RIGHT: Actions */}
@@ -156,7 +174,7 @@ export default function Navbar() {
 
               <CartNav />
 
-              <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block" />
+              <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block" />
 
               {isPending ? (
                 <div className="hidden sm:flex items-center gap-2 p-1 rounded-full border border-gray-100 bg-gray-50/50">
@@ -244,9 +262,11 @@ export default function Navbar() {
 
           {/* Quick Search in Mobile */}
           <div className="p-6 pb-2">
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Find your gear..."
                 className="w-full bg-gray-100 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all border-none"
               />
@@ -254,7 +274,7 @@ export default function Navbar() {
                 size={18}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
               />
-            </div>
+            </form>
           </div>
 
           {/* Multi-category Links */}

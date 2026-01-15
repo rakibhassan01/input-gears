@@ -1,6 +1,11 @@
 import ProductView from "@/modules/products/views/product-view";
 import React from "react";
 
-export default function page() {
-  return <ProductView />;
+export default async function page({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  return <ProductView searchQuery={q} />;
 }

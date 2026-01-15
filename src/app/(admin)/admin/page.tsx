@@ -29,7 +29,6 @@ export default async function AdminDashboardPage() {
     }),
     prisma.order.count(),
     prisma.product.count(),
-    // @ts-expect-error - Prisma type inference issue for user model in this context
     prisma.user.count({ where: { role: "user" } }),
     prisma.order.findMany({
       take: 6,

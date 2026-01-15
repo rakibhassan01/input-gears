@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Image from "next/image";
 import {
-  Search,
   Mail,
   MoreHorizontal,
   Users,
@@ -11,10 +10,27 @@ import {
   Download,
 } from "lucide-react";
 
-export default async function CustomersPage() {
+import AdminSearch from "@/modules/admin/components/admin-search";
+
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+
   // ১. ইউজার ডাটা ফেচিং (অর্ডার হিস্টোরি সহ)
   const users = await prisma.user.findMany({
-    where: { role: "user" }, // শুধু কাস্টমার
+    where: {
+      role: "user",
+      OR: q
+        ? [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+            { phone: { contains: q, mode: "insensitive" } },
+          ]
+        : undefined,
+    },
     include: {
       orders: {
         select: { totalAmount: true, createdAt: true },
@@ -100,17 +116,7 @@ export default async function CustomersPage() {
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         {/* Toolbar */}
         <div className="p-5 border-b border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50">
-          <div className="relative max-w-sm w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search customers..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
-            />
-          </div>
+          <AdminSearch placeholder="Search name, email, phone..." />
           <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
             <ArrowUpDown size={16} /> Sort by LTV
           </button>

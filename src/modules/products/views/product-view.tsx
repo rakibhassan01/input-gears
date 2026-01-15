@@ -3,13 +3,27 @@ import ProductCard from "../components/product-card";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-export default async function ProductView() {
+export default async function ProductView({
+  searchQuery,
+}: {
+  searchQuery?: string;
+}) {
   // ডাটাবেস থেকে প্রোডাক্ট ফেচ করা (Server Component)
   const products = await prisma.product.findMany({
+    where: searchQuery
+      ? {
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" } },
+            { slug: { contains: searchQuery, mode: "insensitive" } },
+            { description: { contains: searchQuery, mode: "insensitive" } },
+            { category: { name: { contains: searchQuery, mode: "insensitive" } } },
+          ],
+        }
+      : {},
     orderBy: {
       createdAt: "desc",
     },
-    take: 12, // প্রথমে ১০-১২ টা দেখালাম
+    take: 20, // সার্চের জন্য একটু বেশি দেখালাম
   });
 
   return (
@@ -21,11 +35,21 @@ export default async function ProductView() {
             <div className="flex items-center gap-2">
               <div className="h-8 w-1 bg-indigo-600 rounded-full" />
               <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight uppercase">
-                Featured <span className="text-indigo-600">Gears</span>
+                {searchQuery ? (
+                  <>
+                    Search: <span className="text-indigo-600">&quot;{searchQuery}&quot;</span>
+                  </>
+                ) : (
+                  <>
+                    Featured <span className="text-indigo-600">Gears</span>
+                  </>
+                )}
               </h2>
             </div>
             <p className="text-sm sm:text-base text-gray-500 font-medium">
-              Explore our latest high-performance gadgets.
+              {searchQuery 
+                ? `Found ${products.length} matching products for your search.`
+                : "Explore our latest high-performance gadgets."}
             </p>
           </div>
           <Link

@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminLayoutWrapper from "@/modules/admin/components/admin-layout-wrapper";
 
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 export default async function AdminLayout({
   children,
 }: {
@@ -18,8 +20,10 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminLayoutWrapper user={session.user as any}>
-      {children}
-    </AdminLayoutWrapper>
+    <NuqsAdapter>
+      <AdminLayoutWrapper user={session.user as any}>
+        {children}
+      </AdminLayoutWrapper>
+    </NuqsAdapter>
   );
 }

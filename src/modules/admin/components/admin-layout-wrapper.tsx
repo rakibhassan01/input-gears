@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import AdminSidebar from "./admin-sidebar";
-import { Menu, Search, Bell, BadgeCheck, ChevronDown, X } from "lucide-react";
+import { Menu, Search, Bell, BadgeCheck, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface AdminLayoutWrapperProps {
   children: React.ReactNode;
@@ -17,12 +17,35 @@ interface AdminLayoutWrapperProps {
 
 export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrapperProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL পাল্টলে সার্চ ইনপুট আপডেট রাখব
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "");
+  }, [searchParams]);
 
   // Close sidebar on navigation (mobile)
   useEffect(() => {
     setIsSidebarOpen(false);
+    setIsSearchOpen(false);
   }, [pathname]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    // কারেন্ট পাথের উপর ভিত্তি করে রিডাইরেক্ট logic
+    let targetPath = "/admin/products";
+    if (pathname.includes("/admin/orders")) targetPath = "/admin/orders";
+    if (pathname.includes("/admin/customers")) targetPath = "/admin/customers";
+
+    router.push(`${targetPath}?q=${encodeURIComponent(searchQuery)}`);
+    setIsSearchOpen(false);
+  };
 
   // Prevent scroll when sidebar is open on mobile
   useEffect(() => {
@@ -67,23 +90,28 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
 
           {/* Center: Global Search Bar */}
           <div className="flex-1 max-w-md mx-4 hidden lg:block">
-            <div className="relative group">
+            <form onSubmit={handleSearch} className="relative group">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
                 size={18}
               />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search orders, products..."
                 className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 transition-all placeholder:text-gray-400"
               />
-            </div>
+            </form>
           </div>
 
           {/* Right: Actions & Profile */}
           <div className="flex items-center gap-2 md:gap-6">
             {/* Search Toggle (Mobile) */}
-            <button className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+            <button 
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+            >
               <Search size={20} />
             </button>
 
@@ -119,6 +147,24 @@ export default function AdminLayoutWrapper({ children, user }: AdminLayoutWrappe
             </div>
           </div>
         </header>
+
+        {/* Mobile Search Overlay */}
+        <div className={cn(
+          "lg:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-200 p-4 z-30 transition-all duration-300",
+          isSearchOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-4 invisible"
+        )}>
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="w-full bg-gray-100 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+              autoFocus={isSearchOpen}
+            />
+          </form>
+        </div>
 
         {/* Dynamic Page Content */}
         <main className="p-4 md:p-6 overflow-y-auto h-[calc(100vh-64px)]">

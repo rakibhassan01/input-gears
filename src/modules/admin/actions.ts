@@ -297,3 +297,26 @@ export async function updateHeroSlides(slides: HeroSlideInput[]) {
   revalidatePath("/");
   return { success: true };
 }
+
+// --- 4. Bulk Delete Orders ---
+export async function deleteOrders(orderIds: string[]) {
+  try {
+    await requireAdmin();
+
+    await prisma.order.deleteMany({
+      where: {
+        id: { in: orderIds },
+      },
+    });
+
+    revalidatePath("/admin/orders");
+    return {
+      success: true,
+      message: `${orderIds.length} orders deleted successfully`,
+    };
+  } catch (error) {
+    console.error("Bulk Delete Error:", error);
+    return { success: false, message: "Failed to delete orders" };
+  }
+}
+

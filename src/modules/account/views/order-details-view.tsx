@@ -10,8 +10,6 @@ import {
   ShoppingBag,
   ChevronLeft,
   Clock,
-  CheckCircle2,
-  Circle,
   Truck,
   Box,
   BadgeCheck,
@@ -123,7 +121,7 @@ export default function OrderDetailsView({ order }: OrderDetailsViewProps) {
               </h3>
               <div className="relative flex flex-col md:flex-row justify-between gap-8 md:gap-4">
                 {/* Connecting Lines for Desktop */}
-                <div className="hidden md:block absolute top-[22px] left-[10%] right-[10%] h-0.5 bg-gray-100 -z-0" />
+                <div className="hidden md:block absolute top-[22px] left-[10%] right-[10%] h-0.5 bg-gray-100 z-0" />
 
                 {statusSteps.map((step, index) => {
                   const Icon = step.icon;
@@ -309,7 +307,7 @@ export default function OrderDetailsView({ order }: OrderDetailsViewProps) {
                   Address
                 </div>
                 <div className="text-sm font-bold text-gray-700 leading-relaxed italic">
-                  "{order.address}"
+                  &quot;{order.address}&quot;
                 </div>
               </div>
             </div>

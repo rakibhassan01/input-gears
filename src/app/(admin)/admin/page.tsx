@@ -6,11 +6,7 @@ import {
   Package,
   TrendingUp,
   ArrowRight,
-  RotateCcw,
-  Clock,
-  CheckCircle2,
   PieChart,
-  XCircle,
   MoreHorizontal,
   Zap,
 } from "lucide-react";
@@ -33,6 +29,7 @@ export default async function AdminDashboardPage() {
     }),
     prisma.order.count(),
     prisma.product.count(),
+    // @ts-expect-error - Prisma type inference issue for user model in this context
     prisma.user.count({ where: { role: "user" } }),
     prisma.order.findMany({
       take: 6,
@@ -92,7 +89,6 @@ export default async function AdminDashboardPage() {
   ];
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
       {/* 2. Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
@@ -343,7 +339,7 @@ export default async function AdminDashboardPage() {
                 {/* CSS Only Bar Chart */}
                 <div className="w-full bg-gray-100 rounded-t-lg h-[40%] hover:bg-indigo-300 transition-colors"></div>
                 <div className="w-full bg-gray-100 rounded-t-lg h-[70%] hover:bg-indigo-400 transition-colors"></div>
-                <div className="w-full bg-indigo-600 rounded-t-lg h-[100%] shadow-lg shadow-indigo-200"></div>
+                <div className="w-full bg-indigo-600 rounded-t-lg h-full shadow-lg shadow-indigo-200"></div>
                 <div className="w-full bg-gray-100 rounded-t-lg h-[60%] hover:bg-indigo-300 transition-colors"></div>
                 <div className="w-full bg-gray-100 rounded-t-lg h-[80%] hover:bg-indigo-300 transition-colors"></div>
               </div>

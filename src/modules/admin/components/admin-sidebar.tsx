@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation"; // ✅ useRouter যোগ করা হয়েছে
 import { cn } from "@/lib/utils";
@@ -101,8 +101,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </div>
         ) : (
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="bg-indigo-600 text-white p-1.5 rounded-lg transform group-hover:rotate-[10deg] transition-all duration-300">
-               <Zap size={18} fill="currentColor" />
+            <div className="bg-indigo-600 text-white p-1.5 rounded-lg transform group-hover:rotate-10 transition-all duration-300">
+              <Zap size={18} fill="currentColor" />
             </div>
             <span className="font-bold text-lg tracking-tight">
               INPUT<span className="text-indigo-500 font-black">GEARS</span>

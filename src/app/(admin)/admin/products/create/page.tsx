@@ -15,11 +15,14 @@ import {
   Layers,
   AlertCircle,
   ExternalLink,
+  Plus,
+  Zap,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/modules/products/components/product-card";
 import { createProduct, getCategoriesOptions } from "@/modules/admin/actions";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, cn } from "@/lib/utils";
 import ImageUpload from "@/components/ui/image-upload";
 import CategoryModal from "@/modules/admin/components/category-modal";
 
@@ -32,6 +35,8 @@ const formSchema = z.object({
   stock: z.coerce.number().min(0, "Stock cannot be negative"),
   image: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   categoryId: z.string().min(1, "Please select a category"),
+  colors: z.array(z.string()).default([]),
+  switchType: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,6 +60,8 @@ export default function CreateProductPage() {
       stock: 10,
       image: "",
       categoryId: "",
+      colors: [],
+      switchType: "",
     },
     mode: "onChange",
   });
@@ -102,6 +109,8 @@ export default function CreateProductPage() {
           stock: 10,
           image: "",
           categoryId: data.categoryId,
+          colors: [],
+          switchType: "",
         });
 
         // Scroll to top
@@ -319,6 +328,123 @@ export default function CreateProductPage() {
                 </div>
               </div>
 
+              {/* Specifications & Variants */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                  <Zap size={80} className="text-indigo-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Zap size={20} className="text-indigo-600" /> Technical Specifications
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Switch Type */}
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700 block">
+                      Keyboard Switch Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {["Linear", "Tactile", "Clicky", "Optical"].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => form.setValue("switchType", type, { shouldDirty: true })}
+                          className={cn(
+                            "px-4 py-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            watchedValues.switchType === type
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200"
+                              : "bg-white border-gray-100 text-gray-500 hover:border-indigo-200"
+                          )}
+                        >
+                          {watchedValues.switchType === type && <Zap size={14} fill="currentColor" />}
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                    <input 
+                      {...form.register("switchType")}
+                      placeholder="Other switch type..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                    />
+                  </div>
+
+                  {/* Colors */}
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700 block">
+                      Available Colors
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {watchedValues.colors?.map((color, index) => (
+                        <div 
+                          key={index}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-lg group animate-in fade-in zoom-in duration-200"
+                        >
+                          <div 
+                             className="w-3 h-3 rounded-full border border-gray-300"
+                             style={{ backgroundColor: color.toLowerCase() }}
+                          />
+                          <span className="text-xs font-bold text-gray-700 uppercase tracking-tighter">{color}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newColors = [...(watchedValues.colors || [])];
+                              newColors.splice(index, 1);
+                              form.setValue("colors", newColors, { shouldDirty: true });
+                            }}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {(!watchedValues.colors || watchedValues.colors.length === 0) && (
+                        <p className="text-xs text-gray-400 italic">No colors added yet.</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input 
+                        id="color-input"
+                        placeholder="Add color (e.g. Red, #FF0000)"
+                        className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const input = e.currentTarget;
+                            const value = input.value.trim();
+                            if (value) {
+                              const currentColors = watchedValues.colors || [];
+                              if (!currentColors.includes(value)) {
+                                form.setValue("colors", [...currentColors, value], { shouldDirty: true });
+                              }
+                              input.value = "";
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = document.getElementById("color-input") as HTMLInputElement;
+                          const value = input.value.trim();
+                          if (value) {
+                            const currentColors = watchedValues.colors || [];
+                            if (!currentColors.includes(value)) {
+                              form.setValue("colors", [...currentColors, value], { shouldDirty: true });
+                            }
+                            input.value = "";
+                          }
+                        }}
+                        className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 text-indigo-600 transition-all"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black italic">Press Enter to add multiple</p>
+                  </div>
+                </div>
+              </div>
+
+
               {/* Media */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-6">Media</h2>
@@ -411,6 +537,8 @@ export default function CreateProductPage() {
                     description: watchedValues.description,
                     stock: Number(watchedValues.stock),
                     slug: watchedValues.slug || "slug",
+                    colors: watchedValues.colors,
+                    switchType: watchedValues.switchType || undefined,
                     category: {
                       name:
                         categories.find(

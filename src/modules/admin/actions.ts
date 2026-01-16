@@ -25,8 +25,9 @@ const productSchema = z.object({
   price: z.coerce.number().min(0.01, "Price must be greater than 0"),
   stock: z.coerce.number().min(0, "Stock cannot be negative"),
   image: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  // ✅ FIX: Category ID এখন Required
   categoryId: z.string().min(1, "Category is required"),
+  colors: z.array(z.string()).default([]),
+  switchType: z.string().optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
@@ -57,8 +58,9 @@ export async function createProduct(data: ProductFormValues) {
         price: validatedData.price,
         stock: validatedData.stock,
         image: validatedData.image || null,
-        // ✅ FIX: ডাটাবেসে categoryId সেভ করা হচ্ছে
         categoryId: validatedData.categoryId,
+        colors: validatedData.colors,
+        switchType: validatedData.switchType,
       },
     });
 
@@ -108,8 +110,9 @@ export async function updateProduct(id: string, data: ProductFormValues) {
         price: validatedData.price,
         stock: validatedData.stock,
         image: validatedData.image || null,
-        // ✅ FIX: আপডেটের সময়ও categoryId আপডেট হবে
         categoryId: validatedData.categoryId,
+        colors: validatedData.colors,
+        switchType: validatedData.switchType,
       },
     });
 
@@ -319,4 +322,3 @@ export async function deleteOrders(orderIds: string[]) {
     return { success: false, message: "Failed to delete orders" };
   }
 }
-

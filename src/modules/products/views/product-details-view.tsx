@@ -19,14 +19,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Product } from "../types";
+import { memo, useMemo } from "react";
 
 interface ProductDetailsViewProps {
   product: Product;
 }
 
-export default function ProductDetailsView({
+const ProductDetailsView = memo(({
   product,
-}: ProductDetailsViewProps) {
+}: ProductDetailsViewProps) => {
   const cart = useCart();
 
   // States
@@ -36,6 +37,20 @@ export default function ProductDetailsView({
     product.colors?.[0] || null
   );
   const [isAdding, setIsAdding] = useState(false);
+
+  const formattedPrice = useMemo(() => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(product.price);
+  }, [product.price]);
+
+  const discountedPrice = useMemo(() => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(product.price * 1.2);
+  }, [product.price]);
 
   // Quantity Handlers
   const incrementQty = () =>
@@ -50,10 +65,9 @@ export default function ProductDetailsView({
       cart.addItem({
         id: product.id,
         name: product.name,
-        // ✅ FIX: Slug যোগ করা হলো (কারণ useCart এ এটি এখন রিকোয়ারড)
         slug: product.slug,
         price: product.price,
-        image: product.images[0], // অথবা product.image যদি ট্রান্সফর্ম না করেন
+        image: product.images[0],
         quantity: quantity,
         maxStock: product.stock,
       });
@@ -85,7 +99,7 @@ export default function ProductDetailsView({
                 key={index}
                 onClick={() => setSelectedImage(img)}
                 className={cn(
-                  "relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all",
+                  "relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all",
                   selectedImage === img
                     ? "border-indigo-600 ring-2 ring-indigo-600/20"
                     : "border-transparent hover:border-gray-300"
@@ -144,11 +158,11 @@ export default function ProductDetailsView({
           {/* Price */}
           <div className="flex items-end gap-4">
             <h2 className="text-3xl font-bold text-indigo-600">
-              ${product.price.toFixed(2)}
+              {formattedPrice}
             </h2>
             {/* Fake Discount Logic (Optional) */}
             <span className="text-lg text-gray-400 line-through mb-1">
-              ${(product.price * 1.2).toFixed(2)}
+              {discountedPrice}
             </span>
           </div>
 
@@ -257,4 +271,8 @@ export default function ProductDetailsView({
       </div>
     </div>
   );
-}
+});
+
+ProductDetailsView.displayName = "ProductDetailsView";
+
+export default ProductDetailsView;

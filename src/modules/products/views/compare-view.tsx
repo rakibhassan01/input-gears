@@ -2,8 +2,7 @@
 
 import { useCompare, CompareItem } from "@/modules/products/hooks/use-compare";
 import { useCart } from "@/modules/cart/hooks/use-cart";
-import { Product } from "@/modules/products/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -16,7 +15,7 @@ import {
   Plus,
   Zap
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function CompareView() {
@@ -28,7 +27,19 @@ export default function CompareView() {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) return null;
+  const specs = useMemo(() => [
+    { key: "brand", label: "Brand" },
+    { key: "model", label: "Model" },
+    { key: "switchType", label: "Switch Type" },
+    { key: "colors", label: "Colors" },
+    { key: "material", label: "Material" },
+    { key: "connectivity", label: "Connectivity" },
+    { key: "battery", label: "Battery Life" },
+    { key: "dimensions", label: "Dimensions" },
+    { key: "warranty", label: "Warranty" },
+  ], []);
+
+  const shouldReduceMotion = useReducedMotion();
 
   const handleAddToCart = (item: CompareItem) => {
     cart.addItem({
@@ -43,17 +54,7 @@ export default function CompareView() {
     toast.success("Added to cart");
   };
 
-  const specs = [
-    { key: "brand", label: "Brand" },
-    { key: "model", label: "Model" },
-    { key: "switchType", label: "Switch Type" },
-    { key: "colors", label: "Colors" },
-    { key: "material", label: "Material" },
-    { key: "connectivity", label: "Connectivity" },
-    { key: "battery", label: "Battery Life" },
-    { key: "dimensions", label: "Dimensions" },
-    { key: "warranty", label: "Warranty" },
-  ];
+  if (!isMounted) return null;
 
   if (compare.items.length === 0) {
     return (
@@ -119,10 +120,11 @@ export default function CompareView() {
             {compare.items.map((item) => (
               <motion.div 
                 key={item.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                layout={!shouldReduceMotion}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
                 className="min-w-[300px] flex-1 border-r border-gray-50 last:border-r-0"
               >
                 {/* Header Info */}
@@ -203,7 +205,7 @@ export default function CompareView() {
                         </div>
                       ) : (
                         <span className="text-xs sm:text-sm font-bold text-gray-600">
-                          {(item.specs as any)?.[spec.key] || (item as any)[spec.key as keyof CompareItem] || <span className="text-gray-300">—</span>}
+                          {(item.specs as Record<string, string>)?.[spec.key] || (item as unknown as Record<string, string>)[spec.key] || <span className="text-gray-300">—</span>}
                         </span>
                       )}
                     </div>

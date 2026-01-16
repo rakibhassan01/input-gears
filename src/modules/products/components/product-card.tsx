@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Check, Heart, Eye, ArrowLeftRight } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
-import { MouseEventHandler, useState, useEffect } from "react";
+import { MouseEventHandler, useState, useEffect, memo, useMemo } from "react";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
 import { useSession } from "@/lib/auth-client";
@@ -24,10 +24,12 @@ interface ProductCardProps {
       name: string;
       slug?: string;
     } | null;
+    colors?: string[];
+    switchType?: string;
   };
 }
 
-export default function ProductCard({ data }: ProductCardProps) {
+const ProductCard = memo(({ data }: ProductCardProps) => {
   const cart = useCart();
   const wishlist = useWishlist();
   const compare = useCompare();
@@ -37,16 +39,23 @@ export default function ProductCard({ data }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Hydration fix & Auth check
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const formattedPrice = useMemo(() => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(data.price);
+  }, [data.price]);
+
+  // Hydration fix & Auth check - moved after isMounted check to be safer
   const isWishlisted =
     isMounted && session ? wishlist.isInWishlist(data.id) : false;
 
   const isComparing = isMounted ? compare.isInCompare(data.id) : false;
   const isOutOfStock = data.stock === 0;
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -114,11 +123,6 @@ export default function ProductCard({ data }: ProductCardProps) {
       });
     }
   };
-
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(data.price);
 
   return (
     <div className="group relative bg-white rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] md:hover:border-indigo-100/50 overflow-hidden flex flex-col h-full active:scale-[0.98]">
@@ -248,4 +252,8 @@ export default function ProductCard({ data }: ProductCardProps) {
       </div>
     </div>
   );
-}
+});
+
+ProductCard.displayName = "ProductCard";
+
+export default ProductCard;

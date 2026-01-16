@@ -91,6 +91,8 @@ model Product {
   orderItems OrderItem[]
   category   Category?   @relation(fields: [categoryId], references: [id])
   categoryId String?
+  colors     String[]    @default([])
+  switchType String?
 
   @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
 }

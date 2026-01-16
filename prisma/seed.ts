@@ -6,7 +6,9 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding products...");
 
-  // আগের সব ডাটা মুছে ফেলা (অপশনাল)
+  // আগের সব ডাটা মুছে ফেলা (ক্রমান্বয়ে মুছে ফেলতে হবে ফরেন কি এরর এড়াতে)
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
   await prisma.product.deleteMany();
 
   await prisma.product.createMany({
@@ -19,6 +21,8 @@ async function main() {
         stock: 50,
         image:
           "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#FFFFFF", "#FF3366"],
+        switchType: "Linear",
       },
       {
         name: "Wireless Gaming Mouse",
@@ -28,6 +32,7 @@ async function main() {
         stock: 30,
         image:
           "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#808080", "#FFD700"],
       },
       {
         name: "Noise Cancelling Headphones",
@@ -38,6 +43,7 @@ async function main() {
         stock: 15,
         image:
           "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#000080"],
       },
       {
         name: "4K Monitor 27-inch",
@@ -47,6 +53,7 @@ async function main() {
         stock: 10,
         image:
           "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#C0C0C0"],
       },
       {
         name: "Ergonomic Desk Chair",
@@ -56,6 +63,7 @@ async function main() {
         stock: 20,
         image:
           "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#4B0082", "#A52A2A"],
       },
       {
         name: "USB-C Hub Multiport",
@@ -65,6 +73,7 @@ async function main() {
         stock: 100,
         image:
           "https://images.unsplash.com/photo-1622359556214-415510b65637?w=800&auto=format&fit=crop&q=60",
+        colors: ["#808080", "#FFFFFF"],
       },
       {
         name: "Smart Watch Series 5",
@@ -74,6 +83,7 @@ async function main() {
         stock: 25,
         image:
           "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#FFC0CB", "#FFFFFF"],
       },
       {
         name: "Portable SSD 1TB",
@@ -83,6 +93,7 @@ async function main() {
         stock: 40,
         image:
           "https://images.unsplash.com/photo-1597872250969-95a985c5b2ce?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#FF4500"],
       },
       {
         name: "Webcam 1080p Pro",
@@ -92,6 +103,7 @@ async function main() {
         stock: 60,
         image:
           "https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000"],
       },
       {
         name: "Gaming Mouse Pad XL",
@@ -101,6 +113,7 @@ async function main() {
         stock: 150,
         image:
           "https://images.unsplash.com/photo-1610444569503-4f514603952f?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000", "#32CD32"],
       },
     ],
   });

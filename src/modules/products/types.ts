@@ -7,7 +7,18 @@ export interface Product {
   images: string[];
   category: string;
   stock: number;
-  // ডেমো অপশনস (কালার/সাইজ)
   colors?: string[];
-  sizes?: string[];
+  switchType?: string;
+  // Technical Specifications for Comparison
+  specs?: {
+    brand?: string;
+    model?: string;
+    weight?: string;
+    dimensions?: string;
+    warranty?: string;
+    material?: string;
+    connectivity?: string;
+    battery?: string;
+    features?: string[];
+  };
 }

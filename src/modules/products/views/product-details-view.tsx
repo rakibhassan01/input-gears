@@ -15,6 +15,7 @@ import {
   Truck,
   ShieldCheck,
   RefreshCcw,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Product } from "../types";
@@ -33,9 +34,6 @@ export default function ProductDetailsView({
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(
     product.colors?.[0] || null
-  );
-  const [selectedSize, setSelectedSize] = useState<string | null>(
-    product.sizes?.[0] || null
   );
   const [isAdding, setIsAdding] = useState(false);
 
@@ -135,6 +133,11 @@ export default function ProductDetailsView({
               <span className="text-sm text-gray-500 font-medium">
                 (125 Reviews)
               </span>
+              {product.switchType && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-indigo-100">
+                  <Zap size={10} /> {product.switchType}
+                </div>
+              )}
             </div>
           </div>
 
@@ -194,30 +197,7 @@ export default function ProductDetailsView({
               </div>
             )}
 
-            {/* Sizes */}
-            {product.sizes && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Select Size
-                </h3>
-                <div className="flex items-center gap-3">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={cn(
-                        "h-10 w-12 rounded-lg border text-sm font-medium flex items-center justify-center transition-all",
-                        selectedSize === size
-                          ? "border-indigo-600 bg-indigo-600 text-white shadow-md"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300 bg-white"
-                      )}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Sizes (Removed as per requirements) */}
           </div>
 
           {/* Actions: Quantity & Add to Cart */}

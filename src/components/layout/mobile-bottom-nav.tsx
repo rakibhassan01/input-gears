@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Tag, Heart, ArrowLeftRight, User } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
+import { useCompare } from "@/modules/products/hooks/use-compare";
 import MobileAccountMenu from "./mobile-account-menu";
 
 interface Tab {
@@ -21,9 +22,11 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const wishlist = useWishlist();
+  const compare = useCompare();
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const wishlistCount = wishlist.items.length;
+  const compareCount = compare.items.length;
 
   const handleOpenAccountMenu = useCallback(() => {
     setIsAccountMenuOpen(true);
@@ -54,10 +57,11 @@ export default function MobileBottomNav() {
       badge: wishlistCount,
     },
     {
-      name: "Compare",
+      name: "Comp",
       icon: ArrowLeftRight,
       href: "/compare",
       isActive: pathname === "/compare",
+      badge: compareCount,
     },
     {
       name: "You",

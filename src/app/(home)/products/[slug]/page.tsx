@@ -36,10 +36,10 @@ export default async function ProductDetailsPage(props: PageProps) {
     // images array তৈরি (placeholder সহ)
     images: productFromDb.image ? [productFromDb.image] : ["/placeholder.png"],
 
-    // ডিফল্ট ভ্যালু
+    // ডাটাবেস থেকে আসা ফিল্ড
     category: "General",
-    colors: [],
-    sizes: [],
+    colors: productFromDb.colors || [],
+    switchType: productFromDb.switchType || undefined,
   };
 
   return <ProductDetailsView product={transformedProduct} />;

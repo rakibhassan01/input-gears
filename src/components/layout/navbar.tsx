@@ -16,11 +16,13 @@ import {
   Headphones,
   Monitor,
   Cpu,
+  ArrowLeftRight,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import UserNav from "../../modules/auth/components/user-nav";
 import dynamic from "next/dynamic";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
+import { useCompare } from "@/modules/products/hooks/use-compare";
 import MobileBottomNav from "./mobile-bottom-nav";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -53,6 +55,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: session, isPending } = useSession();
   const wishlist = useWishlist();
+  const compare = useCompare();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -158,6 +161,25 @@ export default function Navbar() {
               >
                 <Search size={22} />
               </button>
+
+              <Link
+                href="/compare"
+                className="hidden md:flex p-2.5 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all relative group"
+              >
+                <ArrowLeftRight
+                  size={22}
+                  className={`transition-all duration-300 ${
+                    isMounted && compare.items.length > 0
+                      ? "text-amber-600 scale-110"
+                      : "group-hover:scale-110"
+                  }`}
+                />
+                {isMounted && compare.items.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-amber-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in duration-300">
+                    {compare.items.length}
+                  </span>
+                )}
+              </Link>
 
               <Link
                 href="/wishlist"

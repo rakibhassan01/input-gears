@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Check, Heart, Eye } from "lucide-react";
+import { ShoppingCart, Check, Heart, Eye, ArrowLeftRight } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect } from "react";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
+import { useCompare } from "@/modules/products/hooks/use-compare";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ interface ProductCardProps {
 export default function ProductCard({ data }: ProductCardProps) {
   const cart = useCart();
   const wishlist = useWishlist();
+  const compare = useCompare();
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -38,6 +40,8 @@ export default function ProductCard({ data }: ProductCardProps) {
   // Hydration fix & Auth check
   const isWishlisted =
     isMounted && session ? wishlist.isInWishlist(data.id) : false;
+
+  const isComparing = isMounted ? compare.isInCompare(data.id) : false;
   const isOutOfStock = data.stock === 0;
 
   useEffect(() => {
@@ -94,6 +98,23 @@ export default function ProductCard({ data }: ProductCardProps) {
     });
   };
 
+  const onToggleCompare: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (isComparing) {
+      compare.removeItem(data.id);
+    } else {
+      compare.addItem({
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        price: data.price,
+        image: data.image || "",
+      });
+    }
+  };
+
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -101,31 +122,33 @@ export default function ProductCard({ data }: ProductCardProps) {
 
   return (
     <div className="group relative bg-white rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] md:hover:border-indigo-100/50 overflow-hidden flex flex-col h-full active:scale-[0.98]">
-      {/* Image Container */}
-      <Link
-        href={`/products/${data.slug}`}
-        className="block aspect-4/5 relative bg-gray-50 overflow-hidden"
-      >
-        {data.image ? (
-          <Image
-            src={data.image}
-            alt={data.name}
-            fill
-            className={`object-cover transition-transform duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${
-              isOutOfStock ? "opacity-40 grayscale" : "md:group-hover:scale-110"
-            }`}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 font-medium italic">
-            No Image
-          </div>
-        )}
+      <div className="relative block aspect-4/5 bg-gray-50 overflow-hidden">
+        <Link
+          href={`/products/${data.slug}`}
+          className="block w-full h-full"
+        >
+          {data.image ? (
+            <Image
+              src={data.image}
+              alt={data.name}
+              fill
+              className={`object-cover transition-transform duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${
+                isOutOfStock ? "opacity-40 grayscale" : "md:group-hover:scale-110"
+              }`}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300 font-medium italic">
+              No Image
+            </div>
+          )}
+        </Link>
 
         {/* Floating Actions - Static on Mobile, Hover on Desktop */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 transform transition-all duration-500 delay-75 md:translate-x-12 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100">
+        <div className="absolute top-4 right-4 flex flex-col gap-2 transform transition-all duration-500 delay-75 md:translate-x-12 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 z-20">
           <button
             onClick={onToggleWishlist}
+            title="Wishlist"
             className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
               isWishlisted
                 ? "bg-indigo-600 text-white"
@@ -134,13 +157,29 @@ export default function ProductCard({ data }: ProductCardProps) {
           >
             <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
           </button>
-          <div className="h-10 w-10 bg-white/90 backdrop-blur-md text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
+
+          <button
+            onClick={onToggleCompare}
+            title="Compare"
+            className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
+              isComparing
+                ? "bg-amber-500 text-white"
+                : "bg-white/90 text-gray-900 hover:bg-amber-500 hover:text-white"
+            }`}
+          >
+            <ArrowLeftRight size={18} />
+          </button>
+
+          <Link
+            href={`/products/${data.slug}`}
+            className="h-10 w-10 bg-white/90 backdrop-blur-md text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
+          >
             <Eye size={18} />
-          </div>
+          </Link>
         </div>
 
         {/* Badges */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
+        <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
           {data.category && (
             <div className="bg-gray-900/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm">
               {data.category.name}
@@ -152,7 +191,7 @@ export default function ProductCard({ data }: ProductCardProps) {
             </div>
           )}
         </div>
-      </Link>
+      </div>
 
       {/* Content */}
       <div className="p-3.5 sm:p-5 flex flex-col flex-1">

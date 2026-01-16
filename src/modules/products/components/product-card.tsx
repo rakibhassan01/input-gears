@@ -22,10 +22,10 @@ interface ProductCardProps {
     slug: string;
     category?: {
       name: string;
-      slug?: string;
+      slug?: string | null;
     } | null;
     colors?: string[];
-    switchType?: string;
+    switchType?: string | null;
   };
 }
 
@@ -40,7 +40,8 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    const frame = requestAnimationFrame(() => setIsMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const formattedPrice = useMemo(() => {
@@ -127,17 +128,16 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
   return (
     <div className="group relative bg-white rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] md:hover:border-indigo-100/50 overflow-hidden flex flex-col h-full active:scale-[0.98]">
       <div className="relative block aspect-4/5 bg-gray-50 overflow-hidden">
-        <Link
-          href={`/products/${data.slug}`}
-          className="block w-full h-full"
-        >
+        <Link href={`/products/${data.slug}`} className="block w-full h-full">
           {data.image ? (
             <Image
               src={data.image}
               alt={data.name}
               fill
               className={`object-cover transition-transform duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${
-                isOutOfStock ? "opacity-40 grayscale" : "md:group-hover:scale-110"
+                isOutOfStock
+                  ? "opacity-40 grayscale"
+                  : "md:group-hover:scale-110"
               }`}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />

@@ -322,3 +322,25 @@ export async function deleteOrders(orderIds: string[]) {
     return { success: false, message: "Failed to delete orders" };
   }
 }
+// --- 5. Bulk Delete Products ---
+export async function deleteProducts(productIds: string[]) {
+  try {
+    await requireAdmin();
+
+    await prisma.product.deleteMany({
+      where: {
+        id: { in: productIds },
+      },
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/products");
+    return {
+      success: true,
+      message: `${productIds.length} products deleted successfully`,
+    };
+  } catch (error) {
+    console.error("Bulk Delete Products Error:", error);
+    return { success: false, message: "Failed to delete products" };
+  }
+}

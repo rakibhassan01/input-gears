@@ -228,26 +228,28 @@ export default function Navbar() {
 
         {/* SECONDARY NAVBAR (Desktop Categories Row) */}
         <div
-          className={`hidden lg:block w-full bg-white transition-all duration-300 border-b border-gray-100 ${
+          className={`hidden lg:grid w-full bg-white transition-all duration-300 ease-in-out border-b border-gray-100 ${
             isScrolled
-              ? "h-0 overflow-hidden opacity-0 border-none"
-              : "h-12 opacity-100"
+              ? "grid-rows-[0fr] opacity-0 invisible"
+              : "grid-rows-[1fr] opacity-100 visible"
           }`}
         >
-          <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="group flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-widest transition-all"
-              >
-                <link.icon
-                  size={14}
-                  className="text-gray-300 group-hover:text-indigo-400 transition-colors"
-                />
-                {link.name}
-              </Link>
-            ))}
+          <div className="overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-center gap-8">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="group flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-widest transition-all"
+                >
+                  <link.icon
+                    size={14}
+                    className="text-gray-300 group-hover:text-indigo-400 transition-colors"
+                  />
+                  {link.name}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </header>
@@ -399,14 +401,16 @@ export function NavbarSkeleton() {
         </div>
       </nav>
       {/* Secondary Nav Skeleton */}
-      <div className="hidden lg:block w-full h-12 border-t border-gray-50">
-        <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center gap-8">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="h-3 w-20 bg-gray-100 animate-pulse rounded-full"
-            />
-          ))}
+      <div className="hidden lg:grid w-full border-t border-gray-50 grid-rows-[1fr]">
+        <div className="overflow-hidden">
+          <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-center gap-8">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="h-3 w-20 bg-gray-100 animate-pulse rounded-full"
+              />
+            ))}
+          </div>
         </div>
       </div>
     </header>

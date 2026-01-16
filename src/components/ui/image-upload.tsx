@@ -95,8 +95,10 @@ export default function ImageUpload({
       >
         {({ open }) => {
           const onClick = () => {
-            if (disabled) return; // ডিসেবল থাকলে ওপেন হবে না
-            open();
+            if (disabled) return;
+            if (open) {
+              open();
+            }
           };
 
           return (

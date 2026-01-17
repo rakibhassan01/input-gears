@@ -26,7 +26,7 @@ interface ProductCardProps {
     } | null;
     colors?: string[];
     switchType?: string | null;
-    specs?: Record<string, string | number | boolean | null>;
+    specs?: any;
     brand?: string | null;
     sku?: string | null;
     dpi?: string | null;

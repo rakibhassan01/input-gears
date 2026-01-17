@@ -80,65 +80,70 @@ export async function placeOrder(
       new Set(validatedCartItems.map((i) => i.id))
     );
 
-    const result = await prisma.$transaction(async (tx) => {
-      const products = await tx.product.findMany({
-        where: { id: { in: uniqueProductIds } },
-        select: { id: true, name: true, price: true, image: true, stock: true },
+    const products = await prisma.product.findMany({
+      where: { id: { in: uniqueProductIds } },
+      select: { id: true, name: true, price: true, image: true, stock: true },
+    });
+
+    if (products.length !== uniqueProductIds.length) {
+      throw new Error("Invalid cart items");
+    }
+
+    const productById = new Map<
+      string,
+      { id: string; name: string; price: number; image: string | null; stock: number }
+    >(products.map((p) => [p.id, p]));
+    for (const item of validatedCartItems) {
+      const product = productById.get(item.id);
+      if (!product) throw new Error("Invalid cart items");
+      if (item.quantity > product.stock) throw new Error("Out of stock");
+    }
+
+    const subtotalCents = validatedCartItems.reduce((acc, item) => {
+      const product = productById.get(item.id)!;
+      const unitPriceCents = Math.round(product.price * 100);
+      return acc + unitPriceCents * item.quantity;
+    }, 0);
+
+    const shippingCents = subtotalCents > 100000 ? 0 : 6000;
+    const totalCents = subtotalCents + shippingCents;
+
+    const dbPaymentMethod = paymentMethod === "cod" ? "COD" : "STRIPE";
+    let isPaid = false;
+
+    // --- 1. Stripe Verification (Outside Transaction) ---
+    if (dbPaymentMethod === "STRIPE") {
+      if (!paymentIntentId) {
+        throw new Error("Missing payment intent");
+      }
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error("Stripe is not configured");
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2025-12-15.clover",
+        typescript: true,
       });
 
-      if (products.length !== uniqueProductIds.length) {
-        throw new Error("Invalid cart items");
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (
+        paymentIntent.status !== "succeeded" ||
+        paymentIntent.amount !== totalCents ||
+        paymentIntent.currency !== "usd"
+      ) {
+        throw new Error("Payment verification failed");
       }
 
-      const productById = new Map(products.map((p) => [p.id, p]));
-      for (const item of validatedCartItems) {
-        const product = productById.get(item.id);
-        if (!product) throw new Error("Invalid cart items");
-        if (item.quantity > product.stock) throw new Error("Out of stock");
-      }
+      isPaid = true;
+    }
 
-      const subtotalCents = validatedCartItems.reduce((acc, item) => {
-        const product = productById.get(item.id)!;
-        const unitPriceCents = Math.round(product.price * 100);
-        return acc + unitPriceCents * item.quantity;
-      }, 0);
+    // --- 2. Order Number Generation (Outside Transaction) ---
+    const newOrderNumber = await generateOrderNumber();
 
-      const shippingCents = subtotalCents > 100000 ? 0 : 6000;
-      const totalCents = subtotalCents + shippingCents;
-
-      const dbPaymentMethod = paymentMethod === "cod" ? "COD" : "STRIPE";
-      let isPaid = false;
-
-      if (dbPaymentMethod === "STRIPE") {
-        if (!paymentIntentId) {
-          throw new Error("Missing payment intent");
-        }
-        if (!process.env.STRIPE_SECRET_KEY) {
-          throw new Error("Stripe is not configured");
-        }
-
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-          apiVersion: "2025-12-15.clover",
-          typescript: true,
-        });
-
-        const paymentIntent = await stripe.paymentIntents.retrieve(
-          paymentIntentId
-        );
-
-        if (
-          paymentIntent.status !== "succeeded" ||
-          paymentIntent.amount !== totalCents ||
-          paymentIntent.currency !== "usd"
-        ) {
-          throw new Error("Payment verification failed");
-        }
-
-        isPaid = true;
-      }
-
-      const newOrderNumber = await generateOrderNumber();
-
+    // --- 3. Atomic Database Operations (Simplified Transaction) ---
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the order and items
       const order = await tx.order.create({
         data: {
           orderNumber: newOrderNumber,
@@ -170,6 +175,7 @@ export async function placeOrder(
         },
       });
 
+      // Update product stocks
       for (const item of validatedCartItems) {
         await tx.product.update({
           where: { id: item.id },

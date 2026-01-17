@@ -1,49 +1,48 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
+import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Next.js 16 Proxy (formerly Middleware)
+ * Handles route protection and smart authentication redirects.
+ */
 export async function proxy(request: NextRequest) {
-  // বা middleware নাম হলে middleware
   const { pathname } = request.nextUrl;
+  
+  // session check using Better Auth API
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  // ✅ FIX: লোকাল এবং সিকিউর (HTTPS) দুই ধরণের কুকিই চেক করা হচ্ছে
-  const sessionCookie =
-    request.cookies.get("better-auth.session_token") ||
-    request.cookies.get("__Secure-better-auth.session_token");
+  const isAuthRoute = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  const isProtectedRoute =
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/dashboard");
 
-  // 2. অথ রাউট চেক
-  const authRoutes = ["/sign-in", "/sign-up", "/forgot-password"];
-  const isAuthRoute = authRoutes.includes(pathname);
-
-  // 3. প্রোটেক্টেড রাউট চেক
-  const protectedRoutes = ["/dashboard", "/account", "/settings"];
-  // startsWith ব্যবহার করলে /dashboard/abc, /account/orders এগুলোও কাভার হবে
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  // --- Logic ---
-
-  // A. লগইন থাকা অবস্থায় অথ পেজে গেলে -> ড্যাশবোর্ডে পাঠাও
-  if (isAuthRoute && sessionCookie) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // If user is logged in & trying to access auth routes -> redirect to account
+  if (session?.user && isAuthRoute) {
+    return NextResponse.redirect(new URL("/account", request.url));
   }
 
-  // B. লগইন না থাকা অবস্থায় প্রোটেক্টেড পেজে গেলে -> সাইন-ইনে পাঠাও
-  if (isProtectedRoute && !sessionCookie) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+  // If user is NOT logged in & trying to access protected routes -> redirect to sign-in with callbackURL
+  if (!session?.user && isProtectedRoute) {
+    const callbackURL = encodeURIComponent(pathname);
+    return NextResponse.redirect(
+      new URL(`/sign-in?callbackURL=${callbackURL}`, request.url)
+    );
   }
 
   return NextResponse.next();
 }
 
-// কনফিগারেশন
 export const config = {
   matcher: [
+    "/account/:path*",
+    "/admin/:path*",
+    "/checkout/:path*",
+    "/dashboard/:path*",
     "/sign-in",
     "/sign-up",
-    "/forgot-password",
-    "/dashboard/:path*",
-    "/account/:path*",
-    "/settings/:path*",
   ],
 };

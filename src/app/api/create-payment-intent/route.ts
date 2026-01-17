@@ -11,7 +11,7 @@ const requestSchema = z.object({
           id: z.string().min(1),
           quantity: z.number().int().positive().max(99),
         })
-        .passthrough()
+        .passthrough(),
     )
     .min(1),
 });
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: "Stripe is not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,9 +48,14 @@ export async function POST(req: Request) {
     });
 
     if (products.length !== uniqueProductIds.length) {
+      const foundIds = products.map((p) => p.id);
+      const missingIds = uniqueProductIds.filter(
+        (id) => !foundIds.includes(id),
+      );
+      console.error("Invalid product IDs in cart:", missingIds);
       return NextResponse.json(
         { error: "One or more items are invalid" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,13 +65,13 @@ export async function POST(req: Request) {
       if (!product) {
         return NextResponse.json(
           { error: "One or more items are invalid" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       if (item.quantity > product.stock) {
         return NextResponse.json(
           { error: "One or more items are out of stock" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -93,7 +98,7 @@ export async function POST(req: Request) {
     console.error("Create Payment Intent Error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

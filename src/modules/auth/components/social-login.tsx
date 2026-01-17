@@ -2,11 +2,15 @@
 
 import { authClient } from "@/lib/auth-client";
 import { Github, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export default function SocialLogin() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const callbackURL = searchParams.get("callbackURL") || "/account";
 
   const handleSocialLogin = async (provider: "github" | "google") => {
     setIsLoading(true);
@@ -15,7 +19,7 @@ export default function SocialLogin() {
     await authClient.signIn.social(
       {
         provider: provider,
-        callbackURL: "/dashboard",
+        callbackURL: callbackURL,
       },
       {
         onError: (ctx) => {
@@ -27,7 +31,7 @@ export default function SocialLogin() {
           toast.dismiss();
           toast.success("Login successful!");
         },
-      }
+      },
     );
   };
 

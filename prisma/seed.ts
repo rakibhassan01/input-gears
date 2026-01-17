@@ -14,6 +14,7 @@ async function main() {
   await prisma.product.createMany({
     data: [
       {
+        id: "prod_keyboard_x1",
         name: "Mechanical Keyboard X1",
         slug: "mechanical-keyboard-x1",
         description: "Premium mechanical keyboard with RGB backlighting.",
@@ -32,6 +33,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_mouse_wireless",
         name: "Wireless Gaming Mouse",
         slug: "wireless-gaming-mouse",
         description: "Ultra-fast response time with 25k DPI sensor.",
@@ -51,6 +53,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_headphones_anc",
         name: "Noise Cancelling Headphones",
         slug: "noise-cancelling-headphones",
         description:
@@ -69,6 +72,7 @@ async function main() {
         availability: "Limited Stock",
       },
       {
+        id: "prod_monitor_4k",
         name: "4K Monitor 27-inch",
         slug: "4k-monitor-27-inch",
         description: "Crystal clear display tailored for designers.",
@@ -85,6 +89,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_chair_ergonomic",
         name: "Ergonomic Desk Chair",
         slug: "ergonomic-desk-chair",
         description: "Maximum comfort for long working hours.",
@@ -100,6 +105,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_hub_usbc",
         name: "USB-C Hub Multiport",
         slug: "usb-c-hub-multiport",
         description: "Expand your connectivity with 7 ports.",
@@ -114,6 +120,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_watch_series5",
         name: "Smart Watch Series 5",
         slug: "smart-watch-series-5",
         description: "Track your fitness and notifications on the go.",
@@ -128,6 +135,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_ssd_1tb",
         name: "Portable SSD 1TB",
         slug: "portable-ssd-1tb",
         description: "Lightning fast transfer speeds in a compact design.",
@@ -142,6 +150,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_webcam_1080p",
         name: "Webcam 1080p Pro",
         slug: "webcam-1080p-pro",
         description: "Look your best in every video call.",
@@ -156,6 +165,7 @@ async function main() {
         availability: "In Stock",
       },
       {
+        id: "prod_mousepad_xl",
         name: "Gaming Mouse Pad XL",
         slug: "gaming-mouse-pad-xl",
         description: "Smooth surface for precise control.",

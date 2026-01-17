@@ -25,7 +25,7 @@ export default function CartNav() {
 
   const total = cart.items.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
-    0
+    0,
   );
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -150,7 +150,7 @@ export default function CartNav() {
                         <div className="flex justify-between items-start gap-2">
                           <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2">
                             <Link
-                              href={`/product/${item.id}`}
+                              href={`/products/${item.slug}`}
                               onClick={() => setIsOpen(false)}
                               className="hover:text-indigo-600 transition-colors"
                             >

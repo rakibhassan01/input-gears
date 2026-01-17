@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,8 +29,11 @@ type SignUpData = z.infer<typeof signUpSchema>;
 
 export default function SignUpView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const callbackURL = searchParams.get("callbackURL") || "/account";
 
   const {
     register,
@@ -55,21 +58,20 @@ export default function SignUpView() {
           email: data.email,
           password: data.password,
           name: data.name, // Extra field for Sign Up
-          callbackURL: "/account",
         },
         {
-          onError: (ctx) => {
-            toast.error(ctx.error.message || "Something went wrong");
-            setIsLoading(false);
-          },
           onSuccess: () => {
             toast.success("Account created successfully!");
-            router.push("/account");
+            router.push(callbackURL);
             router.refresh();
           },
-        }
+          onError: (ctx) => {
+            toast.error(ctx.error.message || "Failed to create account");
+            setIsLoading(false);
+          },
+        },
       );
-    } catch (error) {
+    } catch {
       toast.error("Network error. Please try again.");
       setIsLoading(false);
     }

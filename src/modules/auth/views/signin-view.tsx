@@ -2,21 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner"; // অথবা 'react-hot-toast'
 import { authClient } from "@/lib/auth-client";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Loader2,
-  Github,
-  Settings,
-} from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, Settings } from "lucide-react";
 import SocialLogin from "@/modules/auth/components/social-login";
 
 // --- Schema ---
@@ -33,8 +25,11 @@ type SignInData = z.infer<typeof signInSchema>;
 
 export default function SignInView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const callbackURL = searchParams.get("callbackURL") || "/account";
 
   const {
     register,
@@ -53,21 +48,20 @@ export default function SignInView() {
         {
           email: data.email,
           password: data.password,
-          callbackURL: "/account",
         },
         {
+          onSuccess: () => {
+            toast.success("Welcome back!");
+            router.push(callbackURL);
+            router.refresh();
+          },
           onError: (ctx) => {
             toast.error(ctx.error.message || "Invalid email or password");
             setIsLoading(false);
           },
-          onSuccess: () => {
-            toast.success("Welcome back!");
-            router.push("/account");
-            router.refresh();
-          },
-        }
+        },
       );
-    } catch (error) {
+    } catch {
       toast.error("Network error. Please try again.");
       setIsLoading(false);
     }

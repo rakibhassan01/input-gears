@@ -59,9 +59,13 @@ export default function Navbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    setSearchQuery(searchParams.get("q") || "");
-  }, [searchParams]);
+  // Sync search query from URL without useEffect to avoid cascading renders
+  const currentQuery = searchParams.get("q") || "";
+  const [prevSearch, setPrevSearch] = useState(currentQuery);
+  if (currentQuery !== prevSearch) {
+    setPrevSearch(currentQuery);
+    setSearchQuery(currentQuery);
+  }
 
   useEffect(() => {
     setIsMounted(true);
@@ -155,13 +159,6 @@ export default function Navbar() {
 
             {/* RIGHT: Actions */}
             <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
-              <button
-                className="md:hidden p-2.5 text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
-                aria-label="Search"
-              >
-                <Search size={22} />
-              </button>
-
               <Link
                 href="/compare"
                 className="hidden md:flex p-2.5 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all relative group"
@@ -225,6 +222,23 @@ export default function Navbar() {
             </div>
           </div>
         </nav>
+
+        {/* MOBILE SEARCH SECTION */}
+        <div className="md:hidden bg-white px-4 pb-3 -mt-1 border-b border-gray-100/50">
+          <form onSubmit={handleSearch} className="relative group">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search gadgets (e.g. Keyboard)..."
+              className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-11 pr-4 py-3 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-300"
+            />
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
+            />
+          </form>
+        </div>
 
         {/* SECONDARY NAVBAR (Desktop Categories Row) */}
         <div
@@ -400,6 +414,11 @@ export function NavbarSkeleton() {
           </div>
         </div>
       </nav>
+
+      {/* Mobile Search Skeleton */}
+      <div className="md:hidden bg-white px-4 pb-3 -mt-1 border-b border-gray-100/50">
+        <div className="h-10 w-full bg-gray-50 animate-pulse rounded-2xl" />
+      </div>
       {/* Secondary Nav Skeleton */}
       <div className="hidden lg:grid w-full border-t border-gray-50 grid-rows-[1fr]">
         <div className="overflow-hidden">

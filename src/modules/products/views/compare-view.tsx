@@ -22,7 +22,7 @@ import {
   ToggleRight,
   Trash2,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -70,15 +70,11 @@ export default function CompareView() {
   const compare = useCompare();
   const cart = useCart();
   const [isMounted, setIsMounted] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [showDiffOnly, setShowDiffOnly] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    const handleScroll = () => setIsScrolled(window.scrollY > 300);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // --- Data Extraction Logic ---
@@ -98,12 +94,12 @@ export default function CompareView() {
 
     // 2. Nested Specs
     if (item.specs) {
-      const specsRecord = item.specs as Record<string, any>;
-      const specKey = Object.keys(specsRecord).find(
+      const specs = item.specs as Record<string, any>;
+      const specKey = Object.keys(specs).find(
         (k) => k.toLowerCase() === searchKey
       );
       if (specKey) {
-        const val = specsRecord[specKey];
+        const val = specs[specKey];
         if (Array.isArray(val)) return val.length > 0 ? val.join(", ") : null;
         return val;
       }
@@ -254,59 +250,6 @@ export default function CompareView() {
   // --- Main Render ---
   return (
     <div className="min-h-screen bg-slate-50/50 pb-32">
-      {/* Sticky Top Bar (Glassmorphism) */}
-      <motion.div
-        className={cn(
-          "fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300",
-          isScrolled
-            ? "translate-y-0 opacity-100 shadow-sm"
-            : "-translate-y-full opacity-0"
-        )}
-      >
-        <div className="max-w-[1600px] mx-auto px-4 md:px-8 h-20 flex items-center">
-          <div className="w-[200px] md:w-[280px] shrink-0 font-bold text-slate-900 flex items-center gap-2">
-            <Scale className="text-indigo-600" size={20} />
-            <span>Comparison</span>
-            <span className="text-slate-400 font-normal text-sm ml-2 hidden sm:inline-block">
-              {compare.items.length} items
-            </span>
-          </div>
-          <div className="flex-1 flex items-center gap-4 overflow-x-auto no-scrollbar mask-gradient-right">
-            {compare.items.map((item) => (
-              <div
-                key={item.id}
-                className="min-w-[200px] flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-lg bg-slate-100 relative overflow-hidden shrink-0 border border-slate-200">
-                  <Image
-                    src={item.image}
-                    alt=""
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-slate-900 truncate block max-w-[120px]">
-                    {item.name}
-                  </span>
-                  <span className="text-[10px] text-slate-500">
-                    ${item.price}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="pl-4 border-l border-slate-200 hidden md:block">
-            <button
-              onClick={() => compare.clearCompare()}
-              className="text-xs font-semibold text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
-            >
-              Clear All
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
       {/* Main Content */}
       <div className="max-w-[1600px] mx-auto pt-16 md:pt-24 px-4 md:px-8">
         {/* Header Section */}
@@ -358,193 +301,193 @@ export default function CompareView() {
           </div>
         </div>
 
-        {/* Comparison Grid */}
-        <div className="relative border border-slate-200 bg-white rounded-3xl shadow-xl shadow-slate-200/40 overflow-hidden">
-          {/* Grid Header (Products) */}
-          <div className="flex border-b border-slate-100">
-            {/* Spacer for sticky sidebar */}
-            <div className="hidden md:flex w-[280px] shrink-0 p-8 flex-col justify-end bg-slate-50/50 border-r border-slate-100">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                {compare.items.length} Products
-              </span>
-            </div>
+        {/* Comparison Grid Container (Unified Scroller) */}
+        <div className="relative border border-slate-200 bg-slate-50/50 rounded-3xl shadow-xl shadow-slate-200/40 overflow-visible">
+          <div className="overflow-x-auto no-scrollbar scroll-smooth rounded-3xl">
+            <div className="min-w-max md:min-w-full">
+              {/* Grid Header (Products) - STICKY */}
+              <div className="flex border-b border-slate-200 sticky top-[100px] md:top-[64px] z-40 bg-white">
+                {/* Fixed Title Box */}
+                <div className="w-[200px] md:w-[280px] shrink-0 p-6 md:p-8 flex flex-col justify-end bg-white border-r border-slate-100 sticky left-0 z-50 shadow-[2px_0_10px_rgba(0,0,0,0.02)]">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
+                    {compare.items.length} Products
+                  </span>
+                </div>
 
-            {/* Product Columns */}
-            <div className="flex overflow-x-auto no-scrollbar divide-x divide-slate-100 w-full scroll-smooth">
-              {compare.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="min-w-[260px] md:min-w-[320px] flex-1 p-6 md:p-8 flex flex-col items-center text-center relative group"
-                >
-                  <button
-                    onClick={() => compare.removeItem(item.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors p-2"
-                  >
-                    <X size={18} />
-                  </button>
-
-                  <div className="relative w-full aspect-square mb-6">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-
-                  <Link
-                    href={`/products/${item.slug}`}
-                    className="hover:text-indigo-600 transition-colors"
-                  >
-                    <h3 className="text-lg font-bold text-slate-900 leading-tight mb-2 line-clamp-2 min-h-[3rem]">
-                      {item.name}
-                    </h3>
-                  </Link>
-
-                  <div className="flex items-center gap-2 mb-6">
-                    <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                      {getDisplayValue(item, "brand")}
-                    </span>
-                    {item.specs?.["new"] && (
-                      <span className="px-2.5 py-1 bg-blue-100 text-blue-600 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                        New
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-auto w-full space-y-3">
-                    <div className="text-2xl font-bold text-slate-900">
-                      ${item.price.toLocaleString()}
-                    </div>
-                    <button
-                      onClick={() => handleAddToCart(item)}
-                      className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95"
+                {/* Product Info Row */}
+                <div className="flex divide-x divide-slate-100 bg-white">
+                  {compare.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="w-[260px] md:w-[320px] shrink-0 p-6 md:p-8 flex flex-col items-center text-center relative group bg-white"
                     >
-                      <ShoppingCart size={16} /> Add
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {/* Add Slot */}
-              {compare.items.length < 4 && (
-                <div className="min-w-[200px] flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/30 border-dashed border-l border-slate-200 hover:bg-slate-50 transition-colors">
-                  <Link
-                    href="/products"
-                    className="group flex flex-col items-center gap-4"
-                  >
-                    <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all">
-                      <ArrowRight size={24} />
-                    </div>
-                    <span className="text-sm font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">
-                      Add Product
-                    </span>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Spec Rows */}
-          <div className="divide-y divide-slate-100">
-            {specGroups.map((group) => {
-              // Filter keys if diff mode is on
-              const visibleKeys = showDiffOnly
-                ? group.keys.filter((k) => rowHasDifferences(k.key))
-                : group.keys;
-
-              if (visibleKeys.length === 0) return null;
-
-              return (
-                <div key={group.id} className="flex flex-col">
-                  {/* Group Header (Mobile) */}
-                  <div className="md:hidden bg-slate-50 px-6 py-3 border-y border-slate-100 flex items-center gap-2 text-slate-500">
-                    <group.icon size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                      {group.name}
-                    </span>
-                  </div>
-
-                  {visibleKeys.map((spec) => {
-                    const isDiff = rowHasDifferences(spec.key);
-                    const isHovered = hoveredRow === spec.key;
-
-                    return (
-                      <div
-                        key={spec.key}
-                        onMouseEnter={() => setHoveredRow(spec.key)}
-                        onMouseLeave={() => setHoveredRow(null)}
-                        className={cn(
-                          "flex flex-col md:flex-row transition-colors duration-200",
-                          isHovered ? "bg-indigo-50/40" : "bg-white",
-                          !isDiff && showDiffOnly
-                            ? "opacity-30 grayscale"
-                            : "opacity-100"
-                        )}
+                      <button
+                        onClick={() => compare.removeItem(item.id)}
+                        className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors p-2"
                       >
-                        {/* Label Column */}
-                        <div className="hidden md:flex w-[280px] shrink-0 p-4 pl-8 items-center border-r border-slate-100/50">
-                          <div className="flex flex-col">
-                            <span
-                              className={cn(
-                                "text-sm font-medium transition-colors",
-                                isHovered ? "text-indigo-900" : "text-slate-500"
-                              )}
-                            >
-                              {spec.label}
-                            </span>
-                            {/* Group Context (Subtle) */}
-                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider mt-0.5">
-                              {group.name}
-                            </span>
-                          </div>
-                        </div>
+                        <X size={18} />
+                      </button>
 
-                        {/* Value Columns */}
-                        <div className="flex overflow-x-auto no-scrollbar divide-x divide-slate-100/50 w-full">
-                          {compare.items.map((item) => {
-                            const val = getDisplayValue(item, spec.key);
-
-                            return (
-                              <div
-                                key={`${item.id}-${spec.key}`}
-                                className="min-w-[260px] md:min-w-[320px] flex-1 p-4 md:p-5 flex items-center justify-center md:justify-start text-center md:text-left"
-                              >
-                                {/* Mobile Label */}
-                                <span className="md:hidden text-xs text-slate-400 mr-2">
-                                  {spec.label}:
-                                </span>
-
-                                {spec.key === "colors" && Array.isArray(val) ? (
-                                  <div className="flex gap-1.5 justify-center md:justify-start flex-wrap">
-                                    {val.map((c: string) => (
-                                      <div
-                                        key={c}
-                                        className="w-5 h-5 rounded-full border border-slate-200 shadow-sm"
-                                        style={{
-                                          backgroundColor: c.toLowerCase(),
-                                        }}
-                                        title={c}
-                                      />
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <SpecValueRenderer value={val as string} />
-                                )}
-                              </div>
-                            );
-                          })}
-                          {/* Spacer for empty slot */}
-                          {compare.items.length < 4 && (
-                            <div className="min-w-[200px] flex-1" />
-                          )}
-                        </div>
+                      <div className="relative w-full aspect-square mb-6">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
+                        />
                       </div>
-                    );
-                  })}
+
+                      <Link
+                        href={`/products/${item.slug}`}
+                        className="hover:text-indigo-600 transition-colors w-full"
+                      >
+                        <h3 className="text-[17px] md:text-xl font-black text-slate-900 leading-tight mb-2 line-clamp-2 h-[3.5rem] md:h-[4.5rem] flex items-center justify-center">
+                          {item.name}
+                        </h3>
+                      </Link>
+
+                      <div className="flex items-center gap-2 mb-6 text-xs font-bold uppercase tracking-wider">
+                        <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">
+                          {getDisplayValue(item, "brand")}
+                        </span>
+                        {item.specs?.["new"] && (
+                          <span className="px-2.5 py-1 bg-blue-100 text-blue-600 rounded-md">
+                            New
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-auto w-full space-y-3">
+                        <div className="text-2xl font-bold text-slate-900">
+                          ${item.price.toLocaleString()}
+                        </div>
+                        <button
+                          onClick={() => handleAddToCart(item)}
+                          className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95"
+                        >
+                          <ShoppingCart size={16} /> Add
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add Slot */}
+                  {compare.items.length < 4 && (
+                    <div className="w-[260px] md:w-[320px] shrink-0 flex flex-col items-center justify-center p-8 bg-slate-50/30 border-dashed border-l border-slate-200 hover:bg-slate-50 transition-colors">
+                      <Link
+                        href="/products"
+                        className="group flex flex-col items-center gap-4"
+                      >
+                        <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all">
+                          <ArrowRight size={24} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">
+                          Add Product
+                        </span>
+                      </Link>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Spec Rows */}
+              <div className="divide-y divide-slate-100">
+                {specGroups.map((group) => {
+                  // Filter keys if diff mode is on
+                  const visibleKeys = showDiffOnly
+                    ? group.keys.filter((k) => rowHasDifferences(k.key))
+                    : group.keys;
+
+                  if (visibleKeys.length === 0) return null;
+
+                  return (
+                    <div key={group.id} className="flex flex-col">
+                      {/* Group Header (Mobile) */}
+                      <div className="md:hidden bg-slate-50 px-6 py-3 border-y border-slate-100 flex items-center gap-2 text-slate-500">
+                        <group.icon size={16} />
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                          {group.name}
+                        </span>
+                      </div>
+
+                      {visibleKeys.map((spec) => {
+                        const isDiff = rowHasDifferences(spec.key);
+                        const isHovered = hoveredRow === spec.key;
+
+                        return (
+                          <div
+                            key={spec.key}
+                            onMouseEnter={() => setHoveredRow(spec.key)}
+                            onMouseLeave={() => setHoveredRow(null)}
+                            className={cn(
+                              "flex transition-colors duration-200",
+                              isHovered ? "bg-indigo-50/40" : "bg-white",
+                              !isDiff && showDiffOnly
+                                ? "opacity-30 grayscale"
+                                : "opacity-100"
+                            )}
+                          >
+                            {/* Label Column - STICKY SIDEBAR */}
+                            <div className="w-[200px] md:w-[280px] shrink-0 p-4 pl-6 md:pl-8 flex items-center border-r border-slate-100/50 sticky left-0 z-20 bg-white shadow-[2px_0_8px_rgba(0,0,0,0.02)]">
+                              <div className="flex flex-col">
+                                <span
+                                  className={cn(
+                                    "text-[13px] md:text-sm font-medium transition-colors",
+                                    isHovered
+                                      ? "text-indigo-900"
+                                      : "text-slate-500"
+                                  )}
+                                >
+                                  {spec.label}
+                                </span>
+                                {/* Group Context (Subtle) */}
+                                <span className="text-[9px] md:text-[10px] text-slate-300 font-bold uppercase tracking-wider mt-0.5">
+                                  {group.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Value Columns */}
+                            <div className="flex divide-x divide-slate-100/50">
+                              {compare.items.map((item) => {
+                                const val = getDisplayValue(item, spec.key);
+
+                                return (
+                                  <div
+                                    key={`${item.id}-${spec.key}`}
+                                    className="w-[260px] md:w-[320px] shrink-0 p-4 md:p-5 flex items-center justify-center md:justify-start text-center md:text-left"
+                                  >
+                                    {spec.key === "colors" &&
+                                    Array.isArray(val) ? (
+                                      <div className="flex gap-1.5 justify-center md:justify-start flex-wrap">
+                                        {val.map((c: string) => (
+                                          <div
+                                            key={c}
+                                            className="w-5 h-5 rounded-full border border-slate-200 shadow-sm"
+                                            style={{
+                                              backgroundColor: c.toLowerCase(),
+                                            }}
+                                            title={c}
+                                          />
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <SpecValueRenderer
+                                        value={val as string}
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 

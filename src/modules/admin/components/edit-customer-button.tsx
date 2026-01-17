@@ -9,7 +9,7 @@ interface EditCustomerButtonProps {
     id: string;
     name: string | null;
     email: string | null;
-    role: string;
+    role: string | null;
     phone: string | null;
   };
 }
@@ -29,7 +29,10 @@ export default function EditCustomerButton({ user }: EditCustomerButtonProps) {
       <EditCustomerModal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        user={user}
+        user={{
+          ...user,
+          role: (user.role as "user" | "admin") || "user",
+        }}
       />
     </>
   );

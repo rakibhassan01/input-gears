@@ -25,7 +25,7 @@ interface EditCustomerModalProps {
     id: string;
     name: string | null;
     email: string | null;
-    role: string;
+    role: string | null;
     phone: string | null;
   };
 }

@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Trash2,
   Zap,
+  Cpu,
   Plus,
   X
 } from "lucide-react";
@@ -41,6 +42,15 @@ const formSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   colors: z.array(z.string()).default([]),
   switchType: z.string().optional(),
+  brand: z.string().optional(),
+  sku: z.string().optional(),
+  dpi: z.string().optional(),
+  weight: z.string().optional(),
+  connectionType: z.string().optional(),
+  pollingRate: z.string().optional(),
+  sensor: z.string().optional(),
+  warranty: z.string().optional(),
+  availability: z.string().optional(),
   specs: z.record(z.string(), z.string()).optional(),
 });
 
@@ -73,6 +83,15 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
       categoryId: product.categoryId || "",
       colors: (product as any).colors || [],
       switchType: (product as any).switchType || "",
+      brand: (product as any).brand || "",
+      sku: (product as any).sku || "",
+      dpi: (product as any).dpi || "",
+      weight: (product as any).weight || "",
+      connectionType: (product as any).connectionType || "",
+      pollingRate: (product as any).pollingRate || "",
+      sensor: (product as any).sensor || "",
+      warranty: (product as any).warranty || "",
+      availability: (product as any).availability || "In Stock",
       specs: (product as any).specs || {},
     },
     mode: "onChange",
@@ -497,6 +516,109 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
                          <Plus size={16} /> Add
                        </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advanced Technical Specs */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Cpu size={20} className="text-indigo-600" /> Advanced Technical Index
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Brand */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Brand</label>
+                    <input 
+                      {...form.register("brand")}
+                      placeholder="e.g. Logitech, Razer"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* SKU */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">SKU / Model</label>
+                    <input 
+                      {...form.register("sku")}
+                      placeholder="e.g. G-PRO-WL-01"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* Availability */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Availability Status</label>
+                    <select
+                      {...form.register("availability")}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold appearance-none cursor-pointer"
+                    >
+                      <option value="In Stock">In Stock</option>
+                      <option value="Out of Stock">Out of Stock</option>
+                      <option value="Pre-Order">Pre-Order</option>
+                      <option value="Discontinued">Discontinued</option>
+                    </select>
+                  </div>
+
+                  {/* Sensor */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sensor Technology</label>
+                    <input 
+                      {...form.register("sensor")}
+                      placeholder="e.g. HERO 25K, Focus Pro"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* DPI */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Max DPI / Sensitivity</label>
+                    <input 
+                      {...form.register("dpi")}
+                      placeholder="e.g. 25,600 DPI"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* Weight */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Product Weight</label>
+                    <input 
+                      {...form.register("weight")}
+                      placeholder="e.g. 63g (Ultra-light)"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* Connection */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Connection Type</label>
+                    <input 
+                      {...form.register("connectionType")}
+                      placeholder="e.g. LIGHTSPEED, Bluetooth"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* Polling Rate */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Polling Rate</label>
+                    <input 
+                      {...form.register("pollingRate")}
+                      placeholder="e.g. 1000Hz, 8000Hz"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                  </div>
+
+                  {/* Warranty */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Warranty Period</label>
+                    <input 
+                      {...form.register("warranty")}
+                      placeholder="e.g. 2 Year Limited"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
                   </div>
                 </div>
               </div>

@@ -26,6 +26,16 @@ interface ProductCardProps {
     } | null;
     colors?: string[];
     switchType?: string | null;
+    specs?: Record<string, string | number | boolean | null>;
+    brand?: string | null;
+    sku?: string | null;
+    dpi?: string | null;
+    weight?: string | null;
+    connectionType?: string | null;
+    pollingRate?: string | null;
+    sensor?: string | null;
+    warranty?: string | null;
+    availability?: string | null;
   };
 }
 
@@ -121,6 +131,18 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
         slug: data.slug,
         price: data.price,
         image: data.image || "",
+        colors: data.colors,
+        switchType: data.switchType || undefined,
+        specs: data.specs,
+        brand: data.brand,
+        sku: data.sku,
+        dpi: data.dpi,
+        weight: data.weight,
+        connectionType: data.connectionType,
+        pollingRate: data.pollingRate,
+        sensor: data.sensor,
+        warranty: data.warranty,
+        availability: data.availability,
       });
     }
   };

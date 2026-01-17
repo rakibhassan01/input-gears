@@ -45,6 +45,8 @@ interface ProductsTableProps {
   allCount: number; // Total Count in Store
 }
 
+import { AlertModal } from "@/components/ui/alert-modal";
+
 export default function ProductsTable({
   products,
   categories,
@@ -55,6 +57,7 @@ export default function ProductsTable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -110,19 +113,13 @@ export default function ProductsTable({
   };
 
   // Bulk Actions
-  const handleDeleteSelected = () => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete ${selectedIds.length} products?`
-      )
-    )
-      return;
-
+  const handleDeleteConfirm = () => {
     startTransition(async () => {
       const res = await deleteProducts(selectedIds);
       if (res.success) {
         toast.success(res.message);
         setSelectedIds([]);
+        setIsDeleteModalOpen(false);
       } else {
         toast.error(res.message);
       }
@@ -131,6 +128,14 @@ export default function ProductsTable({
 
   return (
     <div className="relative">
+      <AlertModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        loading={isPending}
+        title="Delete Selected Products?"
+        description={`This action is permanent and cannot be undone. You are about to delete ${selectedIds.length} products.`}
+      />
       {/* 1. Enhanced Toolbar (Filtering) */}
       <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap items-center gap-4 bg-gray-50/20">
         <div className="flex items-center gap-2">
@@ -199,7 +204,7 @@ export default function ProductsTable({
             <div className="flex items-center gap-3">
               <button
                 disabled={isPending}
-                onClick={handleDeleteSelected}
+                onClick={() => setIsDeleteModalOpen(true)}
                 className="flex items-center gap-2 hover:bg-red-500/10 hover:text-red-400 p-2 rounded-xl transition-colors text-xs font-black uppercase tracking-widest disabled:opacity-50"
               >
                 {isPending ? (

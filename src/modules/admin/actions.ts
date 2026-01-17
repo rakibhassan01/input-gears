@@ -28,6 +28,7 @@ const productSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   colors: z.array(z.string()).default([]),
   switchType: z.string().optional(),
+  specs: z.record(z.string(), z.string()).optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
@@ -61,6 +62,7 @@ export async function createProduct(data: ProductFormValues) {
         categoryId: validatedData.categoryId,
         colors: validatedData.colors,
         switchType: validatedData.switchType,
+        specs: validatedData.specs || {},
       },
     });
 
@@ -113,6 +115,7 @@ export async function updateProduct(id: string, data: ProductFormValues) {
         categoryId: validatedData.categoryId,
         colors: validatedData.colors,
         switchType: validatedData.switchType,
+        specs: validatedData.specs || {},
       },
     });
 
@@ -342,5 +345,62 @@ export async function deleteProducts(productIds: string[]) {
   } catch (error) {
     console.error("Bulk Delete Products Error:", error);
     return { success: false, message: "Failed to delete products" };
+  }
+}
+// --- 6. Bulk Delete Users ---
+export async function deleteUsers(userIds: string[]) {
+  try {
+    await requireAdmin();
+
+    await prisma.user.deleteMany({
+      where: {
+        id: { in: userIds },
+      },
+    });
+
+    revalidatePath("/admin/customers");
+    return {
+      success: true,
+      message: `${userIds.length} customers deleted successfully`,
+    };
+  } catch (error) {
+    console.error("Bulk Delete Users Error:", error);
+    return { success: false, message: "Failed to delete users" };
+  }
+}
+
+// --- 7. Update User ---
+const userUpdateSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  role: z.enum(["user", "admin"]),
+  phone: z.string().optional().nullable(),
+});
+
+export async function updateUser(
+  id: string,
+  data: z.infer<typeof userUpdateSchema>
+) {
+  try {
+    await requireAdmin();
+    const validated = userUpdateSchema.parse(data);
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        name: validated.name,
+        email: validated.email,
+        role: validated.role,
+        phone: validated.phone,
+      },
+    });
+
+    revalidatePath("/admin/customers");
+    revalidatePath(`/admin/customers/${id}`);
+
+    return { success: true, message: "User updated successfully!" };
+  } catch (error) {
+    console.error("Update User Error:", error);
+    return { success: false, message: "Failed to update user" };
   }
 }

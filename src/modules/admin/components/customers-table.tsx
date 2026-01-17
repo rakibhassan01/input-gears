@@ -2,46 +2,40 @@
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
-  Eye,
+  Mail,
   MoreHorizontal,
   ArrowUpDown,
-  CheckCircle2,
-  AlertCircle,
   Trash2,
   X,
   Loader2,
   ArrowUp,
   ArrowDown,
+  User,
+  Eye,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { deleteOrders } from "@/modules/admin/actions";
-import OrderStatusSelector from "./order-status-selector";
+import { deleteUsers } from "@/modules/admin/actions";
 import { cn } from "@/lib/utils";
-
-interface OrderWithUser {
-  id: string;
-  orderNumber: string;
-  name: string;
-  totalAmount: number;
-  status: string;
-  paymentStatus: string;
-  createdAt: Date;
-  user: {
-    name: string | null;
-    email: string | null;
-  } | null;
-}
-
-interface OrdersTableProps {
-  orders: OrderWithUser[];
-}
-
 import { AlertModal } from "@/components/ui/alert-modal";
 
-export default function OrdersTable({ orders }: OrdersTableProps) {
+interface CustomerWithOrders {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  createdAt: Date;
+  orders: { totalAmount: number }[];
+}
+
+interface CustomersTableProps {
+  customers: CustomerWithOrders[];
+}
+
+export default function CustomersTable({ customers }: CustomersTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -51,7 +45,7 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const isAllSelected =
-    orders.length > 0 && selectedIds.length === orders.length;
+    customers.length > 0 && selectedIds.length === customers.length;
 
   // Sorting logic
   const currentSort = searchParams.get("sort") || "createdAt";
@@ -83,11 +77,11 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
     if (isAllSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(orders.map((o) => o.id));
+      setSelectedIds(customers.map((c) => c.id));
     }
   };
 
-  const toggleSelectOrder = (id: string) => {
+  const toggleSelectCustomer = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
@@ -96,7 +90,7 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
   // Bulk Actions
   const handleDeleteConfirm = () => {
     startTransition(async () => {
-      const res = await deleteOrders(selectedIds);
+      const res = await deleteUsers(selectedIds);
       if (res.success) {
         toast.success(res.message);
         setSelectedIds([]);
@@ -114,9 +108,10 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
         loading={isPending}
-        title="Delete Selected Orders?"
-        description={`This action cannot be undone. You are about to delete ${selectedIds.length} orders permanently.`}
+        title="Delete Selected Customers?"
+        description={`Are you sure you want to delete ${selectedIds.length} customers? This will permanently remove their accounts and profiles.`}
       />
+
       {/* --- Bulk Actions Floating Bar --- */}
       <AnimatePresence>
         {selectedIds.length > 0 && (
@@ -173,14 +168,6 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
               </th>
               <th
                 className="px-6 py-4 font-black uppercase tracking-widest text-[10px] cursor-pointer hover:text-gray-900 transition-colors"
-                onClick={() => handleSort("orderNumber")}
-              >
-                <div className="flex items-center gap-2">
-                  Order ID {getSortIcon("orderNumber")}
-                </div>
-              </th>
-              <th
-                className="px-6 py-4 font-black uppercase tracking-widest text-[10px] cursor-pointer hover:text-gray-900 transition-colors"
                 onClick={() => handleSort("name")}
               >
                 <div className="flex items-center gap-2">
@@ -192,44 +179,32 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
                 onClick={() => handleSort("createdAt")}
               >
                 <div className="flex items-center gap-2">
-                  Date {getSortIcon("createdAt")}
+                  Joined {getSortIcon("createdAt")}
                 </div>
               </th>
-              <th
-                className="px-6 py-4 font-black uppercase tracking-widest text-[10px] cursor-pointer hover:text-gray-900 transition-colors"
-                onClick={() => handleSort("totalAmount")}
-              >
-                <div className="flex items-center gap-2">
-                  Total {getSortIcon("totalAmount")}
-                </div>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px]">
+                Total Spent
               </th>
-              <th
-                className="px-6 py-4 font-black uppercase tracking-widest text-[10px] cursor-pointer hover:text-gray-900 transition-colors"
-                onClick={() => handleSort("paymentStatus")}
-              >
-                <div className="flex items-center gap-2">
-                  Payment {getSortIcon("paymentStatus")}
-                </div>
-              </th>
-              <th
-                className="px-6 py-4 font-black uppercase tracking-widest text-[10px] cursor-pointer hover:text-gray-900 transition-colors"
-                onClick={() => handleSort("status")}
-              >
-                <div className="flex items-center gap-2">
-                  Fulfillment {getSortIcon("status")}
-                </div>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px]">
+                Orders
               </th>
               <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-right">
-                Action
+                Actions
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {orders.map((order) => {
-              const isSelected = selectedIds.includes(order.id);
+            {customers.map((customer) => {
+              const totalSpent = customer.orders.reduce(
+                (acc, order) => acc + order.totalAmount,
+                0
+              );
+              const isSelected = selectedIds.includes(customer.id);
+              const isVIP = totalSpent > 500;
+
               return (
                 <tr
-                  key={order.id}
+                  key={customer.id}
                   className={cn(
                     "hover:bg-indigo-50/30 transition-colors group",
                     isSelected && "bg-indigo-50/50"
@@ -240,34 +215,43 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
                       type="checkbox"
                       className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
                       checked={isSelected}
-                      onChange={() => toggleSelectOrder(order.id)}
+                      onChange={() => toggleSelectCustomer(customer.id)}
                     />
                   </td>
                   <td className="px-6 py-5">
-                    <span className="font-black text-gray-900 text-sm tracking-tighter">
-                      #{order.orderNumber.slice(-6).toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-2xl bg-gray-100 flex items-center justify-center text-[10px] font-black text-gray-500 border border-gray-200">
-                        {(order.user?.name || order.name || "G")
-                          .charAt(0)
-                          .toUpperCase()}
+                      <div className="h-10 w-10 rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center relative">
+                        {customer.image ? (
+                          <Image
+                            src={customer.image}
+                            alt={customer.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <User size={20} className="text-gray-400" />
+                        )}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-black text-gray-900 text-sm uppercase tracking-tight">
-                          {order.user?.name || order.name || "Guest User"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-gray-900 text-sm uppercase tracking-tight">
+                            {customer.name}
+                          </span>
+                          {isVIP && (
+                            <span className="px-1.5 py-0.5 rounded-lg text-[8px] font-black bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-widest shadow-sm">
+                              VIP
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          {order.user?.email || "No email"}
+                          {customer.email}
                         </span>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <span className="text-xs font-bold text-gray-500 uppercase">
-                      {new Date(order.createdAt).toLocaleDateString("en-US", {
+                      {new Date(customer.createdAt).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
@@ -275,36 +259,30 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
                     </span>
                   </td>
                   <td className="px-6 py-5">
-                    <span className="text-sm font-black text-indigo-600">
-                      ${order.totalAmount.toFixed(2)}
+                    <span className="text-sm font-black text-indigo-600 tabular-nums">
+                      ${totalSpent.toLocaleString()}
                     </span>
                   </td>
                   <td className="px-6 py-5">
-                    {order.paymentStatus === "PAID" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-50 text-green-600 border border-green-100 text-[9px] font-black uppercase tracking-widest">
-                        <CheckCircle2 size={12} /> Paid
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 border border-red-100 text-[9px] font-black uppercase tracking-widest">
-                        <AlertCircle size={12} /> Unpaid
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-5">
-                    <OrderStatusSelector
-                      orderId={order.id}
-                      currentStatus={order.status}
-                    />
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-xl bg-gray-100 text-gray-600 border border-gray-200 text-[10px] font-black uppercase tracking-widest">
+                      {customer.orders.length} Orders
+                    </span>
                   </td>
                   <td className="px-6 py-5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/admin/orders/${order.id}`}
+                        href={`/admin/customers/${customer.id}`}
                         className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white hover:shadow-sm rounded-xl transition-all"
                         title="View Details"
                       >
                         <Eye size={18} />
                       </Link>
+                      <a
+                        href={`mailto:${customer.email}`}
+                        className="p-2 text-gray-400 hover:text-azure-600 hover:bg-white hover:shadow-sm rounded-xl transition-all"
+                      >
+                        <Mail size={18} />
+                      </a>
                       <button className="p-2 text-gray-400 hover:text-gray-900 hover:bg-white hover:shadow-sm rounded-xl transition-all">
                         <MoreHorizontal size={18} />
                       </button>

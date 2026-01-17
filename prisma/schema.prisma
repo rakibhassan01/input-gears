@@ -86,6 +86,17 @@ model Product {
   stock       Int
   image       String? // ইমেজের URL
 
+  // Technical Specifications
+  brand          String?
+  sku            String?    @unique
+  dpi            String?
+  weight         String?
+  connectionType String?
+  pollingRate    String?
+  sensor         String?
+  warranty       String?
+  availability   String?    @default("In Stock")
+
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   orderItems OrderItem[]
@@ -93,6 +104,8 @@ model Product {
   categoryId String?
   colors     String[]    @default([])
   switchType String?
+
+  specs      Json?       @default("{}")
 
   @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
 }

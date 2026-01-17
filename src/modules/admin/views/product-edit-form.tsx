@@ -41,6 +41,7 @@ const formSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   colors: z.array(z.string()).default([]),
   switchType: z.string().optional(),
+  specs: z.record(z.string(), z.string()).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -72,6 +73,7 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
       categoryId: product.categoryId || "",
       colors: (product as any).colors || [],
       switchType: (product as any).switchType || "",
+      specs: (product as any).specs || {},
     },
     mode: "onChange",
   });
@@ -303,79 +305,95 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
                   <Zap size={20} className="text-indigo-600" /> Technical Specifications
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Switch Type */}
-                  <div className="space-y-4">
-                    <label className="text-sm font-medium text-gray-700 block">
-                      Keyboard Switch Type
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {["Linear", "Tactile", "Clicky", "Optical"].map((type) => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => form.setValue("switchType", type, { shouldDirty: true })}
-                          className={cn(
-                            "px-4 py-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2",
-                            watchedValues.switchType === type
-                              ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200"
-                              : "bg-white border-gray-100 text-gray-500 hover:border-indigo-200"
-                          )}
-                        >
-                          {watchedValues.switchType === type && <Zap size={14} fill="currentColor" />}
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                    <input 
-                      {...form.register("switchType")}
-                      placeholder="Other switch type..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm"
-                    />
-                  </div>
-
-                  {/* Colors */}
-                  <div className="space-y-4">
-                    <label className="text-sm font-medium text-gray-700 block">
-                      Available Colors
-                    </label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {(watchedValues as any).colors?.map((color: string, index: number) => (
-                        <div 
-                          key={index}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-lg group animate-in fade-in zoom-in duration-200"
-                        >
-                          <div 
-                             className="w-3 h-3 rounded-full border border-gray-300"
-                             style={{ backgroundColor: color.toLowerCase() }}
-                          />
-                          <span className="text-xs font-bold text-gray-700 uppercase tracking-tighter">{color}</span>
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Switch Type */}
+                    <div className="space-y-4">
+                      <label className="text-sm font-black text-indigo-600 uppercase tracking-widest text-[10px] block">
+                        Keyboard Switch Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {["Linear", "Tactile", "Clicky", "Optical"].map((type) => (
                           <button
+                            key={type}
                             type="button"
-                            onClick={() => {
-                              const newColors = [...((watchedValues as any).colors || [])];
-                              newColors.splice(index, 1);
-                              form.setValue("colors", newColors, { shouldDirty: true });
-                            }}
-                            className="text-gray-400 hover:text-red-500 transition-colors"
+                            onClick={() => form.setValue("switchType", type, { shouldDirty: true })}
+                            className={cn(
+                              "px-4 py-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2",
+                              watchedValues.switchType === type
+                                ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200"
+                                : "bg-white border-gray-200 text-gray-500 hover:border-indigo-200"
+                            )}
                           >
-                            <X size={14} />
+                            {watchedValues.switchType === type && <Zap size={14} fill="currentColor" />}
+                            {type}
                           </button>
-                        </div>
-                      ))}
-                      {(!(watchedValues as any).colors || (watchedValues as any).colors.length === 0) && (
-                        <p className="text-xs text-gray-400 italic">No colors added yet.</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
+                        ))}
+                      </div>
                       <input 
-                        id="color-input-edit"
-                        placeholder="Add color (e.g. Red, #FF0000)"
-                        className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const input = e.currentTarget;
+                        {...form.register("switchType")}
+                        placeholder="Other switch type..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                      />
+                    </div>
+
+                    {/* Colors */}
+                    <div className="space-y-4">
+                      <label className="text-sm font-black text-indigo-600 uppercase tracking-widest text-[10px] block">
+                        Available Colors
+                      </label>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {(watchedValues as any).colors?.map((color: string, index: number) => (
+                          <div 
+                            key={index}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-lg group animate-in fade-in zoom-in duration-200"
+                          >
+                            <div 
+                               className="w-3 h-3 rounded-full border border-gray-300"
+                               style={{ backgroundColor: color.toLowerCase() }}
+                            />
+                            <span className="text-xs font-bold text-gray-700 uppercase tracking-tighter">{color}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newColors = [...((watchedValues as any).colors || [])];
+                                newColors.splice(index, 1);
+                                form.setValue("colors", newColors, { shouldDirty: true });
+                              }}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        {(!(watchedValues as any).colors || (watchedValues as any).colors.length === 0) && (
+                          <p className="text-xs text-gray-400 italic">No colors added yet.</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <input 
+                          id="color-input-edit"
+                          placeholder="Add color (e.g. Red, #FF0000)"
+                          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const input = e.currentTarget;
+                              const value = input.value.trim();
+                              if (value) {
+                                const currentColors = (watchedValues as any).colors || [];
+                                if (!currentColors.includes(value)) {
+                                  form.setValue("colors", [...currentColors, value], { shouldDirty: true });
+                                }
+                                input.value = "";
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.getElementById("color-input-edit") as HTMLInputElement;
                             const value = input.value.trim();
                             if (value) {
                               const currentColors = (watchedValues as any).colors || [];
@@ -384,26 +402,100 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
                               }
                               input.value = "";
                             }
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const input = document.getElementById("color-input-edit") as HTMLInputElement;
-                          const value = input.value.trim();
-                          if (value) {
-                            const currentColors = (watchedValues as any).colors || [];
-                            if (!currentColors.includes(value)) {
-                              form.setValue("colors", [...currentColors, value], { shouldDirty: true });
+                          }}
+                          className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 text-indigo-600 transition-all"
+                        >
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  {/* Matrix Specifications Editor */}
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <label className="text-sm font-black text-gray-900 uppercase tracking-tighter block">
+                          Technical Index Matrix
+                        </label>
+                        <p className="text-xs text-gray-500">Edit parameters used in the comparison matrix.</p>
+                      </div>
+                    </div>
+
+                    {/* Active Specs List */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries((watchedValues as any).specs || {}).map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+                           <div className="flex-1 min-w-0">
+                             <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest truncate">{key}</div>
+                             <div className="text-sm font-bold text-gray-900 truncate">{value as string}</div>
+                           </div>
+                           <button
+                             type="button"
+                             onClick={() => {
+                               const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                               delete currentSpecs[key];
+                               form.setValue("specs", currentSpecs, { shouldDirty: true });
+                             }}
+                             className="p-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                           >
+                              <X size={16} />
+                           </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add Spec Row */}
+                    <div className="flex flex-col sm:flex-row gap-3 p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
+                       <input 
+                        id="spec-key-edit"
+                        placeholder="Key (e.g. Brand)"
+                        className="flex-1 px-4 py-2 text-sm font-bold rounded-xl border border-gray-200 outline-none focus:border-indigo-500"
+                       />
+                       <input 
+                        id="spec-value-edit"
+                        placeholder="Value (e.g. Logitech)"
+                        className="flex-1 px-4 py-2 text-sm font-bold rounded-xl border border-gray-200 outline-none focus:border-indigo-500"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const keyInput = document.getElementById("spec-key-edit") as HTMLInputElement;
+                            const valueInput = document.getElementById("spec-value-edit") as HTMLInputElement;
+                            const k = keyInput.value.trim();
+                            const v = valueInput.value.trim();
+                            if (k && v) {
+                              const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                              currentSpecs[k] = v;
+                              form.setValue("specs", currentSpecs, { shouldDirty: true });
+                              keyInput.value = "";
+                              valueInput.value = "";
+                              keyInput.focus();
                             }
-                            input.value = "";
                           }
                         }}
-                        className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 text-indigo-600 transition-all"
-                      >
-                        <Plus size={18} />
-                      </button>
+                       />
+                       <button
+                         type="button"
+                         onClick={() => {
+                            const keyInput = document.getElementById("spec-key-edit") as HTMLInputElement;
+                            const valueInput = document.getElementById("spec-value-edit") as HTMLInputElement;
+                            const k = keyInput.value.trim();
+                            const v = valueInput.value.trim();
+                            if (k && v) {
+                              const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                              currentSpecs[k] = v;
+                              form.setValue("specs", currentSpecs, { shouldDirty: true });
+                              keyInput.value = "";
+                              valueInput.value = "";
+                              keyInput.focus();
+                            }
+                         }}
+                         className="px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                       >
+                         <Plus size={16} /> Add
+                       </button>
                     </div>
                   </div>
                 </div>

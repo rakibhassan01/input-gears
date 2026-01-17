@@ -23,6 +23,13 @@ async function main() {
           "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#FFFFFF", "#FF3366"],
         switchType: "Linear",
+        brand: "GearsPro",
+        sku: "GP-KBD-X1",
+        weight: "1.2kg",
+        connectionType: "Wired (USB-C)",
+        pollingRate: "1000Hz",
+        warranty: "2 Years",
+        availability: "In Stock",
       },
       {
         name: "Wireless Gaming Mouse",
@@ -33,6 +40,15 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#808080", "#FFD700"],
+        brand: "SwiftMove",
+        sku: "SM-MSE-W1",
+        dpi: "25600 DPI",
+        weight: "63g",
+        connectionType: "Wireless 2.4GHz / Wired",
+        pollingRate: "4000Hz (Dongle)",
+        sensor: "HERO 25K",
+        warranty: "1 Year",
+        availability: "In Stock",
       },
       {
         name: "Noise Cancelling Headphones",
@@ -44,6 +60,13 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#000080"],
+        brand: "AudioPure",
+        sku: "AP-HDP-ANC",
+        weight: "250g",
+        connectionType: "Bluetooth 5.2 / 3.5mm",
+        pollingRate: "N/A",
+        warranty: "1 Year",
+        availability: "Limited Stock",
       },
       {
         name: "4K Monitor 27-inch",
@@ -54,6 +77,12 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#C0C0C0"],
+        brand: "VisionMaster",
+        sku: "VM-MON-4K27",
+        weight: "5.5kg",
+        connectionType: "HDMI 2.1 / DP 1.4",
+        warranty: "3 Years",
+        availability: "In Stock",
       },
       {
         name: "Ergonomic Desk Chair",
@@ -64,6 +93,11 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#4B0082", "#A52A2A"],
+        brand: "ComfortSit",
+        sku: "CS-CHR-ERG",
+        weight: "12kg",
+        warranty: "5 Years",
+        availability: "In Stock",
       },
       {
         name: "USB-C Hub Multiport",
@@ -74,6 +108,10 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1622359556214-415510b65637?w=800&auto=format&fit=crop&q=60",
         colors: ["#808080", "#FFFFFF"],
+        brand: "ConnectIt",
+        sku: "CI-HUB-7P",
+        warranty: "1 Year",
+        availability: "In Stock",
       },
       {
         name: "Smart Watch Series 5",
@@ -84,6 +122,10 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#FFC0CB", "#FFFFFF"],
+        brand: "TimeTech",
+        sku: "TT-SW-S5",
+        warranty: "1 Year",
+        availability: "In Stock",
       },
       {
         name: "Portable SSD 1TB",
@@ -94,6 +136,10 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1597872250969-95a985c5b2ce?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#FF4500"],
+        brand: "DataSwift",
+        sku: "DS-SSD-1TB",
+        warranty: "3 Years",
+        availability: "In Stock",
       },
       {
         name: "Webcam 1080p Pro",
@@ -104,6 +150,10 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000"],
+        brand: "EyeView",
+        sku: "EV-WCM-1080P",
+        warranty: "1 Year",
+        availability: "In Stock",
       },
       {
         name: "Gaming Mouse Pad XL",
@@ -114,6 +164,10 @@ async function main() {
         image:
           "https://images.unsplash.com/photo-1610444569503-4f514603952f?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#32CD32"],
+        brand: "SwiftPad",
+        sku: "SP-MPD-XL",
+        warranty: "6 Months",
+        availability: "In Stock",
       },
     ],
   });

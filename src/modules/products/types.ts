@@ -9,16 +9,19 @@ export interface Product {
   stock: number;
   colors?: string[];
   switchType?: string;
+
+  // New Technical Specifications
+  brand?: string | null;
+  sku?: string | null;
+  dpi?: string | null;
+  weight?: string | null;
+  connectionType?: string | null;
+  pollingRate?: string | null;
+  sensor?: string | null;
+  warranty?: string | null;
+  availability?: string | null;
+
   // Technical Specifications for Comparison
-  specs?: {
-    brand?: string;
-    model?: string;
-    weight?: string;
-    dimensions?: string;
-    warranty?: string;
-    material?: string;
-    connectivity?: string;
-    battery?: string;
-    features?: string[];
-  };
+  specs?: Record<string, string | number | boolean | null>;
+  image?: string | null;
 }

@@ -1,28 +1,30 @@
 import { prisma } from "@/lib/prisma";
-import Image from "next/image";
 import {
-  Mail,
-  MoreHorizontal,
   Users,
   Trophy,
   UserCheck,
-  ArrowUpDown,
   Download,
 } from "lucide-react";
 
 import AdminSearch from "@/modules/admin/components/admin-search";
 
+import CustomersTable from "@/modules/admin/components/customers-table";
+
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; order?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, sort, order } = await searchParams;
+
+  // Sorting logic for Prisma
+  const sortField = sort || "createdAt";
+  const sortOrder = order || "desc";
 
   // ১. ইউজার ডাটা ফেচিং (অর্ডার হিস্টোরি সহ)
   const users = await prisma.user.findMany({
     where: {
-      role: "user",
+      role: { in: ["user", "admin"] }, // Show all roles maybe? user requested admin actions so admin might be there
       OR: q
         ? [
             { name: { contains: q, mode: "insensitive" } },
@@ -34,17 +36,15 @@ export default async function CustomersPage({
     include: {
       orders: {
         select: { totalAmount: true, createdAt: true },
-        orderBy: { createdAt: "desc" }, // লাস্ট অর্ডার ডেট পাওয়ার জন্য
+        orderBy: { createdAt: "desc" },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { [sortField]: sortOrder },
   });
 
-  // ২. স্ট্যাটস ক্যালকুলেশন
-  const totalCustomers = users.length;
-  // যাদের অন্তত ১টা অর্ডার আছে
+  // ২. স্ট্যাটস ক্যালকুলেশন (Simplified for cleaner UI)
+  const totalCustomers = users.filter((u) => u.role === "user").length;
   const activeCustomers = users.filter((u) => u.orders.length > 0).length;
-  // এই মাসে জয়েন করেছে (Example Logic)
   const newCustomersThisMonth = users.filter((u) => {
     const date = new Date(u.createdAt);
     const now = new Date();
@@ -55,177 +55,79 @@ export default async function CustomersPage({
   }).length;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500">
-            Manage your customer base and view insights.
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">
+            Customers{" "}
+            <span className="text-indigo-600 text-sm align-top ml-1">
+              Member Base
+            </span>
+          </h1>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">
+            Analyze behavior and manage relationships
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition-colors shadow-sm">
-          <Download size={18} /> Export List
-        </button>
+        <div className="flex items-center gap-3">
+          <button className="h-12 inline-flex items-center gap-2 bg-white border border-gray-100 text-gray-900 px-6 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm active:scale-95">
+            <Download size={18} className="text-indigo-600" /> Export List
+          </button>
+        </div>
       </div>
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-            <Users size={24} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {[
+          {
+            label: "Total Base",
+            value: totalCustomers,
+            icon: Users,
+            color: "indigo",
+          },
+          {
+            label: "Active Users",
+            value: activeCustomers,
+            icon: UserCheck,
+            color: "emerald",
+          },
+          {
+            label: "New Joiners",
+            value: `+${newCustomersThisMonth}`,
+            icon: Trophy,
+            color: "purple",
+          },
+        ].map((stat, i) => (
+          <div
+            key={i}
+            className="bg-white p-6 rounded-[32px] border border-gray-50 shadow-sm flex items-center gap-5 group hover:shadow-lg transition-all duration-500"
+          >
+            <div
+              className={`p-4 bg-${stat.color}-50 text-${stat.color}-600 rounded-2xl group-hover:scale-110 transition-transform duration-500`}
+            >
+              <stat.icon size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                {stat.label}
+              </p>
+              <h3 className="text-2xl font-black text-gray-900 tabular-nums leading-none">
+                {stat.value}
+              </h3>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase">
-              Total Customers
-            </p>
-            <h3 className="text-2xl font-bold text-gray-900">
-              {totalCustomers}
-            </h3>
-          </div>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <UserCheck size={24} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase">
-              Active (Ordered)
-            </p>
-            <h3 className="text-2xl font-bold text-gray-900">
-              {activeCustomers}
-            </h3>
-          </div>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-            <Trophy size={24} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase">
-              New this Month
-            </p>
-            <h3 className="text-2xl font-bold text-gray-900">
-              +{newCustomersThisMonth}
-            </h3>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Customer Table */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        {/* Toolbar */}
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50">
-          <AdminSearch placeholder="Search name, email, phone..." />
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
-            <ArrowUpDown size={16} /> Sort by LTV
-          </button>
+      {/* Customer Management Table */}
+      <div className="bg-white border border-gray-50 rounded-[40px] shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gray-50/30">
+          <div className="w-full md:max-w-md">
+            <AdminSearch placeholder="Search name, email, or digital ID..." />
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
-              <tr>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Total Spent (LTV)</th>
-                <th className="px-6 py-4">Orders</th>
-                <th className="px-6 py-4">Last Active</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {users.map((user) => {
-                // Calculate LTV
-                const totalSpent = user.orders.reduce(
-                  (acc, order) => acc + order.totalAmount,
-                  0
-                );
-                const isVIP = totalSpent > 500; // Example Condition
-                const lastOrder = user.orders[0]?.createdAt;
-
-                return (
-                  <tr
-                    key={user.id}
-                    className="hover:bg-gray-50/80 transition-colors group"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                          {user.image ? (
-                            <Image
-                              src={user.image}
-                              alt={user.name}
-                              width={40}
-                              height={40}
-                              className="object-cover h-full w-full"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center text-gray-500 font-bold">
-                              {user.name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900">
-                              {user.name}
-                            </span>
-                            {isVIP && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">
-                                VIP
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-400">
-                            {user.email}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium 
-                          ${
-                            user.orders.length > 0
-                              ? "bg-green-50 text-green-700"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                      >
-                        {user.orders.length > 0 ? "Active" : "New"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-gray-900">
-                      ${totalSpent.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {user.orders.length} orders
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500">
-                      {lastOrder
-                        ? new Date(lastOrder).toLocaleDateString()
-                        : "Never"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <a
-                          href={`mailto:${user.email}`}
-                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="Send Email"
-                        >
-                          <Mail size={16} />
-                        </a>
-                        <button className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                          <MoreHorizontal size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <CustomersTable customers={users} />
       </div>
     </div>
   );

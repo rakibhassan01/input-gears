@@ -10,7 +10,7 @@ export default async function Home() {
     <>
       <HeroSection slides={slides} />
       <BrandTicker />
-      <ProductView />
+      <ProductView showFilters={false} />
     </>
   );
 }

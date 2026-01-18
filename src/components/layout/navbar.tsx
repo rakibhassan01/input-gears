@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import NextImage from "next/image";
 import { useState, useEffect } from "react";
 import {
   Search,
@@ -48,11 +49,23 @@ const NAV_LINKS = [
   { name: "Accessories", href: "/accessories", icon: Cpu },
 ];
 
+interface SearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  image: string | null;
+  category: { name: string } | null;
+}
+
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const { data: session, isPending } = useSession();
   const wishlist = useWishlist();
   const compare = useCompare();
@@ -77,6 +90,54 @@ export default function Navbar() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Live Search Logic
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+
+      setIsSearchLoading(true);
+      try {
+        const res = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery)}`);
+        const data = await res.json();
+        setSearchResults(data);
+        setShowResults(true);
+      } catch (error) {
+        console.error("Search fetch failed:", error);
+      } finally {
+        setIsSearchLoading(false);
+      }
+    };
+
+    const timer = setTimeout(fetchResults, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close results on click outside or Escape
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".search-container")) {
+        setShowResults(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -139,22 +200,82 @@ export default function Navbar() {
 
             {/* MIDDLE: Search Bar (Desktop Only) - Perfectly Centered */}
             <div className="hidden md:flex flex-initial items-center">
-              <form
-                onSubmit={handleSearch}
-                className="relative w-[450px] group"
-              >
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search gadgets (e.g. Mechanical Keyboard)..."
-                  className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-12 pr-4 py-2.5 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-500"
-                />
-                <Search
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
-                />
-              </form>
+              <div className="relative search-container">
+                <form
+                  onSubmit={handleSearch}
+                  className="relative w-[450px] group"
+                >
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
+                    placeholder="Search gadgets (e.g. Mechanical Keyboard)..."
+                    className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-12 pr-4 py-2.5 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-500"
+                  />
+                  <Search
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
+                  />
+                </form>
+
+                {/* Desktop Results Dropdown */}
+                {showResults && (
+                  <div className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-[2rem] shadow-2xl overflow-hidden z-100 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
+                        {isSearchLoading ? "Searching..." : `Found ${searchResults.length} Results`}
+                      </span>
+                      {isSearchLoading && (
+                        <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      )}
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto p-2 no-scrollbar">
+                      {searchResults.length > 0 ? (
+                        searchResults.map((p) => (
+                          <Link
+                            key={p.id}
+                            href={`/products/${p.slug}`}
+                            onClick={() => setShowResults(false)}
+                            className="flex items-center gap-4 p-2.5 hover:bg-indigo-50/50 rounded-2xl transition-all group"
+                          >
+                            <div className="relative h-14 w-14 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100 p-1">
+                              {p.image ? (
+                                <NextImage src={p.image} alt={p.name} fill className="object-contain" />
+                              ) : (
+                                <Zap className="m-auto text-gray-300" size={20} />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-black text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                                {p.name}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs font-bold text-indigo-600">${p.price}</span>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-full">
+                                  {p.category?.name || "Gadget"}
+                                </span>
+                              </div>
+                            </div>
+                            <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400 transition-all transform group-hover:translate-x-1" />
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center">
+                          <p className="text-xs font-bold text-gray-400 italic">No exact matches found...</p>
+                        </div>
+                      )}
+                    </div>
+                    <Link
+                      href={`/products?q=${encodeURIComponent(searchQuery)}`}
+                      onClick={() => setShowResults(false)}
+                      className="block p-4 text-center text-xs font-black text-indigo-600 hover:bg-indigo-50 border-t border-gray-50 transition-colors uppercase tracking-widest"
+                    >
+                      View All Results
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* RIGHT: Actions */}
@@ -224,12 +345,13 @@ export default function Navbar() {
         </nav>
 
         {/* MOBILE SEARCH SECTION */}
-        <div className="md:hidden bg-white px-4 pb-3 -mt-1 border-b border-gray-100/50">
+        <div className="md:hidden bg-white px-4 pb-3 -mt-1 border-b border-gray-100/50 relative search-container">
           <form onSubmit={handleSearch} className="relative group">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
               placeholder="Search gadgets (e.g. Keyboard)..."
               className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-11 pr-4 py-3 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-300"
             />
@@ -238,6 +360,41 @@ export default function Navbar() {
               className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
             />
           </form>
+
+          {/* Mobile Results Dropdown */}
+          {showResults && (
+            <div className="absolute top-full left-4 right-4 mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+               <div className="max-h-[300px] overflow-y-auto p-2 no-scrollbar">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/products/${p.slug}`}
+                        onClick={() => {
+                          setShowResults(false);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-xl"
+                      >
+                         <div className="h-10 w-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 p-1 relative">
+                            {p.image ? (
+                               <NextImage src={p.image} alt={p.name} fill className="object-contain" />
+                            ) : (
+                               <Zap className="m-auto text-gray-300" size={16} />
+                            )}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-gray-900 truncate">{p.name}</h4>
+                            <p className="text-[10px] text-indigo-600 font-bold">${p.price}</p>
+                         </div>
+                      </Link>
+                    ))
+                  ) : !isSearchLoading && (
+                    <div className="p-4 text-center text-[10px] font-bold text-gray-400 italic">No results found</div>
+                  )}
+               </div>
+            </div>
+          )}
         </div>
 
         {/* SECONDARY NAVBAR (Desktop Categories Row) */}

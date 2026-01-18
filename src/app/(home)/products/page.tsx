@@ -4,8 +4,15 @@ import React from "react";
 export default async function page({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    category?: string;
+    brand?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    sort?: string;
+  }>;
 }) {
-  const { q } = await searchParams;
-  return <ProductView searchQuery={q} />;
+  const params = await searchParams;
+  return <ProductView filters={params} />;
 }

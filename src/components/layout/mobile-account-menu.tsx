@@ -35,7 +35,7 @@ export default function MobileAccountMenu({
     if (isOpen) {
       onClose();
     }
-  }, [pathname, isOpen, onClose]); // Only depend on pathname to avoid infinite loops if onClose is unstable
+  }, [pathname]); // Only trigger when the route actually changes
 
   // Prevent body scroll when menu is open
   useEffect(() => {

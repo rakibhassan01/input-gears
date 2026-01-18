@@ -16,6 +16,8 @@ import {
   X,
   Loader2,
   Filter,
+  RefreshCw,
+  Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -32,6 +34,8 @@ interface ProductWithCategory {
   stock: number;
   description: string | null;
   updatedAt: Date;
+  isActive: boolean;
+  scheduledAt: Date | null;
   category: {
     name: string;
     slug: string;
@@ -46,6 +50,8 @@ interface ProductsTableProps {
 }
 
 import { AlertModal } from "@/components/ui/alert-modal";
+import ProductEditModal from "./product-edit-modal";
+import { Product } from "@prisma/client";
 
 export default function ProductsTable({
   products,
@@ -58,6 +64,8 @@ export default function ProductsTable({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -135,6 +143,16 @@ export default function ProductsTable({
         loading={isPending}
         title="Delete Selected Products?"
         description={`This action is permanent and cannot be undone. You are about to delete ${selectedIds.length} products.`}
+      />
+
+      <ProductEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedProduct(null);
+          router.refresh();
+        }}
+        product={selectedProduct}
       />
       {/* 1. Enhanced Toolbar (Filtering) */}
       <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap items-center gap-4 bg-gray-50/20">
@@ -356,6 +374,23 @@ export default function ProductsTable({
                             {product.slug}
                           </span>
                         </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {product.isActive ? (
+                            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100/50">
+                              <RefreshCw size={10} className="animate-spin-slow" /> Active
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-md border border-gray-200">
+                              Disabled
+                            </span>
+                          )}
+
+                          {product.scheduledAt && (
+                            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100/50">
+                              <Calendar size={10} /> {new Date(product.scheduledAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
 
@@ -408,13 +443,16 @@ export default function ProductsTable({
                         >
                           <Eye size={18} />
                         </Link>
-                        <Link
-                          href={`/admin/products/edit/${product.id}`}
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(product as any);
+                            setIsEditModalOpen(true);
+                          }}
                           className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white hover:shadow-sm rounded-xl transition-all"
                           title="Edit"
                         >
                           <Edit size={18} />
-                        </Link>
+                        </button>
                         <button className="p-2 text-gray-400 hover:text-gray-900 hover:bg-white hover:shadow-sm rounded-xl transition-all">
                           <MoreHorizontal size={18} />
                         </button>

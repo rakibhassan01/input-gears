@@ -1,7 +1,7 @@
 import { getStoreAppearance } from "@/modules/admin/actions";
 import HeroSection from "@/modules/home/components/hero";
 import BrandTicker from "@/modules/home/components/brand-ticker";
-import ProductView from "@/modules/products/views/product-view";
+import FeaturedProducts from "@/modules/home/components/featured-products";
 
 export const revalidate = 60;
 export default async function Home() {
@@ -10,7 +10,7 @@ export default async function Home() {
     <>
       <HeroSection slides={slides} />
       <BrandTicker />
-      <ProductView showFilters={false} />
+      <FeaturedProducts />
     </>
   );
 }

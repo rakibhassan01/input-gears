@@ -37,6 +37,8 @@ const productSchema = z.object({
   sensor: z.string().optional().nullable(),
   warranty: z.string().optional().nullable(),
   availability: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
+  scheduledAt: z.string().optional().nullable(),
   specs: z.record(z.string(), z.string()).optional(),
 });
 
@@ -80,6 +82,8 @@ export async function createProduct(data: ProductFormValues) {
         sensor: validatedData.sensor,
         warranty: validatedData.warranty,
         availability: validatedData.availability,
+        isActive: validatedData.isActive,
+        scheduledAt: validatedData.scheduledAt ? new Date(validatedData.scheduledAt) : null,
         specs: validatedData.specs || {},
       },
     });
@@ -142,6 +146,8 @@ export async function updateProduct(id: string, data: ProductFormValues) {
         sensor: validatedData.sensor,
         warranty: validatedData.warranty,
         availability: validatedData.availability,
+        isActive: validatedData.isActive,
+        scheduledAt: validatedData.scheduledAt ? new Date(validatedData.scheduledAt) : null,
         specs: validatedData.specs || {},
       },
     });

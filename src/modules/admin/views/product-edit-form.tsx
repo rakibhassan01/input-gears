@@ -51,6 +51,8 @@ const formSchema = z.object({
   sensor: z.string().optional(),
   warranty: z.string().optional(),
   availability: z.string().optional(),
+  isActive: z.boolean().default(true),
+  scheduledAt: z.string().optional().nullable(),
   specs: z.record(z.string(), z.string()).optional(),
 });
 
@@ -58,9 +60,11 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface ProductEditFormProps {
   product: Product;
+  isModal?: boolean;
+  onSuccess?: () => void;
 }
 
-export default function ProductEditForm({ product }: ProductEditFormProps) {
+export default function ProductEditForm({ product, isModal, onSuccess }: ProductEditFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
@@ -92,6 +96,8 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
       sensor: (product as any).sensor || "",
       warranty: (product as any).warranty || "",
       availability: (product as any).availability || "In Stock",
+      isActive: (product as any).isActive ?? true,
+      scheduledAt: (product as any).scheduledAt ? new Date((product as any).scheduledAt).toISOString().slice(0, 16) : "",
       specs: (product as any).specs || {},
     },
     mode: "onChange",
@@ -137,8 +143,12 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
             <span className="font-semibold">Product Updated Successfully!</span>
           </div>
         );
-        router.push("/admin/products");
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push("/admin/products");
+          router.refresh();
+        }
       } else {
         toast.error(res.message);
       }
@@ -153,27 +163,28 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
   return (
     <div className="min-h-screen bg-gray-50/50 pb-32">
       <div className="max-w-[1600px] mx-auto">
-        {/* Header */}
-        <div className="pt-8 pb-6 px-6">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/products"
-              className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
-            >
-              <ArrowLeft size={20} className="text-gray-600" />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
-              <p className="text-sm text-gray-500">
-                Updating: <span className="font-semibold">{product.name}</span>
-              </p>
+        {!isModal && (
+          <div className="pt-8 pb-6 px-6">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/admin/products"
+                className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                <ArrowLeft size={20} className="text-gray-600" />
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+                <p className="text-sm text-gray-500">
+                  Updating: <span className="font-semibold">{product.name}</span>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className={cn("px-6 grid grid-cols-1 gap-8", !isModal && "lg:grid-cols-3")}>
           {/* --- LEFT SIDE: FORM --- */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className={cn(!isModal && "lg:col-span-2", "space-y-8")}>
             <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
               {/* General Info */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
@@ -705,48 +716,104 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
                   />
                 </div>
               </div>
+
+              {/* Status & Schedule */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <RefreshCw size={20} className="text-indigo-600" /> Status & Scheduling
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700 block">
+                      Product Status
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("isActive", !watchedValues.isActive, { shouldDirty: true })}
+                        className={cn(
+                          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2",
+                          watchedValues.isActive ? "bg-indigo-600" : "bg-gray-200"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            watchedValues.isActive ? "translate-x-5" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                      <span className="text-sm font-bold text-gray-900">
+                        {watchedValues.isActive ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Inactive products won&apos;t be visible to customers.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700 block">
+                      Scheduled Launch (Optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      {...form.register("scheduledAt")}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Product will go live automatically at this time.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </form>
           </div>
 
           {/* --- RIGHT SIDE: PREVIEW --- */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-4">
-              <div className="flex items-center gap-2 mb-2 text-gray-500">
-                <span className="text-xs font-bold uppercase tracking-wider">
-                  Live Preview
-                </span>
-              </div>
+          {!isModal && (
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-4">
+                <div className="flex items-center gap-2 mb-2 text-gray-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Live Preview
+                  </span>
+                </div>
 
-              <div className="pointer-events-none opacity-100 ring-1 ring-gray-200 rounded-3xl overflow-hidden bg-white shadow-xl">
-                <ProductCard
-                  data={{
-                    id: product.id,
-                    name: watchedValues.name || "Product Name",
-                    price: Number(watchedValues.price) || 0,
-                    image: watchedValues.image || null,
-                    description: watchedValues.description,
-                    stock: Number(watchedValues.stock),
-                    slug: watchedValues.slug || "slug",
-                    colors: (watchedValues as any).colors,
-                    switchType: (watchedValues as any).switchType || undefined,
-                    // Matching category name
-                    category: {
-                      name:
-                        categories.find(
-                          (c) => c.id === watchedValues.categoryId
-                        )?.name || "Uncategorized",
-                      slug: "cat",
-                    },
-                  }}
-                />
+                <div className="pointer-events-none opacity-100 ring-1 ring-gray-200 rounded-3xl overflow-hidden bg-white shadow-xl">
+                  <ProductCard
+                    data={{
+                      id: product.id,
+                      name: watchedValues.name || "Product Name",
+                      price: Number(watchedValues.price) || 0,
+                      image: watchedValues.image || null,
+                      description: watchedValues.description,
+                      stock: Number(watchedValues.stock),
+                      slug: watchedValues.slug || "slug",
+                      colors: (watchedValues as any).colors,
+                      switchType: (watchedValues as any).switchType || undefined,
+                      // Matching category name
+                      category: {
+                        name:
+                          categories.find(
+                            (c) => c.id === watchedValues.categoryId
+                          )?.name || "Uncategorized",
+                        slug: "cat",
+                      },
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-50">
+      <div className={cn(
+        "fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-[60]",
+        isModal && "relative mt-8 z-0 rounded-b-2xl"
+      )}>
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm font-medium text-gray-500 flex items-center gap-2">
             {form.formState.isDirty ? (
@@ -763,16 +830,18 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
           </div>
 
           <div className="flex gap-3 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
-            >
-              Cancel
-            </button>
+            {!isModal && (
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                Cancel
+              </button>
+            )}
             <button
               onClick={form.handleSubmit(onSubmit)}
-              disabled={isPending || !form.formState.isDirty}
+              disabled={isPending || (!form.formState.isDirty && !isModal)}
               className="flex-1 sm:flex-none px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isPending ? (
@@ -780,7 +849,7 @@ export default function ProductEditForm({ product }: ProductEditFormProps) {
               ) : (
                 <Save size={18} />
               )}
-              Update Changes
+              {isModal ? "Save Changes" : "Update Changes"}
             </button>
           </div>
         </div>

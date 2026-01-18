@@ -47,6 +47,8 @@ const formSchema = z.object({
   sensor: z.string().optional(),
   warranty: z.string().optional(),
   availability: z.string().optional(),
+  isActive: z.boolean().default(true),
+  scheduledAt: z.string().optional().nullable(),
   specs: z.record(z.string(), z.string()).optional(),
 });
 
@@ -82,6 +84,8 @@ export default function CreateProductPage() {
       sensor: "",
       warranty: "",
       availability: "In Stock",
+      isActive: true,
+      scheduledAt: "",
       specs: {},
     },
     mode: "onChange",
@@ -141,6 +145,8 @@ export default function CreateProductPage() {
           sensor: "",
           warranty: "",
           availability: "In Stock",
+          isActive: true,
+          scheduledAt: "",
           specs: {},
         });
 
@@ -739,6 +745,57 @@ export default function CreateProductPage() {
                         {form.formState.errors.stock.message}
                       </p>
                     )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Schedule */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <RefreshCw size={20} className="text-indigo-600" /> Status & Scheduling
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700 block">
+                      Product Status
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("isActive", !watchedValues.isActive)}
+                        className={cn(
+                          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2",
+                          watchedValues.isActive ? "bg-indigo-600" : "bg-gray-200"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            watchedValues.isActive ? "translate-x-5" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                      <span className="text-sm font-bold text-gray-900">
+                        {watchedValues.isActive ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Inactive products won&apos;t be visible to customers.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700 block">
+                      Scheduled Launch (Optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      {...form.register("scheduledAt")}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Product will go live automatically at this time.
+                    </p>
                   </div>
                 </div>
               </div>

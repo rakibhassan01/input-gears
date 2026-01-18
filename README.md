@@ -6,7 +6,7 @@ Welcome to **Input Gears**, a high-performance e-commerce platform built for tec
 
 ## 📸 Visual Preview
 
-![Input Gears Homepage](file:///C:/Users/rakib/.gemini/antigravity/brain/4720586d-7d83-432f-850a-7ce1ad9533f8/homepage_high_quality_final_1768321348526.png)
+![Input Gears Homepage](/public//input-gears.webp)
 
 ---
 

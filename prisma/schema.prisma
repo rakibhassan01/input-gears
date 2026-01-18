@@ -105,6 +105,9 @@ model Product {
   colors     String[]    @default([])
   switchType String?
 
+  isActive   Boolean   @default(true)
+  scheduledAt DateTime?
+
   specs      Json?       @default("{}")
 
   @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'

@@ -23,40 +23,59 @@ import {
   X,
 } from "lucide-react";
 
-const sidebarItems = [
+const sidebarGroups = [
   {
-    title: "Dashboard",
-    href: "/admin",
-    icon: LayoutDashboard,
+    group: "Overview",
+    items: [
+      {
+        title: "Dashboard",
+        href: "/admin",
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
-    title: "Products",
-    icon: ShoppingBag,
-    submenu: [
+    group: "Manage Product",
+    items: [
       { title: "All Products", href: "/admin/products", icon: List },
       { title: "Add New", href: "/admin/products/create", icon: PackagePlus },
       { title: "Categories", href: "/admin/categories", icon: Layers },
     ],
   },
   {
-    title: "Orders",
-    href: "/admin/orders",
-    icon: ShoppingBag,
+    group: "Manage Order",
+    items: [
+      {
+        title: "Orders",
+        href: "/admin/orders",
+        icon: ShoppingBag,
+      },
+      {
+        title: "Customers",
+        href: "/admin/customers",
+        icon: Users,
+      },
+    ],
   },
   {
-    title: "Customers",
-    href: "/admin/customers",
-    icon: Users,
+    group: "Store Front",
+    items: [
+      {
+        title: "Appearance",
+        icon: Paintbrush,
+        href: "/admin/appearance",
+      },
+    ],
   },
   {
-    title: "Store Appearance",
-    icon: Paintbrush, // lucide-react থেকে import করবেন
-    href: "/admin/appearance",
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
+    group: "Settings",
+    items: [
+      {
+        title: "Settings",
+        href: "/admin/settings",
+        icon: Settings,
+      },
+    ],
   },
 ];
 
@@ -129,62 +148,53 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
       {/* 2. Navigation Items */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-2 scrollbar-hide">
-        {sidebarItems.map((item, idx) => {
-          const isActive = item.href ? pathname === item.href : false;
+        {sidebarGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className="mb-4">
+            {!isCollapsed && (
+              <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 mt-4 opacity-50">
+                {group.group}
+              </p>
+            )}
+            <div className="space-y-1">
+              {group.items.map((item, idx) => {
+                const isActive = item.href ? pathname === item.href : false;
 
-          return (
-            <div key={idx}>
-              {item.submenu ? (
-                // Dropdown Logic
-                <div className={cn("mb-2", isCollapsed && "hidden")}>
-                  <p className="px-4 text-xs font-semibold text-gray-500 uppercase mb-2 mt-4">
-                    {item.title}
-                  </p>
-                  {item.submenu.map((sub, subIdx) => (
-                    <Link
-                      key={subIdx}
-                      href={sub.href}
-                      onClick={onClose}
+                return (
+                  <Link
+                    key={idx}
+                    href={item.href!}
+                    onClick={onClose}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all group relative",
+                      isActive
+                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20"
+                        : "text-gray-400 hover:bg-gray-800/50 hover:text-white",
+                      isCollapsed && "justify-center px-2"
+                    )}
+                  >
+                    <item.icon
+                      size={18}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl transition-all mb-1",
-                        pathname === sub.href
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20"
-                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                        "shrink-0",
+                        isActive ? "text-white" : "text-gray-400 group-hover:text-white"
                       )}
-                    >
-                      <sub.icon size={18} />
-                      {sub.title}
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <Link
-                  href={item.href!}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all group relative",
-                    isActive
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                    isCollapsed && "justify-center px-2"
-                  )}
-                >
-                  <item.icon size={20} className="shrink-0" />
+                    />
 
-                  {!isCollapsed && <span>{item.title}</span>}
+                    {!isCollapsed && <span>{item.title}</span>}
 
-                  {/* Tooltip for Collapsed State */}
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-6 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-100 shadow-xl">
-                      {item.title}
-                      <div className="absolute top-1/2 -left-1 -mt-1 border-4 border-transparent border-r-gray-700" />
-                    </div>
-                  )}
-                </Link>
-              )}
+                    {/* Tooltip for Collapsed State */}
+                    {isCollapsed && (
+                      <div className="absolute left-full ml-6 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-100 shadow-xl">
+                        {item.title}
+                        <div className="absolute top-1/2 -left-1 -mt-1 border-4 border-transparent border-r-gray-700" />
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </nav>
 
       {/* 3. Footer / Logout */}

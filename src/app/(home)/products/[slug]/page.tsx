@@ -24,23 +24,59 @@ export default async function ProductDetailsPage(props: PageProps) {
     notFound();
   }
 
+  // Related products fetching based on category
+  const relatedProducts = await prisma.product.findMany({
+    where: {
+      categoryId: productFromDb.categoryId,
+      NOT: {
+        id: productFromDb.id,
+      },
+    },
+    take: 4,
+    include: {
+      category: true,
+    },
+  });
+
   // ৪. Data Transformation (DB -> UI)
   const transformedProduct: Product = {
     id: productFromDb.id,
-    slug: productFromDb.slug, // ✅ Cart এর জন্য Slug এখন এখানে আছে
+    slug: productFromDb.slug,
     name: productFromDb.name,
     description: productFromDb.description || "",
     price: productFromDb.price,
-    stock: productFromDb.stock, // ✅ Cart এর maxStock এর জন্য এখানে আছে
-
-    // images array তৈরি (placeholder সহ)
+    stock: productFromDb.stock,
     images: productFromDb.image ? [productFromDb.image] : ["/placeholder.png"],
-
-    // ডাটাবেস থেকে আসা ফিল্ড
-    category: "General",
+    category: productFromDb.categoryId || "General",
     colors: productFromDb.colors || [],
     switchType: productFromDb.switchType || undefined,
+    brand: productFromDb.brand,
+    sku: productFromDb.sku,
+    dpi: productFromDb.dpi,
+    weight: productFromDb.weight,
+    connectionType: productFromDb.connectionType,
+    pollingRate: productFromDb.pollingRate,
+    sensor: productFromDb.sensor,
+    warranty: productFromDb.warranty,
+    availability: productFromDb.availability,
   };
 
-  return <ProductDetailsView product={transformedProduct} />;
+  const transformedRelatedProducts: Product[] = relatedProducts.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    description: p.description || "",
+    price: p.price,
+    stock: p.stock,
+    images: p.image ? [p.image] : ["/placeholder.png"],
+    category: p.category?.name || "General",
+    brand: p.brand,
+  }));
+
+  return (
+    <ProductDetailsView
+      product={transformedProduct}
+      relatedProducts={transformedRelatedProducts}
+    />
+  );
 }

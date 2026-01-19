@@ -27,6 +27,8 @@ model User {
   accounts  Account[]
   orders    Order[]
   addresses Address[]
+  wishlist  WishlistItem[]
+  cart      CartItem[]
 
   @@map("user") // Better Auth table name lowercase 'user' prefer kore
 }
@@ -88,27 +90,29 @@ model Product {
 
   // Technical Specifications
   brand          String?
-  sku            String?    @unique
+  sku            String? @unique
   dpi            String?
   weight         String?
   connectionType String?
   pollingRate    String?
   sensor         String?
   warranty       String?
-  availability   String?    @default("In Stock")
+  availability   String? @default("In Stock")
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  orderItems OrderItem[]
-  category   Category?   @relation(fields: [categoryId], references: [id])
-  categoryId String?
-  colors     String[]    @default([])
-  switchType String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
+  cartItems     CartItem[]
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  categoryId    String?
+  colors        String[]       @default([])
+  switchType    String?
 
-  isActive   Boolean   @default(true)
+  isActive    Boolean   @default(true)
   scheduledAt DateTime?
 
-  specs      Json?       @default("{}")
+  specs Json? @default("{}")
 
   @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
 }
@@ -270,4 +274,30 @@ model Address {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@map("cart_items")
 }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCompare, CompareItem } from "@/modules/products/hooks/use-compare";
 import { useCart } from "@/modules/cart/hooks/use-cart";
+import { useSession } from "@/lib/auth-client";
 
 // --- Utils ---
 function cn(...inputs: ClassValue[]) {
@@ -118,6 +119,7 @@ const SpecValueRenderer = ({
 export default function CompareView() {
   const compare = useCompare();
   const cart = useCart();
+  const { data: session } = useSession();
   const [isMounted, setIsMounted] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<
     Record<string, boolean>
@@ -219,7 +221,7 @@ export default function CompareView() {
       image: item.image,
       quantity: 1,
       maxStock: 99,
-    });
+    }, !!session);
     toast.success("Added to Bag", {
       style: { background: "#000", color: "#fff", borderRadius: "12px" },
     });

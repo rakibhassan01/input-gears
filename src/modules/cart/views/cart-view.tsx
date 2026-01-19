@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/modules/cart/hooks/use-cart";
+import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import {
   Trash2,
@@ -17,6 +18,7 @@ import {
 
 export default function CartView() {
   const cart = useCart();
+  const { data: session } = useSession();
 
   const subtotal = cart.items.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
@@ -29,7 +31,7 @@ export default function CartView() {
   const handleQuantityChange = (id: string, value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 1) return;
-    cart.updateQuantity(id, numValue);
+    cart.updateQuantity(id, numValue, !!session);
   };
 
   const handleClearCart = () => {
@@ -124,7 +126,7 @@ export default function CartView() {
                     <div className="flex items-center gap-1 bg-gray-50 rounded-xl p-1 border border-gray-200">
                       <button
                         onClick={() =>
-                          cart.updateQuantity(item.id, item.quantity - 1)
+                          cart.updateQuantity(item.id, item.quantity - 1, !!session)
                         }
                         disabled={item.quantity <= 1}
                         className="w-8 h-8 flex items-center justify-center text-gray-600 bg-white shadow-sm rounded-lg hover:text-indigo-600 disabled:opacity-50 disabled:shadow-none transition-all"
@@ -143,7 +145,7 @@ export default function CartView() {
                       />
                       <button
                         onClick={() =>
-                          cart.updateQuantity(item.id, item.quantity + 1)
+                          cart.updateQuantity(item.id, item.quantity + 1, !!session)
                         }
                         disabled={item.quantity >= item.maxStock}
                         className="w-8 h-8 flex items-center justify-center text-gray-600 bg-white shadow-sm rounded-lg hover:text-indigo-600 disabled:opacity-50 disabled:shadow-none transition-all"
@@ -154,7 +156,7 @@ export default function CartView() {
 
                     {/* Remove Button */}
                     <button
-                      onClick={() => cart.removeItem(item.id)}
+                      onClick={() => cart.removeItem(item.id, !!session)}
                       className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
                     >
                       <Trash2 size={16} />

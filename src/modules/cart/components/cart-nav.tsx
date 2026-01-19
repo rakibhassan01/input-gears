@@ -5,11 +5,13 @@ import { createPortal } from "react-dom"; // ✅ ১. এটা ইমপোর�
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/modules/cart/hooks/use-cart";
+import { useSession } from "@/lib/auth-client";
 import { ShoppingBag, X, Trash2, ArrowRight, Truck } from "lucide-react";
 
 export default function CartNav() {
   const [isOpen, setIsOpen] = useState(false);
   const cart = useCart();
+  const { data: session } = useSession();
 
   // Scroll Lock
   useEffect(() => {
@@ -169,7 +171,7 @@ export default function CartNav() {
 
                           <button
                             type="button"
-                            onClick={() => cart.removeItem(item.id)}
+                            onClick={() => cart.removeItem(item.id, !!session)}
                             className="flex items-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors"
                           >
                             <Trash2 size={14} />

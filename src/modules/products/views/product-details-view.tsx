@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
+import { useSession } from "@/lib/auth-client";
 import { Product } from "../types";
 import { memo, useMemo, useEffect } from "react";
 import ProductTabs from "../components/product-tabs";
@@ -33,6 +34,7 @@ const ProductDetailsView = memo(
   ({ product, relatedProducts }: ProductDetailsViewProps) => {
     const cart = useCart();
     const wishlist = useWishlist();
+    const { data: session } = useSession();
 
     // States
     const [selectedImage, setSelectedImage] = useState(product.images[0]);
@@ -50,14 +52,17 @@ const ProductDetailsView = memo(
     const isWishlisted = isMounted ? wishlist.isInWishlist(product.id) : false;
 
     const handleToggleWishlist = () => {
-      wishlist.toggleItem({
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        price: product.price,
-        image: product.images[0],
-        stock: product.stock,
-      });
+      wishlist.toggleItem(
+        {
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          price: product.price,
+          image: product.images[0],
+          stock: product.stock,
+        },
+        !!session,
+      );
     };
 
     const formattedPrice = useMemo(() => {
@@ -84,15 +89,18 @@ const ProductDetailsView = memo(
       setIsAdding(true);
 
       setTimeout(() => {
-        cart.addItem({
-          id: product.id,
-          name: product.name,
-          slug: product.slug,
-          price: product.price,
-          image: product.images[0],
-          quantity: quantity,
-          maxStock: product.stock,
-        });
+        cart.addItem(
+          {
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            price: product.price,
+            image: product.images[0],
+            quantity: quantity,
+            maxStock: product.stock,
+          },
+          !!session,
+        );
 
         toast.success("Added to cart successfully!");
         setIsAdding(false);

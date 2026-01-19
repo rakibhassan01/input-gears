@@ -322,7 +322,7 @@ export default function Navbar() {
 
               <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block" />
 
-              {isPending ? (
+              {!isMounted || isPending ? (
                 <div className="hidden sm:flex items-center gap-2 p-1 rounded-full border border-gray-100 bg-gray-50/50">
                   <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse border border-white shrink-0" />
                   <div className="h-3 w-16 bg-gray-200 rounded-full animate-pulse hidden lg:block mr-2" />
@@ -517,7 +517,9 @@ export default function Navbar() {
 
           {/* Mobile Footer */}
           <div className="p-6 border-t bg-gray-50/50">
-            {!session ? (
+            {!isMounted ? (
+              <div className="w-full h-14 bg-gray-100 animate-pulse rounded-2xl mb-4" />
+            ) : !session ? (
               <Link
                 href="/sign-in"
                 className="flex items-center justify-center w-full bg-gray-900 text-white font-bold py-4 rounded-2xl mb-4 hover:bg-indigo-600 transition-all shadow-lg shadow-gray-200"

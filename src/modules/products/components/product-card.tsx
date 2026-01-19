@@ -8,8 +8,6 @@ import { MouseEventHandler, useState, useEffect, memo, useMemo } from "react";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
 import { useSession } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 interface ProductCardProps {
   data: {
@@ -44,7 +42,6 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
   const wishlist = useWishlist();
   const compare = useCompare();
   const { data: session } = useSession();
-  const router = useRouter();
 
   const [isAdded, setIsAdded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -61,9 +58,8 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
     }).format(data.price);
   }, [data.price]);
 
-  // Hydration fix & Auth check - moved after isMounted check to be safer
-  const isWishlisted =
-    isMounted && session ? wishlist.isInWishlist(data.id) : false;
+  // Hydration fix
+  const isWishlisted = isMounted ? wishlist.isInWishlist(data.id) : false;
 
   const isComparing = isMounted ? compare.isInCompare(data.id) : false;
   const isOutOfStock = data.stock === 0;
@@ -90,7 +86,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
       maxStock: data.stock,
     };
 
-    cart.addItem(cartItem);
+    cart.addItem(cartItem, !!session);
     setIsAdded(true);
   };
 
@@ -98,24 +94,18 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
     event.preventDefault();
     event.stopPropagation();
 
-    // Guard: Only allow logged-in users to wishlist
-    if (!session) {
-      toast.error("Please sign in to save items", {
-        description: "Join our community to keep track of your favorite gears!",
-      });
-      router.push("/sign-in");
-      return;
-    }
-
-    wishlist.toggleItem({
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      price: data.price,
-      image: data.image || "",
-      stock: data.stock,
-      category: data.category ? { name: data.category.name } : null,
-    });
+    wishlist.toggleItem(
+      {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        price: data.price,
+        image: data.image || "",
+        stock: data.stock,
+        category: data.category ? { name: data.category.name } : null,
+      },
+      !!session,
+    );
   };
 
   const onToggleCompare: MouseEventHandler<HTMLButtonElement> = (event) => {
@@ -251,8 +241,8 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
                   isOutOfStock
                     ? "bg-gray-50 text-gray-300 cursor-not-allowed shadow-none border border-gray-100"
                     : isAdded
-                    ? "bg-emerald-500 text-white shadow-emerald-200"
-                    : "bg-gray-950 text-white shadow-gray-200 hover:bg-indigo-600 hover:shadow-indigo-100 group-hover:-translate-y-1"
+                      ? "bg-emerald-500 text-white shadow-emerald-200"
+                      : "bg-gray-950 text-white shadow-gray-200 hover:bg-indigo-600 hover:shadow-indigo-100 group-hover:-translate-y-1"
                 }
             `}
           >

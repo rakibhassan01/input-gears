@@ -16,10 +16,12 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addItem: (item: CartItem, authenticated?: boolean) => Promise<void>;
+  removeItem: (id: string, authenticated?: boolean) => Promise<void>;
+  updateQuantity: (id: string, quantity: number, authenticated?: boolean) => Promise<void>;
   clearCart: () => void;
+  syncAccount: () => Promise<void>;
+  fetchCart: () => Promise<void>;
 }
 
 export const useCart = create<CartStore>()(
@@ -27,33 +29,55 @@ export const useCart = create<CartStore>()(
     (set, get) => ({
       items: [],
 
-      addItem: (data) => {
+      addItem: async (data, authenticated) => {
         const currentItems = get().items;
         const existingItem = currentItems.find((item) => item.id === data.id);
 
         if (existingItem) {
-          // স্টক চেক করা
           if (existingItem.quantity + 1 > existingItem.maxStock) {
             toast.error("Out of stock limit reached!");
             return;
           }
-          // যদি প্রোডাক্ট থাকে, শুধু কোয়ান্টিটি বাড়বে
+          const newQuantity = existingItem.quantity + 1;
           set({
             items: currentItems.map((item) =>
               item.id === data.id
-                ? { ...item, quantity: item.quantity + 1 }
+                ? { ...item, quantity: newQuantity }
                 : item
             ),
           });
           toast.success("Quantity updated in cart");
+
+          if (authenticated) {
+            try {
+              await fetch(`/api/cart/${data.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quantity: newQuantity }),
+              });
+            } catch (error) {
+              console.error("Failed to sync cart update", error);
+            }
+          }
         } else {
-          // নতুন প্রোডাক্ট যোগ করা
           set({ items: [...get().items, { ...data, quantity: 1 }] });
           toast.success("Product added to cart 🛒");
+
+          if (authenticated) {
+            try {
+              await fetch("/api/cart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: data.id, quantity: 1 }),
+              });
+            } catch (error) {
+              console.error("Failed to sync cart add", error);
+            }
+          }
         }
       },
-      // ✅ নতুন ফাংশন: সরাসরি কোয়ান্টিটি সেট করার জন্য
-      updateQuantity: (id, quantity) => {
+
+      updateQuantity: async (id, quantity, authenticated) => {
         const item = get().items.find((i) => i.id === id);
         if (item && quantity > item.maxStock) {
           toast.error(`Only ${item.maxStock} items available in stock`);
@@ -66,15 +90,68 @@ export const useCart = create<CartStore>()(
             item.id === id ? { ...item, quantity: quantity } : item
           ),
         });
+
+        if (authenticated) {
+          try {
+            await fetch(`/api/cart/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ quantity }),
+            });
+          } catch (error) {
+            console.error("Failed to sync cart update", error);
+          }
+        }
       },
-      removeItem: (id) => {
+
+      removeItem: async (id, authenticated) => {
         set({ items: get().items.filter((item) => item.id !== id) });
         toast.error("Item removed from cart");
+
+        if (authenticated) {
+          try {
+            await fetch(`/api/cart/${id}`, {
+              method: "DELETE",
+            });
+          } catch (error) {
+            console.error("Failed to sync cart remove", error);
+          }
+        }
       },
 
       clearCart: () => {
         set({ items: [] });
-        // toast.success("Cart cleared"); // ✅ টোস্ট এড করা হলো
+      },
+
+      syncAccount: async () => {
+        const localItems = get().items;
+        if (localItems.length === 0) return;
+
+        try {
+          const response = await fetch("/api/cart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: localItems }),
+          });
+
+          if (response.ok) {
+            await get().fetchCart();
+          }
+        } catch (error) {
+          console.error("Cart sync error:", error);
+        }
+      },
+
+      fetchCart: async () => {
+        try {
+          const response = await fetch("/api/cart");
+          if (response.ok) {
+            const dbItems = await response.json();
+            set({ items: dbItems });
+          }
+        } catch (error) {
+          console.error("Cart fetch error:", error);
+        }
       },
     }),
     {

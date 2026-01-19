@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Check, Heart, Eye, ArrowLeftRight } from "lucide-react";
+import { ShoppingCart, Check, Heart, Search, ArrowLeftRight } from "lucide-react";
 import { useCart, CartItem } from "@/modules/cart/hooks/use-cart";
 import { MouseEventHandler, useState, useEffect, memo, useMemo } from "react";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
 import { useSession } from "@/lib/auth-client";
+import { QuickViewModal } from "./quick-view-modal";
 
 interface ProductCardProps {
   data: {
@@ -24,7 +25,7 @@ interface ProductCardProps {
     } | null;
     colors?: string[];
     switchType?: string | null;
-    specs?: any;
+    specs?: Record<string, string | number | boolean | null>;
     brand?: string | null;
     sku?: string | null;
     dpi?: string | null;
@@ -45,6 +46,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
 
   const [isAdded, setIsAdded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsMounted(true));
@@ -139,6 +141,22 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
 
   return (
     <div className="group relative bg-white rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] md:hover:border-indigo-100/50 overflow-hidden flex flex-col h-full active:scale-[0.98]">
+      <QuickViewModal 
+        isOpen={isQuickViewOpen} 
+        onClose={() => setIsQuickViewOpen(false)} 
+        product={{
+          id: data.id,
+          name: data.name,
+          price: data.price,
+          image: data.image,
+          description: data.description,
+          stock: data.stock,
+          slug: data.slug,
+          category: data.category,
+          brand: data.brand || null,
+          switchType: data.switchType
+        }}
+      />
       <div className="relative block aspect-4/5 bg-gray-50 overflow-hidden">
         <Link href={`/products/${data.slug}`} className="block w-full h-full">
           {data.image ? (
@@ -164,34 +182,46 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
         <div className="absolute top-4 right-4 flex flex-col gap-2 transform transition-all duration-500 delay-75 md:translate-x-12 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 z-20">
           <button
             onClick={onToggleWishlist}
-            title="Wishlist"
-            className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
+            className={`group/btn relative h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
               isWishlisted
                 ? "bg-indigo-600 text-white"
                 : "bg-white/90 text-gray-900 hover:bg-indigo-600 hover:text-white"
             }`}
           >
             <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
+            <div className="absolute right-full mr-3 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Wishlist
+            </div>
           </button>
 
           <button
             onClick={onToggleCompare}
-            title="Compare"
-            className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
+            className={`group/btn relative h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
               isComparing
                 ? "bg-amber-500 text-white"
                 : "bg-white/90 text-gray-900 hover:bg-amber-500 hover:text-white"
             }`}
           >
             <ArrowLeftRight size={18} />
+            <div className="absolute right-full mr-3 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Compare
+            </div>
           </button>
 
-          <Link
-            href={`/products/${data.slug}`}
-            className="h-10 w-10 bg-white/90 backdrop-blur-md text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsQuickViewOpen(true);
+            }}
+            className="group/btn relative h-10 w-10 bg-white/90 backdrop-blur-md text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
           >
-            <Eye size={18} />
-          </Link>
+            <Search size={18} />
+            <div className="absolute right-full mr-3 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Quick View
+            </div>
+          </button>
         </div>
 
         {/* Badges */}

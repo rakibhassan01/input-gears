@@ -10,7 +10,6 @@ import {
   Settings,
   LogOut,
   X,
-  Heart,
   LayoutDashboard,
   BadgeCheck,
 } from "lucide-react";
@@ -32,10 +31,8 @@ export default function MobileAccountMenu({
 
   // Close menu when route changes
   useEffect(() => {
-    if (isOpen) {
-      onClose();
-    }
-  }, [pathname]); // Only trigger when the route actually changes
+    onClose();
+  }, [pathname, onClose]); // Only trigger when the route actually changes
 
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -77,13 +74,6 @@ export default function MobileAccountMenu({
       href: "/account/orders",
       color: "text-blue-600",
       bg: "bg-blue-50",
-    },
-    {
-      label: "Wishlist",
-      icon: Heart,
-      href: "/wishlist",
-      color: "text-pink-600",
-      bg: "bg-pink-50",
     },
     {
       label: "Addresses",

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/modules/cart/hooks/use-cart"; // আপনার কার্ট হুক পাথ
-import { toast } from "sonner";
 import {
   ShoppingCart,
   Heart,
@@ -102,7 +101,6 @@ const ProductDetailsView = memo(
           !!session,
         );
 
-        toast.success("Added to cart successfully!");
         setIsAdding(false);
       }, 500);
     };

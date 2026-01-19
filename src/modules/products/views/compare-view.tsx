@@ -107,8 +107,8 @@ const SpecValueRenderer = ({
   return (
     <span
       className={cn(
-        "text-sm transition-all duration-300",
-        isDiff ? "text-zinc-950 font-black" : "text-zinc-500 font-medium",
+        "text-xs transition-all duration-300",
+        isDiff ? "text-zinc-950 font-semibold" : "text-zinc-500 font-normal",
       )}
     >
       {String(value)}
@@ -222,9 +222,6 @@ export default function CompareView() {
       quantity: 1,
       maxStock: 99,
     }, !!session);
-    toast.success("Added to Bag", {
-      style: { background: "#000", color: "#fff", borderRadius: "12px" },
-    });
   };
 
   if (!isMounted) return null;
@@ -272,7 +269,7 @@ export default function CompareView() {
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-zinc-950 rounded-xl flex items-center justify-center text-white shadow-xl shadow-zinc-200">
               <Scale size={14} className="lg:size-16" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-950 hidden lg:block">Matrix v2</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-950 hidden lg:block">Comparison</span>
           </div>
           <div className="flex-1 flex gap-4 lg:gap-14 overflow-hidden border-l border-zinc-100 pl-4 lg:pl-16">
             {compare.items.map((item) => (
@@ -289,10 +286,10 @@ export default function CompareView() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] lg:text-xs font-black text-zinc-950 truncate tracking-tight uppercase italic">
+                  <p className="text-[10px] lg:text-xs font-bold text-zinc-950 truncate tracking-tight uppercase">
                     {item.name}
                   </p>
-                  <p className="text-[9px] lg:text-[10px] font-bold text-zinc-400 font-mono tracking-tighter">
+                  <p className="text-[9px] lg:text-[10px] font-medium text-zinc-400 tracking-tight">
                     ${item.price}
                   </p>
                 </div>
@@ -304,39 +301,34 @@ export default function CompareView() {
 
       <div className="max-w-[1440px] mx-auto pt-20 px-4 lg:px-12 relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-28">
-          <div className="relative max-w-2xl">
+          <div className="relative">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-4 mb-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 mb-4"
             >
-              <div className="px-2 py-0.5 bg-zinc-950 text-white text-[9px] font-black uppercase tracking-[0.4em] rounded">
-                Architecture
-              </div>
-              <span className="h-[2px] w-12 bg-zinc-100" />
-              <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">
-                {compare.items.length} Units Mounted
+              <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-[0.2em]">
+                {compare.items.length} Products
               </span>
             </motion.div>
-            <h1 className="text-5xl sm:text-7xl lg:text-[9rem] font-black text-zinc-950 tracking-tightest leading-[0.8] italic lowercase underline decoration-zinc-100 decoration-[8px] sm:decoration-[16px] underline-offset-[-2px] sm:underline-offset-[-4px]">
-              Spec.
-              <br />
-              <span className="text-zinc-200 not-italic">Matrix</span>
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold text-zinc-950 tracking-tight leading-tight">
+              Compare
+              <span className="text-zinc-300">.</span>
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleShare}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-zinc-100 flex items-center justify-center text-zinc-400 hover:text-zinc-950 hover:border-zinc-950 transition-all hover:shadow-2xl hover:shadow-zinc-100 active:scale-95"
+              className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 hover:text-zinc-950 transition-all active:scale-95"
             >
-              <Share2 size={20} className="sm:size-24" />
+              <Share2 size={18} />
             </button>
             <button
               onClick={() => compare.clearCompare()}
-              className="h-12 sm:h-14 px-6 sm:px-10 bg-zinc-950 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl hover:bg-zinc-800 transition-all shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] active:scale-95"
+              className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-950 transition-colors"
             >
-              Clear Matrix
+              Clear All
             </button>
           </div>
         </div>
@@ -345,17 +337,12 @@ export default function CompareView() {
           <table className="w-full min-w-[800px] border-collapse">
             <thead>
               <tr className="border-b border-zinc-100">
-                <th className="p-6 sm:p-10 text-left w-[150px] sm:w-[200px] lg:w-[320px] align-top">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[9px] sm:text-[10px] font-black text-zinc-300 uppercase tracking-[0.4em]">
-                      Section 01
+                <th className="p-6 sm:p-10 text-left w-[150px] sm:w-[200px] lg:w-[280px] align-top">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-zinc-950 uppercase tracking-widest">
+                      Specifications
                     </span>
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-zinc-950 animate-pulse" />
-                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-zinc-950">
-                        Technical
-                      </span>
-                    </div>
+                    <div className="h-0.5 w-6 bg-zinc-950" />
                   </div>
                 </th>
                 {compare.items.map((item, idx) => (
@@ -388,23 +375,18 @@ export default function CompareView() {
                         </button>
                       </motion.div>
                       <div className="space-y-4">
-                        <div className="space-y-1">
-                          <p className="text-[9px] sm:text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em]">
-                            REF ID: 00{idx + 1}
-                          </p>
-                          <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-zinc-950 tracking-tightest leading-[0.9] line-clamp-2 uppercase italic">
-                            {item.name}
-                          </h3>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-2xl sm:text-3xl font-black text-zinc-950 font-mono tracking-tightest">
+                        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-950 tracking-tight leading-none">
+                          {item.name}
+                        </h3>
+                        <div className="flex items-end justify-between gap-4">
+                          <span className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
                             ${item.price}
                           </span>
                           <button
                             onClick={() => handleAddToCart(item)}
-                            className="bg-zinc-50 text-zinc-950 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-zinc-950 hover:text-white transition-all shadow-sm active:scale-95 flex-shrink-0"
+                            className="text-[10px] font-bold uppercase tracking-widest text-zinc-950 underline underline-offset-4 hover:text-zinc-500 transition-colors"
                           >
-                            Acquire
+                            Add to Cart
                           </button>
                         </div>
                       </div>
@@ -415,13 +397,13 @@ export default function CompareView() {
                   <th className="p-10 align-top">
                     <Link
                       href="/products"
-                      className="flex flex-col items-center justify-center aspect-square lg:h-48 border-2 border-dashed border-zinc-100 rounded-[3rem] hover:border-zinc-950 hover:bg-zinc-50 hover:shadow-2xl hover:shadow-zinc-100 group transition-all duration-500"
+                      className="flex flex-col items-center justify-center aspect-square lg:h-48 border border-zinc-100 rounded-3xl hover:border-zinc-950 hover:bg-zinc-50 group transition-all duration-300"
                     >
-                      <div className="w-14 h-14 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-200 group-hover:bg-zinc-950 group-hover:text-white transition-all mb-4">
-                        <Plus size={24} strokeWidth={3} />
+                      <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-300 group-hover:bg-zinc-950 group-hover:text-white transition-all mb-4">
+                        <Plus size={18} />
                       </div>
-                      <span className="text-[10px] font-black text-zinc-300 group-hover:text-zinc-950 uppercase tracking-[0.4em]">
-                        Extend Map
+                      <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-950 uppercase tracking-widest">
+                        Add Unit
                       </span>
                     </Link>
                   </th>
@@ -442,14 +424,9 @@ export default function CompareView() {
                           <group.icon size={14} className="sm:size-16" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-zinc-950">
-                            {collapsedGroups[group.id] ? "Sub-Map" : group.name}
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-950">
+                            {group.name}
                           </span>
-                          {!collapsedGroups[group.id] && (
-                            <span className="text-[7px] sm:text-[8px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
-                              Module v2.4
-                            </span>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -483,13 +460,10 @@ export default function CompareView() {
                           exit={{ opacity: 0, x: 10 }}
                           className="group/row border-b border-zinc-50 hover:bg-zinc-50/20 transition-all"
                         >
-                          <td className="bg-white/50 p-4 sm:p-8 px-6 sm:px-16 border-r border-zinc-50 transition-all">
-                            <div className="flex flex-col gap-1 sm:gap-1.5">
-                              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 group-hover/row:text-zinc-950 transition-all duration-500">
-                                {spec.label}
-                              </span>
-                              <div className="h-0.5 w-3 sm:w-4 bg-zinc-100 group-hover/row:w-8 sm:group-hover/row:w-12 group-hover/row:bg-zinc-950 transition-all duration-1000" />
-                            </div>
+                          <td className="bg-white p-4 sm:p-8 px-6 sm:px-16 transition-all">
+                            <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 group-hover/row:text-zinc-950 transition-colors">
+                              {spec.label}
+                            </span>
                           </td>
                           {compare.items.map((item) => (
                             <td

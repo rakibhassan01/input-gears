@@ -2,8 +2,10 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, Tag, Heart, ArrowLeftRight, User } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
@@ -28,8 +30,8 @@ export default function MobileBottomNav() {
   const wishlistCount = wishlist.items.length;
   const compareCount = compare.items.length;
 
-  const handleOpenAccountMenu = useCallback(() => {
-    setIsAccountMenuOpen(true);
+  const handleToggleAccountMenu = useCallback(() => {
+    setIsAccountMenuOpen((prev) => !prev);
   }, []);
 
   const handleCloseAccountMenu = useCallback(() => {
@@ -75,13 +77,13 @@ export default function MobileBottomNav() {
   const handleTabClick = (tab: Tab, e: React.MouseEvent) => {
     if (tab.isAccountTab && session) {
       e.preventDefault();
-      handleOpenAccountMenu();
+      handleToggleAccountMenu();
     }
   };
 
   return (
     <>
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-100 bg-white/95 backdrop-blur-3xl border-t border-gray-100 rounded-t-[32px] shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.08)] pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[1100] bg-white/95 backdrop-blur-3xl border-t border-gray-100 rounded-t-[32px] shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.08)] pb-safe">
         <nav className="max-w-md mx-auto px-6 pt-3 pb-2 flex items-center justify-between">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -103,7 +105,21 @@ export default function MobileBottomNav() {
                         : "text-gray-400"
                     }`}
                   >
-                    <Icon size={20} strokeWidth={tab.isActive ? 2.5 : 2} />
+                    {session.user.image ? (
+                      <div className={cn(
+                        "relative w-5 h-5 rounded-full overflow-hidden border-2 transition-all",
+                        tab.isActive ? "border-indigo-600 shadow-lg shadow-indigo-100 ring-2 ring-indigo-50" : "border-gray-200"
+                      )}>
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <Icon size={20} strokeWidth={tab.isActive ? 2.5 : 2} />
+                    )}
 
                     {tab.badge !== undefined && tab.badge > 0 && (
                       <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-indigo-600 text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white">
@@ -124,11 +140,7 @@ export default function MobileBottomNav() {
             }
 
             return (
-              <Link
-                key={tab.name}
-                href={tab.href}
-                className={sharedClasses}
-              >
+              <Link key={tab.name} href={tab.href} className={sharedClasses}>
                 <div
                   className={`relative p-1.5 rounded-xl transition-all duration-300 ${
                     tab.isActive

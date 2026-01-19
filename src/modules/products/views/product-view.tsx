@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import ProductCard from "../components/product-card";
 import { Prisma } from "@prisma/client";
 import ProductFilters from "../components/product-filters";
+import MobileFilters from "../components/mobile-filters";
 import { SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -84,13 +85,16 @@ export default async function ProductView({
     <div className="bg-[#fcfcff] min-h-screen">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <div className="flex flex-col lg:flex-row gap-12 items-start">
-          {/* --- SIDEBAR: FILTERS --- */}
+          {/* --- SIDEBAR: FILTERS (Desktop) --- */}
           {showFilters && (
-            <aside className="w-full lg:w-80 lg:sticky lg:top-24">
-              <div className="p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-2xl shadow-gray-200/40">
-                <ProductFilters categories={categories} brands={brands} />
-              </div>
-            </aside>
+            <>
+              <aside className="hidden lg:block w-80 lg:sticky lg:top-24">
+                <div className="p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-2xl shadow-gray-200/40">
+                  <ProductFilters categories={categories} brands={brands} />
+                </div>
+              </aside>
+              <MobileFilters categories={categories} brands={brands} />
+            </>
           )}
 
           {/* --- MAIN CONTENT: GRID --- */}

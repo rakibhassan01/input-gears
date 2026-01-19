@@ -1,8 +1,20 @@
 "use client";
 
 import { useQueryState, parseAsString, parseAsFloat } from "nuqs";
-import { Search, X, SlidersHorizontal, ChevronDown, RotateCcw } from "lucide-react";
+import { Search, X, SlidersHorizontal, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface ProductFiltersProps {
   categories: { id: string; name: string }[];
@@ -17,6 +29,9 @@ export default function ProductFilters({ categories, brands }: ProductFiltersPro
   const [maxPrice, setMaxPrice] = useQueryState("maxPrice", parseAsFloat.withOptions({ shallow: false }));
   const [sort, setSort] = useQueryState("sort", parseAsString.withDefault("newest").withOptions({ shallow: false }));
 
+  // Local state for price slider to avoid excessive URL updates
+  const [priceRange, setPriceRange] = useState<[number, number]>([minPrice ?? 0, maxPrice ?? 2000]);
+
   const activeFiltersCount = [category, brand, minPrice, maxPrice, sort !== "newest" ? sort : null].filter(Boolean).length;
 
   const handleReset = () => {
@@ -26,156 +41,176 @@ export default function ProductFilters({ categories, brands }: ProductFiltersPro
     setMinPrice(null);
     setMaxPrice(null);
     setSort("newest");
+    setPriceRange([0, 2000]);
+  };
+
+  const handlePriceChange = (value: number[]) => {
+    setPriceRange([value[0], value[1]]);
+  };
+
+  const handlePriceCommit = (value: number[]) => {
+    setMinPrice(value[0]);
+    setMaxPrice(value[1]);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-left duration-700">
-      {/* Search Header */}
-      <div className="relative group">
-        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <Search size={18} className="text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search gadgets..."
-          value={q ?? ""}
-          onChange={(e) => setQ(e.target.value)}
-          className="w-full pl-12 pr-4 py-4 bg-white border border-gray-100 rounded-[2rem] shadow-sm focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all outline-none text-gray-900 font-medium placeholder:text-gray-400"
-        />
-        {q && (
-          <button
-            onClick={() => setQ("")}
-            className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pb-2">
+    <div className="space-y-6 animate-in fade-in slide-in-from-left duration-700">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal size={18} className="text-indigo-600" />
-          <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Advanced Filters</h3>
+          <SlidersHorizontal size={18} className="text-gray-950" />
+          <h3 className="text-sm font-bold uppercase tracking-widest text-gray-950">Filters</h3>
           {activeFiltersCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black text-white">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-950 text-[10px] font-bold text-white">
               {activeFiltersCount}
             </span>
           )}
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleReset}
-          className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 hover:text-indigo-600 transition-colors uppercase tracking-widest group"
+          className="h-8 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-gray-950 transition-colors gap-2"
         >
-          <RotateCcw size={12} className="group-hover:-rotate-180 transition-transform duration-500" />
+          <RotateCcw size={12} />
           Reset
-        </button>
+        </Button>
       </div>
 
+      {/* Search */}
+      <div className="relative group">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gray-950 transition-colors" />
+        <Input
+          placeholder="Search devices..."
+          value={q ?? ""}
+          onChange={(e) => setQ(e.target.value)}
+          className="pl-10 h-10 bg-gray-50/50 border-gray-200 rounded-xl focus-visible:ring-1 focus-visible:ring-gray-950 focus-visible:border-gray-950 transition-all"
+        />
+        {q && (
+          <button
+            onClick={() => setQ("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-gray-200 rounded-md transition-all"
+          >
+            <X size={14} className="text-gray-400" />
+          </button>
+        )}
+      </div>
+
+      <Accordion type="multiple" defaultValue={["categories", "brands", "price"]} className="w-full">
+        {/* Categories */}
+        <AccordionItem value="categories" className="border-b-0 py-2">
+          <AccordionTrigger className="hover:no-underline py-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Categories
+          </AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategory(category === cat.name ? "" : cat.name)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                    category === cat.name
+                      ? "bg-gray-900 border-gray-900 text-white shadow-md"
+                      : "bg-white border-gray-100 text-gray-600 hover:border-gray-900 hover:text-gray-900"
+                  )}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Brands */}
+        <AccordionItem value="brands" className="border-b-0 py-2">
+          <AccordionTrigger className="hover:no-underline py-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Featured Brands
+          </AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <div className="grid grid-cols-1 gap-1">
+              {brands.map((b) => (
+                <div key={b} className="flex items-center space-x-2 rounded-xl hover:bg-gray-50 p-2 border border-transparent transition-all">
+                  <Checkbox 
+                    id={`brand-${b}`} 
+                    checked={brand === b}
+                    onCheckedChange={() => setBrand(brand === b ? "" : b)}
+                    className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
+                  />
+                  <Label 
+                    htmlFor={`brand-${b}`} 
+                    className={cn(
+                      "text-sm font-bold cursor-pointer transition-colors flex-1",
+                      brand === b ? "text-gray-950" : "text-gray-500"
+                    )}
+                  >
+                    {b}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Price Range */}
+        <AccordionItem value="price" className="border-b-0 py-2">
+          <AccordionTrigger className="hover:no-underline py-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Price Range
+          </AccordionTrigger>
+          <AccordionContent className="pt-6 px-1">
+            <div className="space-y-6">
+              <Slider
+                value={priceRange}
+                max={2000}
+                step={50}
+                onValueChange={handlePriceChange}
+                onValueCommit={handlePriceCommit}
+                className="[&_.relative]:h-1.5 **:data-[slot=slider-range]:bg-gray-950 **:data-[slot=slider-thumb]:bg-white **:data-[slot=slider-thumb]:border-gray-950"
+              />
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 text-center bg-gray-50 border border-gray-100 rounded-xl py-2">
+                  <span className="text-[9px] font-black text-gray-400 block uppercase mb-0.5">Min</span>
+                  <span className="text-xs font-black text-gray-950">${priceRange[0]}</span>
+                </div>
+                <div className="flex-1 text-center bg-gray-50 border border-gray-100 rounded-xl py-2">
+                  <span className="text-[9px] font-black text-gray-400 block uppercase mb-0.5">Max</span>
+                  <span className="text-xs font-black text-gray-950">${priceRange[1]}+</span>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
       {/* Sorting */}
-      <div className="space-y-4">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Sort By</h4>
+      <div className="space-y-4 pt-4 border-t">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sort Inventory</h4>
         <div className="grid grid-cols-1 gap-2">
           {[
             { id: "newest", label: "Newest Arrivals" },
             { id: "price_asc", label: "Price: Low to High" },
             { id: "price_desc", label: "Price: High to Low" },
-            { id: "popular", label: "Best Sellers" },
           ].map((option) => (
             <button
               key={option.id}
               onClick={() => setSort(option.id)}
               className={cn(
-                "group flex items-center justify-between w-full p-4 rounded-2xl border text-sm font-bold transition-all duration-300",
+                "group flex items-center justify-between w-full p-3.5 rounded-xl border text-xs font-bold transition-all",
                 sort === option.id
-                  ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100"
-                  : "bg-white border-gray-100 text-gray-600 hover:border-indigo-100 hover:bg-indigo-50/30"
+                  ? "bg-gray-950 border-gray-950 text-white shadow-xl shadow-gray-200"
+                  : "bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-950"
               )}
             >
               {option.label}
               <div className={cn(
-                "h-2 w-2 rounded-full transition-all duration-500",
-                sort === option.id ? "bg-white scale-125" : "bg-gray-200 group-hover:bg-indigo-200"
+                "h-1.5 w-1.5 rounded-full transition-all",
+                sort === option.id ? "bg-white scale-125" : "bg-gray-200 group-hover:bg-gray-400"
               )} />
             </button>
           ))}
         </div>
       </div>
-
-      {/* Categories */}
-      <div className="space-y-4">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1 text-nowrap">Categories</h4>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(category === cat.name ? "" : cat.name)}
-              className={cn(
-                "px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border",
-                category === cat.name
-                  ? "bg-indigo-600 border-indigo-600 text-white shadow-md"
-                  : "bg-white border-gray-100 text-gray-600 hover:border-indigo-200 hover:text-indigo-600"
-              )}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Brands */}
-      <div className="space-y-4">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Trending Brands</h4>
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-3">
-          {brands.map((b) => (
-            <label key={b} className="flex items-center gap-3 cursor-pointer group">
-              <div className="relative flex items-center">
-                <input
-                  type="checkbox"
-                  checked={brand === b}
-                  onChange={() => setBrand(brand === b ? "" : b)}
-                  className="peer appearance-none h-6 w-6 border-2 border-gray-100 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all"
-                />
-                <div className="absolute inset-0 flex items-center justify-center text-white scale-0 peer-checked:scale-100 transition-transform">
-                  <ChevronDown size={14} className="-rotate-90" />
-                </div>
-              </div>
-              <span className={cn(
-                "text-sm font-bold transition-colors",
-                brand === b ? "text-gray-900" : "text-gray-500 group-hover:text-gray-900"
-              )}>
-                {b}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Price Range */}
-      <div className="space-y-4">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Price Range</h4>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5 focus-within:translate-y-[-2px] transition-transform">
-            <label className="text-[9px] font-black text-gray-400 uppercase px-1">Min ($)</label>
-            <input
-              type="number"
-              value={minPrice ?? ""}
-              onChange={(e) => setMinPrice(e.target.value ? parseFloat(e.target.value) : null)}
-              className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:border-indigo-600 outline-none transition-all"
-              placeholder="0"
-            />
-          </div>
-          <div className="space-y-1.5 focus-within:translate-y-[-2px] transition-transform">
-            <label className="text-[9px] font-black text-gray-400 uppercase px-1">Max ($)</label>
-            <input
-              type="number"
-              value={maxPrice ?? ""}
-              onChange={(e) => setMaxPrice(e.target.value ? parseFloat(e.target.value) : null)}
-              className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:border-indigo-600 outline-none transition-all"
-              placeholder="1000+"
-            />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
+

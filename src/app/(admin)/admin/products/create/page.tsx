@@ -49,7 +49,7 @@ const formSchema = z.object({
   availability: z.string().optional(),
   isActive: z.boolean().default(true),
   scheduledAt: z.string().optional().nullable(),
-  specs: z.record(z.string(), z.string()).optional(),
+  specs: z.record(z.string(), z.string().or(z.number()).or(z.boolean()).nullable()).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -99,7 +99,7 @@ export default function CreateProductPage() {
     try {
       const data = await getCategoriesOptions();
       setCategories(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load categories");
     } finally {
       setIsLoadingCategories(false);
@@ -378,7 +378,7 @@ export default function CreateProductPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Switch Type */}
                     <div className="space-y-4">
-                      <label className="text-sm font-medium text-gray-700 block text-indigo-600 uppercase tracking-widest font-black text-[10px]">
+                      <label className="text-sm font-black text-indigo-600 uppercase tracking-widest text-[10px] block">
                         Keyboard Switch Type
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -408,7 +408,7 @@ export default function CreateProductPage() {
 
                     {/* Colors */}
                     <div className="space-y-4">
-                      <label className="text-sm font-medium text-gray-700 block text-indigo-600 uppercase tracking-widest font-black text-[10px]">
+                      <label className="text-sm font-black text-indigo-600 uppercase tracking-widest text-[10px] block">
                         Available Colors
                       </label>
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -501,7 +501,7 @@ export default function CreateProductPage() {
 
                     {/* Active Specs List */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries((watchedValues as any).specs || {}).map(([key, value]) => (
+                      {Object.entries(watchedValues.specs || {}).map(([key, value]) => (
                         <div key={key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
                            <div className="flex-1 min-w-0">
                              <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest truncate">{key}</div>
@@ -510,7 +510,7 @@ export default function CreateProductPage() {
                            <button
                              type="button"
                              onClick={() => {
-                               const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                               const currentSpecs = { ...(watchedValues.specs || {}) };
                                delete currentSpecs[key];
                                form.setValue("specs", currentSpecs, { shouldDirty: true });
                              }}
@@ -541,7 +541,7 @@ export default function CreateProductPage() {
                             const k = keyInput.value.trim();
                             const v = valueInput.value.trim();
                             if (k && v) {
-                              const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                              const currentSpecs = { ...(watchedValues.specs || {}) };
                               currentSpecs[k] = v;
                               form.setValue("specs", currentSpecs, { shouldDirty: true });
                               keyInput.value = "";
@@ -559,7 +559,7 @@ export default function CreateProductPage() {
                             const k = keyInput.value.trim();
                             const v = valueInput.value.trim();
                             if (k && v) {
-                              const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                              const currentSpecs = { ...(watchedValues.specs || {}) };
                               currentSpecs[k] = v;
                               form.setValue("specs", currentSpecs, { shouldDirty: true });
                               keyInput.value = "";
@@ -814,24 +814,50 @@ export default function CreateProductPage() {
 
               <div className="pointer-events-none opacity-100 ring-4 ring-gray-100 rounded-3xl overflow-hidden bg-white shadow-lg">
                 <ProductCard
-                  data={{
-                    id: "preview",
-                    name: watchedValues.name || "Product Name",
-                    price: Number(watchedValues.price) || 0,
-                    image: watchedValues.image || null,
-                    description: watchedValues.description,
-                    stock: Number(watchedValues.stock),
-                    slug: watchedValues.slug || "slug",
-                    colors: watchedValues.colors,
-                    switchType: watchedValues.switchType || undefined,
-                    category: {
-                      name:
-                        categories.find(
-                          (c) => c.id === watchedValues.categoryId
-                        )?.name || "Uncategorized",
-                      slug: "cat",
-                    },
-                  }}
+                    data={{
+                      id: "preview",
+                      name: watchedValues.name || "Product Name",
+                      price: Number(watchedValues.price) || 0,
+                      image: watchedValues.image || null,
+                      description: watchedValues.description || null,
+                      stock: Number(watchedValues.stock),
+                      slug: watchedValues.slug || "slug",
+                      colors: watchedValues.colors || [],
+                      switchType: watchedValues.switchType || null,
+                      isActive: watchedValues.isActive ?? true,
+                      scheduledAt: watchedValues.scheduledAt ? new Date(watchedValues.scheduledAt) : null,
+                      specs: (watchedValues.specs || {}) as Record<string, string | number | boolean | null>,
+                      brand: watchedValues.brand || null,
+                      sku: watchedValues.sku || null,
+                      dpi: watchedValues.dpi || null,
+                      weight: watchedValues.weight || null,
+                      connectionType: watchedValues.connectionType || null,
+                      pollingRate: watchedValues.pollingRate || null,
+                      sensor: watchedValues.sensor || null,
+                      warranty: watchedValues.warranty || null,
+                      availability: watchedValues.availability || null,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      categoryId: watchedValues.categoryId || null,
+                      // Matching category name
+                      category: {
+                        id: watchedValues.categoryId || "temp",
+                        name:
+                          categories.find(
+                            (c) => c.id === watchedValues.categoryId
+                          )?.name || "Uncategorized",
+                        slug: "temp",
+                        description: null,
+                        image: null,
+                        parentId: null,
+                        isActive: true,
+                        isFeatured: false,
+                        seoTitle: null,
+                        seoDescription: null,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                      },
+                    }}
                 />
               </div>
 

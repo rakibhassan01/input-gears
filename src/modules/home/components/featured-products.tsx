@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import ProductCard from "../../products/components/product-card";
+import { Product } from "@/types/product";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 
@@ -52,7 +53,7 @@ export default async function FeaturedProducts() {
         {/* Product Grid - 2 columns on mobile */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {products.map((product) => (
-            <ProductCard key={product.id} data={product} />
+            <ProductCard key={product.id} data={product as unknown as Product} />
           ))}
         </div>
 

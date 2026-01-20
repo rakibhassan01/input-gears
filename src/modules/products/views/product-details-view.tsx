@@ -35,8 +35,9 @@ const ProductDetailsView = memo(
     const wishlist = useWishlist();
     const { data: session } = useSession();
 
-    // States
-    const [selectedImage, setSelectedImage] = useState(product.images[0]);
+    const [selectedImage, setSelectedImage] = useState(
+      product.images?.[0] || product.image || "/placeholder.png",
+    );
     const [quantity, setQuantity] = useState(1);
     const [selectedColor, setSelectedColor] = useState<string | null>(
       product.colors?.[0] || null,
@@ -45,7 +46,8 @@ const ProductDetailsView = memo(
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-      setIsMounted(true);
+      const frame = requestAnimationFrame(() => setIsMounted(true));
+      return () => cancelAnimationFrame(frame);
     }, []);
 
     const isWishlisted = isMounted ? wishlist.isInWishlist(product.id) : false;
@@ -57,7 +59,7 @@ const ProductDetailsView = memo(
           name: product.name,
           slug: product.slug,
           price: product.price,
-          image: product.images[0],
+          image: product.images?.[0] || product.image || "/placeholder.png",
           stock: product.stock,
         },
         !!session,
@@ -94,7 +96,7 @@ const ProductDetailsView = memo(
             name: product.name,
             slug: product.slug,
             price: product.price,
-            image: product.images[0],
+            image: product.images?.[0] || product.image || "/placeholder.png",
             quantity: quantity,
             maxStock: product.stock,
           },
@@ -128,9 +130,9 @@ const ProductDetailsView = memo(
                 </div>
               </div>
 
-              {/* Thumbnails */}
               <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                {product.images.map((img, index) => (
+                {(product.images || (product.image ? [product.image] : [])).map(
+                  (img: string, index: number) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(img)}

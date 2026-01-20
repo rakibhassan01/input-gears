@@ -2,11 +2,10 @@
 
 import { X } from "lucide-react";
 import ProductEditForm from "../views/product-edit-form";
-import { Product } from "@prisma/client";
-import { cn } from "@/lib/utils";
+import { Product } from "@/types/product";
 
 interface ProductEditModalProps {
-  product: Product | null;
+  product: Product | unknown; // Accept unknown for Prisma compatibility, cast in form
   isOpen: boolean;
   onClose: () => void;
 }
@@ -18,17 +17,19 @@ export default function ProductEditModal({
 }: ProductEditModalProps) {
   if (!isOpen || !product) return null;
 
+  const productData = product as Product;
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-8 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-8 animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-6xl max-h-[90vh] rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-gray-50/30">
           <div>
             <h3 className="font-bold text-xl text-gray-900">Edit Product</h3>
             <p className="text-sm text-gray-500">
               Updating:{" "}
               <span className="font-semibold text-indigo-600">
-                {product.name}
+                {productData.name}
               </span>
             </p>
           </div>
@@ -43,7 +44,7 @@ export default function ProductEditModal({
         {/* Form Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <ProductEditForm
-            product={product}
+            product={product as unknown as Product}
             isModal={true}
             onSuccess={() => {
               onClose();

@@ -23,15 +23,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import Image from "next/image"; // Image component import
+import Image from "next/image";
 import ProductCard from "@/modules/products/components/product-card";
 import { updateProduct, getCategoriesOptions } from "@/modules/admin/actions";
-import { Product } from "@prisma/client";
-import ImageUpload from "@/components/ui/image-upload"; // ImageUpload component import
+import { Product } from "@/types/product";
+import ImageUpload from "@/components/ui/image-upload";
 import CategoryModal from "@/modules/admin/components/category-modal";
 import { generateSlug } from "@/lib/utils";
 
-// ✅ 1. Schema Update: categoryId যোগ করা হয়েছে
+// ✅ 1. Schema Update
 const formSchema = z.object({
   name: z.string().min(3, "Name is required"),
   slug: z.string().min(3, "Slug is required"),
@@ -53,7 +53,7 @@ const formSchema = z.object({
   availability: z.string().optional(),
   isActive: z.boolean().default(true),
   scheduledAt: z.string().optional().nullable(),
-  specs: z.record(z.string(), z.string()).optional(),
+  specs: z.record(z.string(), z.string().or(z.number()).or(z.boolean()).nullable()).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -85,20 +85,20 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
       stock: product.stock,
       image: product.image || "",
       categoryId: product.categoryId || "",
-      colors: (product as any).colors || [],
-      switchType: (product as any).switchType || "",
-      brand: (product as any).brand || "",
-      sku: (product as any).sku || "",
-      dpi: (product as any).dpi || "",
-      weight: (product as any).weight || "",
-      connectionType: (product as any).connectionType || "",
-      pollingRate: (product as any).pollingRate || "",
-      sensor: (product as any).sensor || "",
-      warranty: (product as any).warranty || "",
-      availability: (product as any).availability || "In Stock",
-      isActive: (product as any).isActive ?? true,
-      scheduledAt: (product as any).scheduledAt ? new Date((product as any).scheduledAt).toISOString().slice(0, 16) : "",
-      specs: (product as any).specs || {},
+      colors: product.colors || [],
+      switchType: product.switchType || "",
+      brand: product.brand || "",
+      sku: product.sku || "",
+      dpi: product.dpi || "",
+      weight: product.weight || "",
+      connectionType: product.connectionType || "",
+      pollingRate: product.pollingRate || "",
+      sensor: product.sensor || "",
+      warranty: product.warranty || "",
+      availability: product.availability || "In Stock",
+      isActive: product.isActive ?? true,
+      scheduledAt: product.scheduledAt ? new Date(product.scheduledAt).toISOString().slice(0, 16) : "",
+      specs: product.specs as Record<string, string>,
     },
     mode: "onChange",
   });
@@ -373,7 +373,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                         Available Colors
                       </label>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {(watchedValues as any).colors?.map((color: string, index: number) => (
+                        {watchedValues.colors?.map((color: string, index: number) => (
                           <div 
                             key={index}
                             className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-lg group animate-in fade-in zoom-in duration-200"
@@ -386,7 +386,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                             <button
                               type="button"
                               onClick={() => {
-                                const newColors = [...((watchedValues as any).colors || [])];
+                                const newColors = [...(watchedValues.colors || [])];
                                 newColors.splice(index, 1);
                                 form.setValue("colors", newColors, { shouldDirty: true });
                               }}
@@ -396,7 +396,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                             </button>
                           </div>
                         ))}
-                        {(!(watchedValues as any).colors || (watchedValues as any).colors.length === 0) && (
+                        {(!watchedValues.colors || watchedValues.colors.length === 0) && (
                           <p className="text-xs text-gray-400 italic">No colors added yet.</p>
                         )}
                       </div>
@@ -411,7 +411,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                               const input = e.currentTarget;
                               const value = input.value.trim();
                               if (value) {
-                                const currentColors = (watchedValues as any).colors || [];
+                                const currentColors = watchedValues.colors || [];
                                 if (!currentColors.includes(value)) {
                                   form.setValue("colors", [...currentColors, value], { shouldDirty: true });
                                 }
@@ -426,7 +426,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                             const input = document.getElementById("color-input-edit") as HTMLInputElement;
                             const value = input.value.trim();
                             if (value) {
-                              const currentColors = (watchedValues as any).colors || [];
+                              const currentColors = watchedValues.colors || [];
                               if (!currentColors.includes(value)) {
                                 form.setValue("colors", [...currentColors, value], { shouldDirty: true });
                               }
@@ -456,7 +456,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
 
                     {/* Active Specs List */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries((watchedValues as any).specs || {}).map(([key, value]) => (
+                      {Object.entries(watchedValues.specs || {}).map(([key, value]) => (
                         <div key={key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
                            <div className="flex-1 min-w-0">
                              <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest truncate">{key}</div>
@@ -465,7 +465,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                            <button
                              type="button"
                              onClick={() => {
-                               const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                               const currentSpecs = { ...(watchedValues.specs || {}) };
                                delete currentSpecs[key];
                                form.setValue("specs", currentSpecs, { shouldDirty: true });
                              }}
@@ -496,7 +496,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                             const k = keyInput.value.trim();
                             const v = valueInput.value.trim();
                             if (k && v) {
-                              const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                              const currentSpecs = { ...(watchedValues.specs || {}) };
                               currentSpecs[k] = v;
                               form.setValue("specs", currentSpecs, { shouldDirty: true });
                               keyInput.value = "";
@@ -514,7 +514,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                             const k = keyInput.value.trim();
                             const v = valueInput.value.trim();
                             if (k && v) {
-                              const currentSpecs = { ...((watchedValues as any).specs || {}) };
+                              const currentSpecs = { ...(watchedValues.specs || {}) };
                               currentSpecs[k] = v;
                               form.setValue("specs", currentSpecs, { shouldDirty: true });
                               keyInput.value = "";
@@ -787,18 +787,43 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                       name: watchedValues.name || "Product Name",
                       price: Number(watchedValues.price) || 0,
                       image: watchedValues.image || null,
-                      description: watchedValues.description,
+                      description: watchedValues.description || null,
                       stock: Number(watchedValues.stock),
                       slug: watchedValues.slug || "slug",
-                      colors: (watchedValues as any).colors,
-                      switchType: (watchedValues as any).switchType || undefined,
+                      colors: watchedValues.colors || [],
+                      switchType: watchedValues.switchType || null,
+                      isActive: watchedValues.isActive ?? true,
+                      scheduledAt: watchedValues.scheduledAt ? new Date(watchedValues.scheduledAt) : null,
+                      specs: (watchedValues.specs || {}) as Record<string, string | number | boolean | null>,
+                      brand: watchedValues.brand || null,
+                      sku: watchedValues.sku || null,
+                      dpi: watchedValues.dpi || null,
+                      weight: watchedValues.weight || null,
+                      connectionType: watchedValues.connectionType || null,
+                      pollingRate: watchedValues.pollingRate || null,
+                      sensor: watchedValues.sensor || null,
+                      warranty: watchedValues.warranty || null,
+                      availability: watchedValues.availability || null,
+                      createdAt: product.createdAt,
+                      updatedAt: new Date(),
+                      categoryId: watchedValues.categoryId || null,
                       // Matching category name
                       category: {
+                        id: watchedValues.categoryId || "temp",
                         name:
                           categories.find(
                             (c) => c.id === watchedValues.categoryId
                           )?.name || "Uncategorized",
-                        slug: "cat",
+                        slug: "temp",
+                        description: null,
+                        image: null,
+                        parentId: null,
+                        isActive: true,
+                        isFeatured: false,
+                        seoTitle: null,
+                        seoDescription: null,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
                       },
                     }}
                   />
@@ -811,7 +836,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
 
       {/* Sticky Bottom Bar */}
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-[60]",
+        "fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-60",
         isModal && "relative mt-8 z-0 rounded-b-2xl"
       )}>
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">

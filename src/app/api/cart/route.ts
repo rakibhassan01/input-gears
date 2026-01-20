@@ -85,9 +85,14 @@ export async function POST(req: Request) {
       });
     }
 
+    interface CartInputItem {
+      id: string;
+      quantity: number;
+    }
+
     // Handle batch sync (for guest to account migration)
     if (items && Array.isArray(items)) {
-      for (const item of items as any[]) {
+      for (const item of items as CartInputItem[]) {
         await prisma.cartItem.upsert({
           where: {
             userId_productId: {

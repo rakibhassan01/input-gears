@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Plus, Package, AlertTriangle, DollarSign } from "lucide-react";
 import AdminSearch from "@/modules/admin/components/admin-search";
 import ProductsTable from "@/modules/admin/components/products-table";
+import { Product } from "@/types/product";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -175,7 +176,7 @@ export default async function ProductsPage({
         </div>
 
         <ProductsTable
-          products={products}
+          products={products as unknown as Product[]}
           categories={categories}
           totalCount={filteredCount}
           allCount={totalCount}

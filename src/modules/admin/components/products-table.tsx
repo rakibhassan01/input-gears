@@ -25,25 +25,10 @@ import { deleteProducts } from "@/modules/admin/actions";
 import { cn } from "@/lib/utils";
 import { useQueryState } from "nuqs";
 
-interface ProductWithCategory {
-  id: string;
-  name: string;
-  slug: string;
-  image: string | null;
-  price: number;
-  stock: number;
-  description: string | null;
-  updatedAt: Date;
-  isActive: boolean;
-  scheduledAt: Date | null;
-  category: {
-    name: string;
-    slug: string;
-  } | null;
-}
+import { Product } from "@/types/product";
 
 interface ProductsTableProps {
-  products: ProductWithCategory[];
+  products: Product[];
   categories: { id: string; name: string; slug: string }[];
   totalCount: number; // Filtered Count
   allCount: number; // Total Count in Store
@@ -51,7 +36,6 @@ interface ProductsTableProps {
 
 import { AlertModal } from "@/components/ui/alert-modal";
 import ProductEditModal from "./product-edit-modal";
-import { Product } from "@prisma/client";
 
 export default function ProductsTable({
   products,
@@ -445,7 +429,7 @@ export default function ProductsTable({
                         </Link>
                         <button
                           onClick={() => {
-                            setSelectedProduct(product as any);
+                            setSelectedProduct(product);
                             setIsEditModalOpen(true);
                           }}
                           className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white hover:shadow-sm rounded-xl transition-all"

@@ -39,7 +39,9 @@ const productSchema = z.object({
   availability: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
   scheduledAt: z.string().optional().nullable(),
-  specs: z.record(z.string(), z.string()).optional(),
+  specs: z
+    .record(z.string(), z.string().or(z.number()).or(z.boolean()).nullable())
+    .optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
@@ -83,7 +85,9 @@ export async function createProduct(data: ProductFormValues) {
         warranty: validatedData.warranty,
         availability: validatedData.availability,
         isActive: validatedData.isActive,
-        scheduledAt: validatedData.scheduledAt ? new Date(validatedData.scheduledAt) : null,
+        scheduledAt: validatedData.scheduledAt
+          ? new Date(validatedData.scheduledAt)
+          : null,
         specs: validatedData.specs || {},
       },
     });
@@ -147,7 +151,9 @@ export async function updateProduct(id: string, data: ProductFormValues) {
         warranty: validatedData.warranty,
         availability: validatedData.availability,
         isActive: validatedData.isActive,
-        scheduledAt: validatedData.scheduledAt ? new Date(validatedData.scheduledAt) : null,
+        scheduledAt: validatedData.scheduledAt
+          ? new Date(validatedData.scheduledAt)
+          : null,
         specs: validatedData.specs || {},
       },
     });
@@ -412,7 +418,7 @@ const userUpdateSchema = z.object({
 
 export async function updateUser(
   id: string,
-  data: z.infer<typeof userUpdateSchema>
+  data: z.infer<typeof userUpdateSchema>,
 ) {
   try {
     await requireAdmin();

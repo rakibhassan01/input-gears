@@ -5,13 +5,15 @@ import ProductCard from "../components/product-card";
 import { Heart, ShoppingBag, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { Product } from "@/types/product";
 
 export default function WishlistView() {
   const { items } = useWishlist();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    const frame = requestAnimationFrame(() => setIsMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   // Hydration fix
@@ -79,11 +81,7 @@ export default function WishlistView() {
             {wishlistItems.map((product) => (
               <ProductCard
                 key={product.id}
-                data={{
-                  ...product,
-                  image: product.image || null,
-                  description: null,
-                }}
+                data={product as unknown as Product}
               />
             ))}
           </div>

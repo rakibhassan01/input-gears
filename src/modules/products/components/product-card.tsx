@@ -9,33 +9,10 @@ import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
 import { useSession } from "@/lib/auth-client";
 import { QuickViewModal } from "./quick-view-modal";
+import { Product } from "@/types/product";
 
 interface ProductCardProps {
-  data: {
-    id: string;
-    name: string;
-    price: number;
-    image: string | null;
-    description: string | null;
-    stock: number;
-    slug: string;
-    category?: {
-      name: string;
-      slug?: string | null;
-    } | null;
-    colors?: string[];
-    switchType?: string | null;
-    specs?: Record<string, string | number | boolean | null>;
-    brand?: string | null;
-    sku?: string | null;
-    dpi?: string | null;
-    weight?: string | null;
-    connectionType?: string | null;
-    pollingRate?: string | null;
-    sensor?: string | null;
-    warranty?: string | null;
-    availability?: string | null;
-  };
+  data: Product;
 }
 
 const ProductCard = memo(({ data }: ProductCardProps) => {

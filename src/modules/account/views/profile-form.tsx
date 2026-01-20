@@ -29,6 +29,7 @@ import {
   PasswordFormValues,
 } from "@/modules/account/profile-schema";
 import { authClient } from "@/lib/auth-client";
+import { CloudinaryResult } from "@/types/cloudinary";
 
 interface ProfileFormProps {
   user: {
@@ -43,7 +44,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
   return (
     <div className="space-y-6 md:space-y-8">
       <GeneralInfoForm user={user} />
-      <PasswordChangeForm email={user.email} />
+      <PasswordChangeForm />
     </div>
   );
 }
@@ -70,6 +71,7 @@ function GeneralInfoForm({ user }: ProfileFormProps) {
       router.refresh();
       form.reset(data);
     } catch (error) {
+      console.error(error);
       toast.error("Failed to update profile");
     } finally {
       setIsSubmitting(false);
@@ -90,14 +92,25 @@ function GeneralInfoForm({ user }: ProfileFormProps) {
       </div>
 
       <div className="p-6 md:p-8">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-8">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6 md:space-y-8"
+        >
           {/* --- Avatar Section --- */}
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100 border-dashed">
             <CldUploadWidget
               uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-              onSuccess={(result: any) => {
-                if (result.info && result.info.secure_url) {
-                  form.setValue("image", result.info.secure_url, {
+              onSuccess={(result: unknown) => {
+                if (
+                  result &&
+                  typeof result === "object" &&
+                  "info" in result &&
+                  typeof result.info === "object" &&
+                  result.info !== null &&
+                  "secure_url" in result.info
+                ) {
+                  const info = result.info as CloudinaryResult["info"];
+                  form.setValue("image", info.secure_url, {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
@@ -239,7 +252,7 @@ function GeneralInfoForm({ user }: ProfileFormProps) {
 }
 
 // --- SUB COMPONENT 2: Password Change ---
-function PasswordChangeForm({ email }: { email: string | null }) {
+function PasswordChangeForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<PasswordFormValues>({

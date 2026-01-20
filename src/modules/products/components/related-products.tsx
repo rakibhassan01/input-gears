@@ -37,7 +37,7 @@ const RelatedProducts = ({ products }: RelatedProductsProps) => {
           >
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100">
               <Image
-                src={product.images[0]}
+                src={product.images?.[0] || product.image || "/placeholder.png"}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -46,7 +46,7 @@ const RelatedProducts = ({ products }: RelatedProductsProps) => {
 
             <div className="flex flex-col justify-center min-w-0">
               <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">
-                {product.category}
+                {product.category?.name || "General"}
               </span>
               <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
                 {product.name}

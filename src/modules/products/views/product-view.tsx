@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Product } from "@/types/product";
 import ProductCard from "../components/product-card";
 import { Prisma } from "@prisma/client";
 import ProductFilters from "../components/product-filters";
@@ -35,7 +36,7 @@ export default async function ProductView({
     }),
   ]);
 
-  const brands = uniqueBrands.map((b) => b.brand as string).filter(Boolean);
+  const brands = uniqueBrands.map((b: { brand: string | null }) => b.brand as string).filter(Boolean);
 
   // Build Prisma query where clause
   const where: Prisma.ProductWhereInput = {
@@ -72,14 +73,14 @@ export default async function ProductView({
   if (sort === "price_desc") orderBy = { price: "desc" };
 
   // Fetch filtered products
-  const products = await prisma.product.findMany({
+  const products = (await prisma.product.findMany({
     where,
     orderBy,
     include: {
       category: true,
     },
     take: 40,
-  });
+  })) as unknown as Product[];
 
   return (
     <div className="bg-[#fcfcff] min-h-screen">
@@ -172,8 +173,8 @@ export default async function ProductView({
                     : "lg:grid-cols-3 xl:grid-cols-4 mini:grid-cols-4",
                 )}
               >
-                {products.map((product) => (
-                  <ProductCard key={product.id} data={product as any} />
+                {products.map((product: Product) => (
+                  <ProductCard key={product.id} data={product} />
                 ))}
               </div>
             )}

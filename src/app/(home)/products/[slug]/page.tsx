@@ -40,37 +40,34 @@ export default async function ProductDetailsPage(props: PageProps) {
 
   // ৪. Data Transformation (DB -> UI)
   const transformedProduct: Product = {
-    id: productFromDb.id,
-    slug: productFromDb.slug,
-    name: productFromDb.name,
+    ...productFromDb,
     description: productFromDb.description || "",
-    price: productFromDb.price,
-    stock: productFromDb.stock,
+    image: productFromDb.image,
     images: productFromDb.image ? [productFromDb.image] : ["/placeholder.png"],
-    category: productFromDb.categoryId || "General",
-    colors: productFromDb.colors || [],
-    switchType: productFromDb.switchType || undefined,
-    brand: productFromDb.brand,
-    sku: productFromDb.sku,
-    dpi: productFromDb.dpi,
-    weight: productFromDb.weight,
-    connectionType: productFromDb.connectionType,
-    pollingRate: productFromDb.pollingRate,
-    sensor: productFromDb.sensor,
-    warranty: productFromDb.warranty,
-    availability: productFromDb.availability,
+    category: {
+      id: productFromDb.categoryId || "",
+      name: "General",
+      slug: "general",
+      description: null,
+      image: null,
+      parentId: null,
+      isActive: true,
+      isFeatured: false,
+      seoTitle: null,
+      seoDescription: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    specs: (productFromDb.specs as Record<string, string | number | boolean | null>) || {},
   };
 
   const transformedRelatedProducts: Product[] = relatedProducts.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
+    ...p,
     description: p.description || "",
-    price: p.price,
-    stock: p.stock,
+    image: p.image,
     images: p.image ? [p.image] : ["/placeholder.png"],
-    category: p.category?.name || "General",
-    brand: p.brand,
+    category: p.category ? { ...p.category } : null,
+    specs: (p.specs as Record<string, string | number | boolean | null>) || {},
   }));
 
   return (

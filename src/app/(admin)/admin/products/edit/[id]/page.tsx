@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ProductEditForm from "@/modules/admin/views/product-edit-form";
+import { Product } from "@/types/product";
 
 interface EditPageProps {
   params: Promise<{
@@ -21,5 +22,6 @@ export default async function EditProductPage({ params }: EditPageProps) {
   }
 
   // Client Form এ ডাটা পাঠানো হচ্ছে
-  return <ProductEditForm product={product} />;
+  // আমরা এখানে টাইপ কাস্ট করছি কারণ প্রিজমার JsonValue সরাসরি আমাদের Record টাইপের সাথে মিলে না
+  return <ProductEditForm product={product as unknown as Product} />;
 }

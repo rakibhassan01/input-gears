@@ -6,14 +6,7 @@ import Image from "next/image";
 import { Trash, CloudLightning } from "lucide-react";
 import { toast } from "sonner";
 
-// ✅ 1. Cloudinary Result এর জন্য নির্দিষ্ট টাইপ তৈরি
-interface CloudinaryResult {
-  info: {
-    secure_url: string;
-    [key: string]: unknown; // অন্য প্রপার্টি থাকতে পারে, তাই unknown দেওয়া নিরাপদ
-  };
-  event: string;
-}
+import { CloudinaryResult } from "@/types/cloudinary";
 
 interface ImageUploadProps {
   disabled?: boolean;
@@ -33,11 +26,12 @@ export default function ImageUpload({
   // ✅ 2. Hydration Mismatch Fix
   // এই প্যাটার্নটি Next.js এ স্ট্যান্ডার্ড এবং নিরাপদ
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 
   // ✅ 3. Type Safe Upload Handler
-  const onUpload = (result: any) => {
+  const onUpload = (result: unknown) => {
     // Note: CldUploadWidget এর টাইপ লাইব্রেরি থেকে অনেক সময় 'any' রিটার্ন করে,
     // তাই আমরা এখানে Type Assertion বা Check ব্যবহার করব।
 

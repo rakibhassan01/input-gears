@@ -4,13 +4,63 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding products...");
+  console.log("🌱 Seeding categories and products...");
 
-  // আগের সব ডাটা মুছে ফেলা (ক্রমান্বয়ে মুছে ফেলতে হবে ফরেন কি এরর এড়াতে)
+  // Delete existing data in correct order
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.cartItem.deleteMany();
+  await prisma.wishlistItem.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
 
+  // 1. Create Categories
+  const categories = await Promise.all([
+    prisma.category.create({
+      data: {
+        name: "Keyboards",
+        slug: "keyboards",
+        description: "Mechanical, membrane, and custom keyboards.",
+        isFeatured: true,
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: "Mice",
+        slug: "mice",
+        description: "Gaming and productivity mice.",
+        isFeatured: true,
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: "Audio",
+        slug: "audio",
+        description: "Headsets and headphones.",
+        isFeatured: true,
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: "Monitors",
+        slug: "monitors",
+        description: "High-refresh rate and 4K monitors.",
+        isFeatured: true,
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: "Accessories",
+        slug: "accessories",
+        description: "Hubs, mouse pads, and more.",
+        isFeatured: true,
+      },
+    }),
+  ]);
+
+  const [kbdCat, miceCat, audioCat, monCat, accCat] = categories;
+
+  // 2. Create Products associated with Categories
   await prisma.product.createMany({
     data: [
       {
@@ -20,8 +70,7 @@ async function main() {
         description: "Premium mechanical keyboard with RGB backlighting.",
         price: 120.0,
         stock: 50,
-        image:
-          "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#FFFFFF", "#FF3366"],
         switchType: "Linear",
         brand: "GearsPro",
@@ -31,6 +80,22 @@ async function main() {
         pollingRate: "1000Hz",
         warranty: "2 Years",
         availability: "In Stock",
+        categoryId: kbdCat.id,
+      },
+      {
+        id: "prod_keyboard_logi",
+        name: "Logitech G Pro X",
+        slug: "logitech-g-pro-x",
+        description: "The pro-grade keyboard with swappable switches.",
+        price: 149.99,
+        stock: 45,
+        image: "https://images.unsplash.com/photo-1595044426077-d36d93375ea4?w=800&auto=format&fit=crop&q=60",
+        colors: ["#000000"],
+        switchType: "GX Blue Clicky",
+        brand: "Logitech",
+        sku: "LOGI-GPROX",
+        connectionType: "Wired",
+        categoryId: kbdCat.id,
       },
       {
         id: "prod_mouse_wireless",
@@ -39,8 +104,7 @@ async function main() {
         description: "Ultra-fast response time with 25k DPI sensor.",
         price: 85.5,
         stock: 30,
-        image:
-          "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#808080", "#FFD700"],
         brand: "SwiftMove",
         sku: "SM-MSE-W1",
@@ -51,17 +115,29 @@ async function main() {
         sensor: "HERO 25K",
         warranty: "1 Year",
         availability: "In Stock",
+        categoryId: miceCat.id,
+      },
+      {
+        id: "prod_mouse_razer",
+        name: "Razer DeathAdder V3 Pro",
+        slug: "razer-deathadder-v3-pro",
+        description: "Ultra-lightweight wireless ergonomic mouse.",
+        price: 149.0,
+        stock: 20,
+        image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=60",
+        brand: "Razer",
+        sku: "RAZ-DV3P",
+        dpi: "30000 DPI",
+        categoryId: miceCat.id,
       },
       {
         id: "prod_headphones_anc",
         name: "Noise Cancelling Headphones",
         slug: "noise-cancelling-headphones",
-        description:
-          "Immersive sound experience with active noise cancellation.",
+        description: "Immersive sound experience with active noise cancellation.",
         price: 250.0,
         stock: 15,
-        image:
-          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#000080"],
         brand: "AudioPure",
         sku: "AP-HDP-ANC",
@@ -70,6 +146,7 @@ async function main() {
         pollingRate: "N/A",
         warranty: "1 Year",
         availability: "Limited Stock",
+        categoryId: audioCat.id,
       },
       {
         id: "prod_monitor_4k",
@@ -78,8 +155,7 @@ async function main() {
         description: "Crystal clear display tailored for designers.",
         price: 450.0,
         stock: 10,
-        image:
-          "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#C0C0C0"],
         brand: "VisionMaster",
         sku: "VM-MON-4K27",
@@ -87,22 +163,7 @@ async function main() {
         connectionType: "HDMI 2.1 / DP 1.4",
         warranty: "3 Years",
         availability: "In Stock",
-      },
-      {
-        id: "prod_chair_ergonomic",
-        name: "Ergonomic Desk Chair",
-        slug: "ergonomic-desk-chair",
-        description: "Maximum comfort for long working hours.",
-        price: 320.0,
-        stock: 20,
-        image:
-          "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=800&auto=format&fit=crop&q=60",
-        colors: ["#000000", "#4B0082", "#A52A2A"],
-        brand: "ComfortSit",
-        sku: "CS-CHR-ERG",
-        weight: "12kg",
-        warranty: "5 Years",
-        availability: "In Stock",
+        categoryId: monCat.id,
       },
       {
         id: "prod_hub_usbc",
@@ -111,58 +172,13 @@ async function main() {
         description: "Expand your connectivity with 7 ports.",
         price: 45.0,
         stock: 100,
-        image:
-          "https://images.unsplash.com/photo-1622359556214-415510b65637?w=800&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1622359556214-415510b65637?w=800&auto=format&fit=crop&q=60",
         colors: ["#808080", "#FFFFFF"],
         brand: "ConnectIt",
         sku: "CI-HUB-7P",
         warranty: "1 Year",
         availability: "In Stock",
-      },
-      {
-        id: "prod_watch_series5",
-        name: "Smart Watch Series 5",
-        slug: "smart-watch-series-5",
-        description: "Track your fitness and notifications on the go.",
-        price: 199.0,
-        stock: 25,
-        image:
-          "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=60",
-        colors: ["#000000", "#FFC0CB", "#FFFFFF"],
-        brand: "TimeTech",
-        sku: "TT-SW-S5",
-        warranty: "1 Year",
-        availability: "In Stock",
-      },
-      {
-        id: "prod_ssd_1tb",
-        name: "Portable SSD 1TB",
-        slug: "portable-ssd-1tb",
-        description: "Lightning fast transfer speeds in a compact design.",
-        price: 110.0,
-        stock: 40,
-        image:
-          "https://images.unsplash.com/photo-1597872250969-95a985c5b2ce?w=800&auto=format&fit=crop&q=60",
-        colors: ["#000000", "#FF4500"],
-        brand: "DataSwift",
-        sku: "DS-SSD-1TB",
-        warranty: "3 Years",
-        availability: "In Stock",
-      },
-      {
-        id: "prod_webcam_1080p",
-        name: "Webcam 1080p Pro",
-        slug: "webcam-1080p-pro",
-        description: "Look your best in every video call.",
-        price: 70.0,
-        stock: 60,
-        image:
-          "https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=60",
-        colors: ["#000000"],
-        brand: "EyeView",
-        sku: "EV-WCM-1080P",
-        warranty: "1 Year",
-        availability: "In Stock",
+        categoryId: accCat.id,
       },
       {
         id: "prod_mousepad_xl",
@@ -171,13 +187,13 @@ async function main() {
         description: "Smooth surface for precise control.",
         price: 25.0,
         stock: 150,
-        image:
-          "https://images.unsplash.com/photo-1610444569503-4f514603952f?w=800&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1610444569503-4f514603952f?w=800&auto=format&fit=crop&q=60",
         colors: ["#000000", "#32CD32"],
         brand: "SwiftPad",
         sku: "SP-MPD-XL",
         warranty: "6 Months",
         availability: "In Stock",
+        categoryId: accCat.id,
       },
     ],
   });

@@ -18,6 +18,7 @@ import {
   Monitor,
   Cpu,
   ArrowLeftRight,
+  ChevronDown,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import UserNav from "../../modules/auth/components/user-nav";
@@ -26,9 +27,9 @@ import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
 import MobileBottomNav from "./mobile-bottom-nav";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 // CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
-// ... (CartNav stays same)
 const CartNav = dynamic(
   () => import("../../modules/cart/components/cart-nav"),
   {
@@ -41,13 +42,20 @@ const CartNav = dynamic(
   }
 );
 
-const NAV_LINKS = [
-  { name: "Keyboards", href: "/keyboards", icon: Keyboard },
-  { name: "Mice", href: "/mice", icon: Mouse },
-  { name: "Audio", href: "/audio", icon: Headphones },
-  { name: "Monitors", href: "/monitors", icon: Monitor },
-  { name: "Accessories", href: "/accessories", icon: Cpu },
-];
+interface CategoryWithBrands {
+  id: string;
+  name: string;
+  slug: string;
+  brands: string[];
+}
+
+const CATEGORY_ICONS: Record<string, any> = {
+  keyboards: Keyboard,
+  mice: Mouse,
+  audio: Headphones,
+  monitors: Monitor,
+  accessories: Cpu,
+};
 
 interface SearchResult {
   id: string;
@@ -66,13 +74,16 @@ export default function Navbar() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [categories, setCategories] = useState<CategoryWithBrands[]>([]);
+  const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
+
   const { data: session, isPending } = useSession();
   const wishlist = useWishlist();
   const compare = useCompare();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Sync search query from URL without useEffect to avoid cascading renders
+  // Sync search query from URL
   const currentQuery = searchParams.get("q") || "";
   const [prevSearch, setPrevSearch] = useState(currentQuery);
   if (currentQuery !== prevSearch) {
@@ -82,6 +93,10 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsMounted(true);
+    fetch("/api/categories/brands")
+      .then((res) => res.json())
+      .then((data) => setCategories(data))
+      .catch((err) => console.error("Error fetching categories:", err));
   }, []);
 
   useEffect(() => {
@@ -118,7 +133,6 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Close results on click outside or Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".search-container")) {
@@ -129,6 +143,7 @@ export default function Navbar() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setShowResults(false);
+        setActiveMegaMenu(null);
       }
     };
 
@@ -148,7 +163,6 @@ export default function Navbar() {
     }
   }, [isMobileMenuOpen]);
 
-  // Only show badge/active state after mounting
   const wishlistCount = isMounted ? wishlist.items.length : 0;
   const hasWishlistItems = wishlistCount > 0;
 
@@ -157,6 +171,7 @@ export default function Navbar() {
     if (!searchQuery.trim()) return;
     router.push(`/products?q=${encodeURIComponent(searchQuery)}`);
     setIsMobileMenuOpen(false);
+    setShowResults(false);
   };
 
   return (
@@ -171,9 +186,7 @@ export default function Navbar() {
           }`}
         >
           <div className="max-w-[1440px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 md:gap-8">
-            {/* Desktop Left / Mobile Side: Menu & Logo Container */}
             <div className="flex items-center gap-4 flex-1">
-              {/* Hamburger Menu (Mobile Only) */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="flex md:hidden p-2 text-gray-900 hover:bg-gray-100 rounded-xl transition-all active:scale-95 z-10"
@@ -182,7 +195,6 @@ export default function Navbar() {
                 <Menu size={20} />
               </button>
 
-              {/* Logo: Centered on mobile, Left-aligned on Desktop */}
               <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
                 <Link
                   href="/"
@@ -198,7 +210,6 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* MIDDLE: Search Bar (Desktop Only) - Perfectly Centered */}
             <div className="hidden md:flex flex-initial items-center">
               <div className="relative search-container">
                 <form
@@ -219,66 +230,71 @@ export default function Navbar() {
                   />
                 </form>
 
-                {/* Desktop Results Dropdown */}
-                {showResults && (
-                  <div className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-[2rem] shadow-2xl overflow-hidden z-100 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="p-4 border-b border-gray-50 flex items-center justify-between">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
-                        {isSearchLoading ? "Searching..." : `Found ${searchResults.length} Results`}
-                      </span>
-                      {isSearchLoading && (
-                        <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                      )}
-                    </div>
-                    <div className="max-h-[400px] overflow-y-auto p-2 no-scrollbar">
-                      {searchResults.length > 0 ? (
-                        searchResults.map((p) => (
-                          <Link
-                            key={p.id}
-                            href={`/products/${p.slug}`}
-                            onClick={() => setShowResults(false)}
-                            className="flex items-center gap-4 p-2.5 hover:bg-indigo-50/50 rounded-2xl transition-all group"
-                          >
-                            <div className="relative h-14 w-14 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100 p-1">
-                              {p.image ? (
-                                <NextImage src={p.image} alt={p.name} fill className="object-contain" />
-                              ) : (
-                                <Zap className="m-auto text-gray-300" size={20} />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-black text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
-                                {p.name}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-xs font-bold text-indigo-600">${p.price}</span>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-full">
-                                  {p.category?.name || "Gadget"}
-                                </span>
-                              </div>
-                            </div>
-                            <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400 transition-all transform group-hover:translate-x-1" />
-                          </Link>
-                        ))
-                      ) : (
-                        <div className="p-8 text-center">
-                          <p className="text-xs font-bold text-gray-400 italic">No exact matches found...</p>
-                        </div>
-                      )}
-                    </div>
-                    <Link
-                      href={`/products?q=${encodeURIComponent(searchQuery)}`}
-                      onClick={() => setShowResults(false)}
-                      className="block p-4 text-center text-xs font-black text-indigo-600 hover:bg-indigo-50 border-t border-gray-50 transition-colors uppercase tracking-widest"
+                <AnimatePresence>
+                  {showResults && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-[2rem] shadow-2xl overflow-hidden z-100"
                     >
-                      View All Results
-                    </Link>
-                  </div>
-                )}
+                      <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
+                          {isSearchLoading ? "Searching..." : `Found ${searchResults.length} Results`}
+                        </span>
+                        {isSearchLoading && (
+                          <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                        )}
+                      </div>
+                      <div className="max-h-[400px] overflow-y-auto p-2 no-scrollbar">
+                        {searchResults.length > 0 ? (
+                          searchResults.map((p) => (
+                            <Link
+                              key={p.id}
+                              href={`/products/${p.slug}`}
+                              onClick={() => setShowResults(false)}
+                              className="flex items-center gap-4 p-2.5 hover:bg-indigo-50/50 rounded-2xl transition-all group"
+                            >
+                              <div className="relative h-14 w-14 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100 p-1">
+                                {p.image ? (
+                                  <NextImage src={p.image} alt={p.name} fill className="object-contain" />
+                                ) : (
+                                  <Zap className="m-auto text-gray-300" size={20} />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-black text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                                  {p.name}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs font-bold text-indigo-600">${p.price}</span>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-full">
+                                    {p.category?.name || "Gadget"}
+                                  </span>
+                                </div>
+                              </div>
+                              <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400 transition-all transform group-hover:translate-x-1" />
+                            </Link>
+                          ) )
+                        ) : (
+                          <div className="p-8 text-center">
+                            <p className="text-xs font-bold text-gray-400 italic">No exact matches found...</p>
+                          </div>
+                        )}
+                      </div>
+                      <Link
+                        href={`/products?q=${encodeURIComponent(searchQuery)}`}
+                        onClick={() => setShowResults(false)}
+                        className="block p-4 text-center text-xs font-black text-indigo-600 hover:bg-indigo-50 border-t border-gray-50 transition-colors uppercase tracking-widest"
+                      >
+                        View All Results
+                      </Link>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
-            {/* RIGHT: Actions */}
             <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
               <Link
                 href="/compare"
@@ -344,206 +360,198 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* MOBILE SEARCH SECTION */}
-        <div className="md:hidden bg-white px-4 pb-3 -mt-1 border-b border-gray-100/50 relative search-container">
-          <form onSubmit={handleSearch} className="relative group">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-              placeholder="Search gadgets (e.g. Keyboard)..."
-              className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-11 pr-4 py-3 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all duration-300"
-            />
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
-            />
-          </form>
-
-          {/* Mobile Results Dropdown */}
-          {showResults && (
-            <div className="absolute top-full left-4 right-4 mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
-               <div className="max-h-[300px] overflow-y-auto p-2 no-scrollbar">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((p) => (
-                      <Link
-                        key={p.id}
-                        href={`/products/${p.slug}`}
-                        onClick={() => {
-                          setShowResults(false);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-xl"
-                      >
-                         <div className="h-10 w-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 p-1 relative">
-                            {p.image ? (
-                               <NextImage src={p.image} alt={p.name} fill className="object-contain" />
-                            ) : (
-                               <Zap className="m-auto text-gray-300" size={16} />
-                            )}
-                         </div>
-                         <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-bold text-gray-900 truncate">{p.name}</h4>
-                            <p className="text-[10px] text-indigo-600 font-bold">${p.price}</p>
-                         </div>
-                      </Link>
-                    ))
-                  ) : !isSearchLoading && (
-                    <div className="p-4 text-center text-[10px] font-bold text-gray-400 italic">No results found</div>
-                  )}
-               </div>
-            </div>
-          )}
-        </div>
-
-        {/* SECONDARY NAVBAR (Desktop Categories Row) */}
+        {/* SECONDARY NAVBAR (Desktop Categories Mega Menu Row) */}
         <div
-          className={`hidden lg:grid w-full bg-white transition-all duration-300 ease-in-out border-b border-gray-100 ${
-            isScrolled
-              ? "grid-rows-[0fr] opacity-0 invisible"
-              : "grid-rows-[1fr] opacity-100 visible"
+          className={`hidden lg:grid w-full bg-white border-b border-gray-100 transition-all duration-300 ${
+            isScrolled ? "opacity-0 invisible h-0" : "opacity-100 visible h-12"
           }`}
         >
-          <div className="overflow-hidden">
-            <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-center gap-8">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="group flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-widest transition-all"
+          <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center gap-1">
+            {categories.map((cat) => {
+              const Icon = CATEGORY_ICONS[cat.slug] || Cpu;
+              const isActive = activeMegaMenu === cat.slug;
+
+              return (
+                <div
+                  key={cat.id}
+                  className="relative h-full flex items-center"
+                  onMouseEnter={() => setActiveMegaMenu(cat.slug)}
+                  onMouseLeave={() => setActiveMegaMenu(null)}
                 >
-                  <link.icon
-                    size={14}
-                    className="text-gray-300 group-hover:text-indigo-400 transition-colors"
-                  />
-                  {link.name}
-                </Link>
-              ))}
-            </div>
+                  <Link
+                    href={`/${cat.slug}`}
+                    className={`group flex items-center gap-2 px-4 h-full text-[11px] font-black uppercase tracking-widest transition-all ${
+                      isActive ? "text-indigo-600" : "text-gray-500 hover:text-indigo-600"
+                    }`}
+                  >
+                    <Icon
+                      size={14}
+                      className={`${isActive ? "text-indigo-600" : "text-gray-300 group-hover:text-indigo-400"}`}
+                    />
+                    {cat.name}
+                    <ChevronDown size={10} className={`ml-1 transition-transform duration-300 ${isActive ? "rotate-180" : ""}`} />
+                  </Link>
+
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full left-1/2 -translate-x-1/2 w-64 pt-2 z-50"
+                      >
+                        <div className="bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-2xl p-4 overflow-hidden">
+                          <div className="mb-3 px-2">
+                             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Shop by Brand</span>
+                          </div>
+                          <div className="grid gap-1">
+                            {cat.brands.length > 0 ? (
+                              cat.brands.map((brand) => (
+                                <Link
+                                  key={brand}
+                                  href={`/${cat.slug}?brand=${encodeURIComponent(brand)}`}
+                                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-indigo-50/50 group/item transition-all"
+                                >
+                                  <span className="text-xs font-bold text-gray-700 group-hover/item:text-indigo-600">{brand}</span>
+                                  <ChevronRight size={12} className="text-gray-200 group-hover/item:text-indigo-400 transform group-hover/item:translate-x-1 duration-300" />
+                                </Link>
+                              ))
+                            ) : (
+                              <p className="p-3 text-[10px] text-gray-400 italic">No brands found</p>
+                            )}
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-gray-50">
+                             <Link href={`/${cat.slug}`} className="block w-full py-2 text-center text-[10px] font-black text-indigo-600 uppercase tracking-[0.15em] hover:bg-indigo-50 rounded-xl transition-colors">
+                               View All {cat.name}
+                             </Link>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
         </div>
       </header>
 
       {/* MOBILE MENU DRAWER */}
-      <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-100 transition-opacity duration-500 ${
-          isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
-
-      <div
-        className={`fixed inset-y-0 left-0 z-101 w-[85%] max-w-[320px] bg-white shadow-2xl transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Mobile Header */}
-          <div className="p-6 flex items-center justify-between border-b border-gray-50">
-            <Link
-              href="/"
-              className="flex items-center gap-2 group"
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-100"
               onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 z-101 w-[85%] max-w-[320px] bg-white shadow-2xl"
             >
-              <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-100 transform group-active:scale-95 transition-all">
-                <Zap size={18} fill="currentColor" />
-              </div>
-              <span className="text-xl font-black tracking-tight text-gray-900">
-                Input<span className="text-indigo-600">Gears</span>
-              </span>
-            </Link>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-all"
-            >
-              <X size={24} className="text-gray-900" />
-            </button>
-          </div>
-
-          {/* Quick Search in Mobile */}
-          <div className="p-6 pb-2">
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Find your gear..."
-                className="w-full bg-gray-100 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all border-none"
-              />
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-              />
-            </form>
-          </div>
-
-          {/* Multi-category Links */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-2">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
-              Categories
-            </p>
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="group flex items-center gap-4 py-3.5 px-4 rounded-2xl hover:bg-indigo-50 transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <div className="p-2 bg-gray-100 group-hover:bg-white group-hover:text-indigo-600 text-gray-600 rounded-xl transition-all">
-                  <link.icon size={20} />
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="p-6 flex items-center justify-between border-b border-gray-50">
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 group"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-100">
+                      <Zap size={18} fill="currentColor" />
+                    </div>
+                    <span className="text-xl font-black tracking-tight text-gray-900">
+                      Input<span className="text-indigo-600">Gears</span>
+                    </span>
+                  </Link>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl">
+                    <X size={24} className="text-gray-900" />
+                  </button>
                 </div>
-                <span className="text-[17px] font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                  {link.name}
-                </span>
-                <ChevronRight
-                  size={16}
-                  className="ml-auto text-gray-300 group-hover:text-indigo-400 transform group-hover:translate-x-1 transition-all"
-                />
-              </Link>
-            ))}
 
-            <div className="pt-4 mt-4 border-t border-gray-50">
-              <Link
-                href="/sale"
-                className="flex items-center gap-4 py-3.5 px-4 rounded-2xl bg-red-50 text-red-600 hover:bg-red-100 transition-all font-bold"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Zap size={20} fill="currentColor" />
-                <span className="text-[17px]">Flash Sale</span>
-              </Link>
-            </div>
-          </div>
+                <div className="p-6 pb-2">
+                  <form onSubmit={handleSearch} className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Find your gear..."
+                      className="w-full bg-gray-100 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 border-none"
+                    />
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                  </form>
+                </div>
 
-          {/* Mobile Footer */}
-          <div className="p-6 border-t bg-gray-50/50">
-            {!isMounted ? (
-              <div className="w-full h-14 bg-gray-100 animate-pulse rounded-2xl mb-4" />
-            ) : !session ? (
-              <Link
-                href="/sign-in"
-                className="flex items-center justify-center w-full bg-gray-900 text-white font-bold py-4 rounded-2xl mb-4 hover:bg-indigo-600 transition-all shadow-lg shadow-gray-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Join Now / Sign In
-              </Link>
-            ) : (
-              <Link
-                href="/account"
-                className="flex items-center justify-center w-full bg-indigo-50 text-indigo-600 font-bold py-4 rounded-2xl mb-4 hover:bg-indigo-100 transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                My Account Dashboard
-              </Link>
-            )}
-            <div className="flex justify-center gap-4 text-[11px] text-gray-400 font-medium uppercase tracking-tighter">
-              <Link href="/support">Support</Link>
-              <Link href="/tracking">Order Tracking</Link>
-              <Link href="/privacy">Privacy</Link>
-            </div>
-          </div>
-        </div>
-      </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Categories</p>
+                  {categories.map((cat) => {
+                    const Icon = CATEGORY_ICONS[cat.slug] || Cpu;
+                    return (
+                      <div key={cat.id} className="space-y-1">
+                        <Link
+                          href={`/${cat.slug}`}
+                          className="group flex items-center gap-4 py-3 px-4 rounded-2xl hover:bg-indigo-50 transition-all bg-gray-50/50"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <div className="p-2 bg-white text-gray-600 rounded-xl group-hover:text-indigo-600 shadow-sm">
+                            <Icon size={18} />
+                          </div>
+                          <span className="text-[15px] font-bold text-gray-900">{cat.name}</span>
+                          <ChevronRight size={14} className="ml-auto text-gray-300" />
+                        </Link>
+                        {/* Mobile Brands Shortcut */}
+                        <div className="pl-14 flex flex-wrap gap-2 pt-1">
+                           {cat.brands.slice(0, 3).map(brand => (
+                             <Link 
+                                key={brand} 
+                                href={`/${cat.slug}?brand=${encodeURIComponent(brand)}`}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-[10px] font-bold text-gray-400 hover:text-indigo-600 uppercase tracking-tighter"
+                             >
+                               {brand}
+                             </Link>
+                           ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-6 border-t bg-gray-50/50">
+                  {!isMounted || isPending ? (
+                    <div className="w-full h-14 bg-gray-100 animate-pulse rounded-2xl mb-4" />
+                  ) : !session ? (
+                    <Link
+                      href="/sign-in"
+                      className="flex items-center justify-center w-full bg-gray-900 text-white font-bold py-4 rounded-2xl mb-4 hover:bg-indigo-600 shadow-lg shadow-gray-200"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Join Now / Sign In
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/account"
+                      className="flex items-center justify-center w-full bg-indigo-50 text-indigo-600 font-bold py-4 rounded-2xl mb-4"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      My Dashboard
+                    </Link>
+                  )}
+                  <div className="flex justify-center gap-4 text-[11px] text-gray-400 font-medium uppercase tracking-tighter">
+                    <Link href="/support">Support</Link>
+                    <Link href="/tracking">Orders</Link>
+                    <Link href="/privacy">Privacy</Link>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       <MobileBottomNav />
     </>
   );
@@ -554,17 +562,12 @@ export function NavbarSkeleton() {
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200/50">
       <nav className="w-full py-4">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 md:gap-8">
-          {/* Logo Skeleton */}
           <div className="flex items-center gap-4 flex-1">
             <div className="h-10 w-32 bg-gray-100 animate-pulse rounded-xl" />
           </div>
-
-          {/* Search Skeleton */}
           <div className="hidden md:flex flex-initial items-center">
             <div className="h-10 w-[450px] bg-gray-50 animate-pulse rounded-2xl" />
           </div>
-
-          {/* Actions Skeleton */}
           <div className="flex flex-1 items-center justify-end gap-3">
             <div className="h-10 w-10 bg-gray-100 animate-pulse rounded-xl" />
             <div className="h-10 w-10 bg-gray-100 animate-pulse rounded-xl" />
@@ -573,24 +576,6 @@ export function NavbarSkeleton() {
           </div>
         </div>
       </nav>
-
-      {/* Mobile Search Skeleton */}
-      <div className="md:hidden bg-white px-4 pb-3 -mt-1 border-b border-gray-100/50">
-        <div className="h-10 w-full bg-gray-50 animate-pulse rounded-2xl" />
-      </div>
-      {/* Secondary Nav Skeleton */}
-      <div className="hidden lg:grid w-full border-t border-gray-50 grid-rows-[1fr]">
-        <div className="overflow-hidden">
-          <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-center gap-8">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="h-3 w-20 bg-gray-100 animate-pulse rounded-full"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
     </header>
   );
 }

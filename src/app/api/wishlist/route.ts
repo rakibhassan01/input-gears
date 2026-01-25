@@ -62,27 +62,41 @@ export async function POST(req: Request) {
 
     // Handle single item add
     if (productId) {
-      await prisma.wishlistItem.upsert({
-        where: {
-          userId_productId: {
+      const productExists = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { id: true },
+      });
+
+      if (productExists) {
+        await prisma.wishlistItem.upsert({
+          where: {
+            userId_productId: {
+              userId: session.user.id,
+              productId,
+            },
+          },
+          create: {
             userId: session.user.id,
             productId,
           },
-        },
-        create: {
-          userId: session.user.id,
-          productId,
-        },
-        update: {},
-      });
+          update: {},
+        });
+      }
     }
 
     // Handle batch sync (for guest to account migration)
     if (productIds && Array.isArray(productIds)) {
-      // Use createMany for efficiency if possible, but upsert handles duplicates better
-      // Since createMany might fail on duplicates without skipDuplicates (Prisma version dependent)
-      // I'll stick to a loop or Promise.all for safety with current schema
-      const operations = productIds.map((id) =>
+      // Filter out non-existent product IDs to prevent foreign key errors
+      const existingProducts = await prisma.product.findMany({
+        where: {
+          id: { in: productIds },
+        },
+        select: { id: true },
+      });
+
+      const validIds = existingProducts.map((p) => p.id);
+
+      const operations = validIds.map((id) =>
         prisma.wishlistItem.upsert({
           where: {
             userId_productId: {

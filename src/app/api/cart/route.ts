@@ -67,22 +67,29 @@ export async function POST(req: Request) {
 
     // Handle single item add/update
     if (productId) {
-      await prisma.cartItem.upsert({
-        where: {
-          userId_productId: {
+      const productExists = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { id: true },
+      });
+
+      if (productExists) {
+        await prisma.cartItem.upsert({
+          where: {
+            userId_productId: {
+              userId: session.user.id,
+              productId,
+            },
+          },
+          create: {
             userId: session.user.id,
             productId,
+            quantity: quantity || 1,
           },
-        },
-        create: {
-          userId: session.user.id,
-          productId,
-          quantity: quantity || 1,
-        },
-        update: {
-          quantity: quantity ? quantity : { increment: 1 },
-        },
-      });
+          update: {
+            quantity: quantity ? quantity : { increment: 1 },
+          },
+        });
+      }
     }
 
     interface CartInputItem {
@@ -92,7 +99,16 @@ export async function POST(req: Request) {
 
     // Handle batch sync (for guest to account migration)
     if (items && Array.isArray(items)) {
+      const itemIds = (items as CartInputItem[]).map((i) => i.id);
+      const existingProducts = await prisma.product.findMany({
+        where: { id: { in: itemIds } },
+        select: { id: true },
+      });
+      const validIds = new Set(existingProducts.map((p) => p.id));
+
       for (const item of items as CartInputItem[]) {
+        if (!validIds.has(item.id)) continue;
+
         await prisma.cartItem.upsert({
           where: {
             userId_productId: {

@@ -2,24 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FieldErrors, useForm } from "react-hook-form";
+import { FieldErrors, useForm, SubmitHandler, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import {
-  Save,
+  X,
+  Eye,
+  EyeOff,
   ArrowLeft,
-  Loader2,
-  RefreshCw,
   Info,
-  Layers,
-  AlertCircle,
+  RefreshCw,
   ExternalLink,
-  Plus,
+  AlertCircle,
+  Layers,
+  Loader2,
   Zap,
+  Plus,
   Cpu,
-  X
+  Save
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import ProductCard from "@/modules/products/components/product-card";
 import { createProduct, getCategoriesOptions } from "@/modules/admin/actions";
@@ -52,7 +55,29 @@ const formSchema = z.object({
   specs: z.record(z.string(), z.string().or(z.number()).or(z.boolean()).nullable()).optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+interface FormValues {
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  stock: number;
+  image?: string;
+  categoryId: string;
+  colors: string[];
+  switchType?: string;
+  brand?: string;
+  sku?: string;
+  dpi?: string;
+  weight?: string;
+  connectionType?: string;
+  pollingRate?: string;
+  sensor?: string;
+  warranty?: string;
+  availability?: string;
+  isActive: boolean;
+  scheduledAt?: string | null;
+  specs?: Record<string, string | number | boolean | null>;
+}
 
 export default function CreateProductPage() {
   const router = useRouter();
@@ -61,10 +86,11 @@ export default function CreateProductPage() {
     []
   );
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
   // React Hook Form
-  const form = useForm({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       name: "",
       slug: "",
@@ -119,7 +145,7 @@ export default function CreateProductPage() {
   };
 
   // Submit Handler
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsPending(true);
     try {
       const res = await createProduct(data);
@@ -168,7 +194,7 @@ export default function CreateProductPage() {
     }
   };
 
-  const onInvalid = (errors: FieldErrors) => {
+  const onInvalid = (errors: FieldErrors<FormValues>) => {
     console.log("Validation Errors:", errors);
     if (errors.categoryId) {
       toast.error("Don't forget to select a category!");
@@ -178,10 +204,10 @@ export default function CreateProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-32">
-      <div className="max-w-[1600px] mx-auto">
+    <div className="min-h-full flex flex-col bg-gray-50/50 pb-24 md:pb-32">
+      <div className="w-full flex-1 flex flex-col">
         {/* Header */}
-        <div className="pt-8 pb-6 px-6">
+        <div className="pt-8 pb-6 px-6 max-w-[1600px] mx-auto w-full">
           <div className="flex items-center gap-4">
             <Link
               href="/admin/products"
@@ -197,13 +223,31 @@ export default function CreateProductPage() {
                 Create a new product for your store inventory.
               </p>
             </div>
+            
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className={cn(
+                "ml-auto flex items-center gap-2 px-4 py-2 rounded-xl border transition-all shadow-sm",
+                showPreview 
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-600" 
+                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              {showPreview ? <EyeOff size={18} /> : <Eye size={18} />}
+              <span className="text-sm font-medium">
+                {showPreview ? "Hide Preview" : "Show Preview"}
+              </span>
+            </button>
           </div>
         </div>
 
-        {/* ✅ Change 2: Removed 'items-start' to fix Sticky height issue */}
-        <div className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content Area */}
+        <div className="px-6 grid grid-cols-1 lg:grid-cols-1 gap-8 relative overflow-hidden max-w-[1600px] mx-auto w-full">
           {/* --- LEFT SIDE: FORM --- */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className={cn(
+            "space-y-8 transition-all duration-500",
+            showPreview ? "lg:mr-[400px]" : "mr-0"
+          )}>
             <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
               {/* General Info */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
@@ -802,95 +846,150 @@ export default function CreateProductPage() {
             </form>
           </div>
 
-          {/* --- RIGHT SIDE: PREVIEW (Sticky) --- */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-6 space-y-6">
-              <div className="bg-linear-to-br from-indigo-900 to-indigo-800 rounded-2xl p-6 text-white shadow-xl">
-                <h3 className="font-bold text-lg mb-1">Live Preview</h3>
-                <p className="text-indigo-200 text-xs">
-                  This is how customers will see your product.
-                </p>
-              </div>
+          {/* --- RIGHT SIDE: PREVIEW (Side Panel) --- */}
+          <AnimatePresence>
+            {showPreview && (
+              <motion.div
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 right-0 w-full sm:w-[400px] bg-white border-l border-gray-200 shadow-2xl z-50 overflow-y-auto"
+              >
+                <div className="p-6 space-y-6 pb-32">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">Live Preview</h3>
+                      <p className="text-indigo-600 text-xs font-medium">
+                        Real-time customer view
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => setShowPreview(false)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
 
-              <div className="pointer-events-none opacity-100 ring-4 ring-gray-100 rounded-3xl overflow-hidden bg-white shadow-lg">
-                <ProductCard
-                    data={{
-                      id: "preview",
-                      name: watchedValues.name || "Product Name",
-                      price: Number(watchedValues.price) || 0,
-                      image: watchedValues.image || null,
-                      description: watchedValues.description || null,
-                      stock: Number(watchedValues.stock),
-                      slug: watchedValues.slug || "slug",
-                      colors: watchedValues.colors || [],
-                      switchType: watchedValues.switchType || null,
-                      isActive: watchedValues.isActive ?? true,
-                      scheduledAt: watchedValues.scheduledAt ? new Date(watchedValues.scheduledAt) : null,
-                      specs: (watchedValues.specs || {}) as Record<string, string | number | boolean | null>,
-                      brand: watchedValues.brand || null,
-                      sku: watchedValues.sku || null,
-                      dpi: watchedValues.dpi || null,
-                      weight: watchedValues.weight || null,
-                      connectionType: watchedValues.connectionType || null,
-                      pollingRate: watchedValues.pollingRate || null,
-                      sensor: watchedValues.sensor || null,
-                      warranty: watchedValues.warranty || null,
-                      availability: watchedValues.availability || null,
-                      createdAt: new Date(),
-                      updatedAt: new Date(),
-                      categoryId: watchedValues.categoryId || null,
-                      // Matching category name
-                      category: {
-                        id: watchedValues.categoryId || "temp",
-                        name:
-                          categories.find(
-                            (c) => c.id === watchedValues.categoryId
-                          )?.name || "Uncategorized",
-                        slug: "temp",
-                        description: null,
-                        image: null,
-                        parentId: null,
-                        isActive: true,
-                        isFeatured: false,
-                        seoTitle: null,
-                        seoDescription: null,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                      },
-                    }}
-                />
-              </div>
+                  <div className="bg-linear-to-br from-indigo-900 to-indigo-800 rounded-2xl p-4 text-white shadow-lg">
+                    <p className="text-indigo-100 text-xs font-medium">
+                      This is how customers will see your product on the storefront.
+                    </p>
+                  </div>
 
-              <div className="bg-white p-5 rounded-xl border border-gray-200 text-sm space-y-3 shadow-sm">
-                <h4 className="font-semibold text-gray-900 border-b border-gray-100 pb-2">
-                  Quick Summary
-                </h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Status</span>
-                  <span className="font-bold text-xs text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-md">
-                    Active
-                  </span>
+                  <div className="ring-8 ring-gray-50 rounded-[2.5rem] overflow-hidden bg-white shadow-xl border border-gray-100">
+                    <ProductCard
+                        data={{
+                          id: "preview",
+                          name: watchedValues.name || "Product Name",
+                          price: Number(watchedValues.price) || 0,
+                          image: watchedValues.image || null,
+                          description: watchedValues.description || null,
+                          stock: Number(watchedValues.stock),
+                          slug: watchedValues.slug || "slug",
+                          colors: watchedValues.colors || [],
+                          switchType: watchedValues.switchType || null,
+                          isActive: watchedValues.isActive ?? true,
+                          scheduledAt: watchedValues.scheduledAt ? new Date(watchedValues.scheduledAt) : null,
+                          specs: (watchedValues.specs || {}) as Record<string, string | number | boolean | null>,
+                          brand: watchedValues.brand || null,
+                          sku: watchedValues.sku || null,
+                          dpi: watchedValues.dpi || null,
+                          weight: watchedValues.weight || null,
+                          connectionType: watchedValues.connectionType || null,
+                          pollingRate: watchedValues.pollingRate || null,
+                          sensor: watchedValues.sensor || null,
+                          warranty: watchedValues.warranty || null,
+                          availability: watchedValues.availability || null,
+                          createdAt: new Date(),
+                          updatedAt: new Date(),
+                          categoryId: watchedValues.categoryId || null,
+                          // Matching category name
+                          category: {
+                            id: watchedValues.categoryId || "temp",
+                            name:
+                              categories.find(
+                                (c) => c.id === watchedValues.categoryId
+                              )?.name || "Uncategorized",
+                            slug: "temp",
+                            description: null,
+                            image: null,
+                            parentId: null,
+                            isActive: true,
+                            isFeatured: false,
+                            seoTitle: null,
+                            seoDescription: null,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                          },
+                        }}
+                    />
+                  </div>
+
+                  <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-sm space-y-4 shadow-sm">
+                    <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                       <Zap size={16} className="text-indigo-600" />
+                       Quick Summary
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200/50">
+                        <span className="text-gray-500 font-medium text-xs uppercase tracking-wider">Status</span>
+                        <span className={cn(
+                          "font-bold text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                          watchedValues.isActive 
+                            ? "text-emerald-700 bg-emerald-50 border-emerald-100" 
+                            : "text-amber-700 bg-amber-50 border-amber-100"
+                        )}>
+                          {watchedValues.isActive ? "Active" : "Disabled"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200/50">
+                        <span className="text-gray-500 font-medium text-xs uppercase tracking-wider">Category</span>
+                        <span className="font-bold text-gray-800">
+                          {categories.find((c) => c.id === watchedValues.categoryId)
+                            ?.name || "None"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-500 font-medium text-xs uppercase tracking-wider">Price</span>
+                        <span className="font-black text-indigo-600 text-base">
+                          ${watchedValues.price?.toString() || "0.00"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Category</span>
-                  <span className="font-medium text-gray-900">
-                    {categories.find((c) => c.id === watchedValues.categoryId)
-                      ?.name || "—"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-200 p-4 z-40">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-          <div className="hidden sm:block text-sm text-gray-500">
+      {/* Fixed Bottom Action Bar */}
+      <div className={cn(
+        "fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-200 p-4 z-40 transition-all duration-500",
+        showPreview && "lg:right-[400px]"
+      )}>
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between lg:pl-72">
+          <div className="hidden sm:flex items-center gap-4 text-sm text-gray-500">
             {form.formState.isDirty
               ? "You have unsaved changes."
               : "Ready to save."}
+            
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all",
+                showPreview 
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm" 
+                  : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+              )}
+            >
+              {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+              <span className="text-xs font-bold uppercase tracking-wider">Preview</span>
+            </button>
           </div>
           <div className="flex gap-3 ml-auto">
             <button

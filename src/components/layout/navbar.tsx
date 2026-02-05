@@ -19,6 +19,7 @@ import {
   Cpu,
   ArrowLeftRight,
   ChevronDown,
+  LucideIcon,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import UserNav from "../../modules/auth/components/user-nav";
@@ -49,7 +50,7 @@ interface CategoryWithBrands {
   brands: string[];
 }
 
-const CATEGORY_ICONS: Record<string, any> = {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
   keyboards: Keyboard,
   mice: Mouse,
   audio: Headphones,

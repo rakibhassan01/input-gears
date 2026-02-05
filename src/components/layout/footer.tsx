@@ -6,7 +6,6 @@ import {
   Linkedin,
   ArrowRight,
   Settings,
-  Send,
 } from "lucide-react";
 
 // --- Type Definitions (Strict Type Safety) ---

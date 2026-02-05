@@ -2,16 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import {
-  Plus,
   Search,
-  MoreHorizontal,
   Edit,
   Trash2,
   Layers,
   Package,
-  ArrowRight,
-  ImageIcon,
-  CheckCircle2,
 } from "lucide-react";
 import CategoryModal from "@/modules/admin/components/category-modal";
 

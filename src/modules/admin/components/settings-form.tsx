@@ -7,9 +7,7 @@ import {
   ShieldCheck,
   Bell,
   Save,
-  Globe,
   CreditCard,
-  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -110,7 +108,7 @@ export default function SettingsForm() {
                     Enable Maintenance
                   </p>
                   <p className="text-xs text-gray-500">
-                    Visitors will see a "Coming Soon" page.
+                    Visitors will see a &quot;Coming Soon&quot; page.
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">

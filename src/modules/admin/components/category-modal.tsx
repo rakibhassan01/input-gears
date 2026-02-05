@@ -33,7 +33,7 @@ export default function CategoryModal() {
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    // ইভেন্ট প্রপাগেশন বন্ধ করা, যাতে প্যারেন্ট ফর্ম সাবমিট না হয়
+    // Stop event propagation to prevent parent form submission
     try {
       setIsPending(true);
       const res = await createCategory(data);
@@ -45,7 +45,7 @@ export default function CategoryModal() {
       } else {
         toast.error(res.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to create category");
     } finally {
       setIsPending(false);
@@ -54,11 +54,11 @@ export default function CategoryModal() {
 
   return (
     <>
-      {/* ✅ FIX: type="button" দেওয়া হয়েছে যাতে পেজ রিলোড না হয় */}
+      {/* type="button" to prevent form submission/reload */}
       <button
         type="button"
         onClick={(e) => {
-          e.preventDefault(); // ডাবল সেফটি
+          e.preventDefault();
           setIsOpen(true);
         }}
         className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm"
@@ -69,8 +69,9 @@ export default function CategoryModal() {
 
       {/* Modal Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-100 animate-in fade-in transition-all duration-300" />
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200 z-101">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
               <h3 className="font-bold text-lg text-gray-900">
                 Add New Category

@@ -13,14 +13,14 @@ export default async function AccountPage() {
     redirect("/sign-in");
   }
 
-  // ১. ইউজারের সব অর্ডার নিয়ে আসা (Latest First)
+  // 1. Fetch latest 5 orders
   const orders = await prisma.order.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
-    take: 5, // ড্যাশবোর্ডে মাত্র লেটেস্ট ৫টা দেখাবো
+    take: 5,
   });
 
-  // ২. স্ট্যাটাস ক্যালকুলেশন (Database Aggregation for better performance)
+  // 2. Status calculation
   const totalOrders = await prisma.order.count({
     where: { userId: session.user.id },
   });
@@ -28,7 +28,7 @@ export default async function AccountPage() {
   const pendingOrders = await prisma.order.count({
     where: {
       userId: session.user.id,
-      status: "PENDING", // অথবা আপনার logic অনুযায়ী (e.g. PROCESSING সহ)
+      status: "PENDING",
     },
   });
 
@@ -39,7 +39,7 @@ export default async function AccountPage() {
   });
   const totalSpent = aggregations._sum.totalAmount || 0;
 
-  // ৩. ডাটা প্যাক করে ভিউতে পাঠানো
+  // 3. Send data to view
   const dashboardData = {
     totalOrders,
     pendingOrders,

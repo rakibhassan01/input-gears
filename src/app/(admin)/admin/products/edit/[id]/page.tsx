@@ -18,10 +18,10 @@ export default async function EditProductPage({ params }: EditPageProps) {
   });
 
   if (!product) {
-    notFound(); // যদি প্রোডাক্ট না পাওয়া যায়, 404 পেজে পাঠাবে
+    notFound(); // 404 if product not found
   }
 
-  // Client Form এ ডাটা পাঠানো হচ্ছে
-  // আমরা এখানে টাইপ কাস্ট করছি কারণ প্রিজমার JsonValue সরাসরি আমাদের Record টাইপের সাথে মিলে না
+  // Send data to client form
+  // Casting Prisma JsonValue to Record type
   return <ProductEditForm product={product as unknown as Product} />;
 }

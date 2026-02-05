@@ -39,7 +39,6 @@ export default function CartView() {
     toast.success("Cart cleared successfully");
   };
 
-  // --- Empty State ---
   if (cart.items.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 animate-in fade-in zoom-in duration-500">
@@ -72,7 +71,6 @@ export default function CartView() {
       </h1>
 
       <div className="lg:grid lg:grid-cols-12 lg:gap-10 items-start relative">
-        {/* --- Left: Cart Items List --- */}
         <div className="lg:col-span-8 space-y-6">
           {cart.items.map((item) => (
             <div
@@ -80,9 +78,8 @@ export default function CartView() {
               className="group bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all duration-300"
             >
               <div className="flex gap-4 sm:gap-6">
-                {/* Image Section */}
                 <Link
-                  href={`/products/${item.slug}`} // ✅ Slug Fix Link
+                  href={`/products/${item.slug}`}
                   className="relative h-28 w-28 sm:h-32 sm:w-32 bg-gray-50 rounded-2xl overflow-hidden shrink-0 border border-gray-100 cursor-pointer"
                 >
                   {item.image ? (
@@ -99,12 +96,10 @@ export default function CartView() {
                   )}
                 </Link>
 
-                {/* Content Section */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div className="flex justify-between items-start gap-4">
                     <div>
                       <h3 className="font-bold text-gray-900 text-lg leading-tight hover:text-indigo-600 transition-colors line-clamp-2">
-                        {/* ✅ Slug Fix Link */}
                         <Link href={`/products/${item.slug}`}>{item.name}</Link>
                       </h3>
                       <p className="text-gray-500 text-sm mt-1.5 font-medium">
@@ -114,15 +109,12 @@ export default function CartView() {
                       </p>
                     </div>
 
-                    {/* Total Price for this item */}
                     <p className="font-bold text-lg text-gray-900">
                       ${(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
 
-                  {/* Actions Row */}
                   <div className="flex items-end justify-between mt-4">
-                    {/* Modern Quantity Selector */}
                     <div className="flex items-center gap-1 bg-gray-50 rounded-xl p-1 border border-gray-200">
                       <button
                         onClick={() =>
@@ -154,7 +146,6 @@ export default function CartView() {
                       </button>
                     </div>
 
-                    {/* Remove Button */}
                     <button
                       onClick={() => cart.removeItem(item.id, !!session)}
                       className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
@@ -168,7 +159,6 @@ export default function CartView() {
             </div>
           ))}
 
-          {/* Bottom Actions */}
           <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 pt-4">
             <Link
               href="/products"
@@ -181,7 +171,6 @@ export default function CartView() {
               Continue Shopping
             </Link>
 
-            {/* ✅ Clear Cart Button (No Confirm Window) */}
             <button
               onClick={handleClearCart}
               className="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors"
@@ -191,11 +180,9 @@ export default function CartView() {
           </div>
         </div>
 
-        {/* --- Right: Sticky Order Summary --- */}
         <div className="lg:col-span-4 mt-8 lg:mt-0 relative h-full">
           <div className="sticky top-24 space-y-4">
             <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 p-6 sm:p-8 overflow-hidden relative">
-              {/* Background Glow */}
               <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
 
               <h2 className="text-xl font-bold text-gray-900 mb-6 relative z-10">
@@ -249,7 +236,6 @@ export default function CartView() {
                 />
               </Link>
 
-              {/* Trust Badges */}
               <div className="mt-6 grid grid-cols-2 gap-2">
                 <div className="flex items-center justify-center gap-1.5 text-[10px] font-medium text-gray-500 bg-gray-50 py-2 rounded-lg">
                   <ShieldCheck size={12} className="text-indigo-500" />

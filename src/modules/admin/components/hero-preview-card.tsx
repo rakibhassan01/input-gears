@@ -1,6 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui/button"; // আপনার বাটন কম্পোনেন্ট
+import { Button } from "@/components/ui/button";
 
 interface HeroPreviewProps {
   data: {

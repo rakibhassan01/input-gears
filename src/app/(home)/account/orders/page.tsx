@@ -13,7 +13,7 @@ export default async function OrderHistoryPage() {
     redirect("/sign-in");
   }
 
-  // ইউজারের সব অর্ডার নিয়ে আসা
+  // Fetch all user orders
   const orders = await prisma.order.findMany({
     where: {
       userId: session.user.id,

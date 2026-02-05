@@ -11,7 +11,7 @@ interface TopAnnouncementProps {
 }
 
 export default function TopAnnouncement({ data }: TopAnnouncementProps) {
-  // ১. যদি ডাটা না থাকে বা অ্যাডমিন অফ করে রাখে -> কিচ্ছু দেখাবে না
+  // 1. If no data or disabled by admin -> Return null
   if (!data || !data.topBarActive || !data.topBarText) return null;
 
   return (

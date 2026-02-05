@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { ProfileFormValues, profileSchema } from "./profile-schema";
 
-// ✅ স্কিমা ইমপোর্ট করুন (আলাদা ফাইল থেকে)
 
 // 1. Get User Profile
 export async function getUserProfile() {
@@ -36,7 +35,6 @@ export async function updateProfile(data: ProfileFormValues) {
 
   if (!session?.user?.email) throw new Error("Unauthorized");
 
-  // সার্ভার সাইড ভ্যালিডেশন
   const validated = profileSchema.parse(data);
 
   try {

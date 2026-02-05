@@ -24,25 +24,21 @@ import {
 } from "@/modules/account/address-actions";
 import { AddressFormValues, addressSchema } from "../address-schema";
 
-// ✅ 1. Prisma Interface (Database Shape)
-// ডাটাবেস থেকে state 'null' আসতে পারে, তাই এখানে null এলাউ করতে হবে।
 interface Address {
   id: string;
   name: string;
   phone: string;
   street: string;
   city: string;
-  state: string | null; // Prisma returns null
+  state: string | null;
   zip: string;
-  type: string; // Prisma returns string
+  type: string;
   isDefault: boolean;
 }
 
 export default function AddressView({ addresses }: { addresses: Address[] }) {
   const [isModalOpen, setModalOpen] = useState(false);
 
-  // ✅ 2. State Type Fix
-  // এখানে আমরা ফর্মের ভ্যালু স্টোর করব, যা Zod স্কিমার সাথে মিলবে
   const [editingAddress, setEditingAddress] =
     useState<AddressFormValues | null>(null);
 
@@ -52,8 +48,6 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
   // --- Handlers ---
   const openFormModal = (address?: Address) => {
     if (address) {
-      // ✅ 3. Data Transformation (Prisma -> Form)
-      // Prisma এর ডাটাকে ফর্মের উপযোগী করে কনভার্ট করছি
       setEditingAddress({
         id: address.id,
         name: address.name,
@@ -62,9 +56,7 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
         city: address.city,
         zip: address.zip,
         isDefault: address.isDefault,
-        // Fix: null কে empty string এ কনভার্ট করা হলো
         state: address.state ?? "",
-        // Fix: string কে নির্দিষ্ট টাইপে ফোর্স করা হলো
         type: (address.type as "HOME" | "WORK") || "HOME",
       });
     } else {
@@ -86,7 +78,7 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
       toast.success("Address deleted successfully");
       setDeleteModalOpen(false);
       setAddressToDelete(null);
-    } catch (e) {
+    } catch {
       toast.error("Failed to delete address");
     }
   };
@@ -165,7 +157,6 @@ export default function AddressView({ addresses }: { addresses: Address[] }) {
   );
 }
 
-// --- SUB COMPONENT: Address Card ---
 interface AddressCardProps {
   address: Address;
   onEdit: () => void;
@@ -251,18 +242,15 @@ function AddressCard({
   );
 }
 
-// --- SUB COMPONENT: Address Modal Form ---
 interface AddressModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // ✅ Form Values Type ব্যবহার করছি
   initialData: AddressFormValues | null;
 }
 
 function AddressModal({ isOpen, onClose, initialData }: AddressModalProps) {
   const [loading, setLoading] = useState(false);
 
-  // ✅ 4. Generics Fix: useForm এর ভেতরে সঠিক টাইপ বলে দেওয়া হলো
   const form = useForm({
     resolver: zodResolver(addressSchema),
     defaultValues: initialData || {
@@ -285,7 +273,7 @@ function AddressModal({ isOpen, onClose, initialData }: AddressModalProps) {
         initialData ? "Address updated!" : "Address added successfully!"
       );
       onClose();
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
@@ -461,7 +449,6 @@ function AddressModal({ isOpen, onClose, initialData }: AddressModalProps) {
   );
 }
 
-// --- SUB COMPONENT: Delete Confirmation Modal ---
 interface DeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -476,7 +463,7 @@ function DeleteConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200 scale-100">
         <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
           <AlertTriangle size={24} />

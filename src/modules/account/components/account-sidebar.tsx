@@ -56,7 +56,6 @@ export default function AccountSidebar({ user }: AccountSidebarProps) {
 
   const isAdmin = user?.role === "admin";
 
-  // ✅ চেক করা হচ্ছে ইউজার ওভারভিউ পেজে আছে কিনা
   const isOverviewPage = pathname === "/account";
 
   const handleSignOut = async () => {
@@ -69,8 +68,6 @@ export default function AccountSidebar({ user }: AccountSidebarProps) {
 
   return (
     <div className="bg-white rounded-3xl border border-gray-200 shadow-sm h-full overflow-hidden flex flex-col transition-all duration-300">
-      {/* 1. Dynamic User Header */}
-      {/* যদি Overview পেজ না হয়, তবেই ইউজার ইনফো দেখাবে */}
       {!isOverviewPage ? (
         <div className="p-6 border-b border-gray-100 bg-gray-50/50 animate-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-4">
@@ -96,7 +93,6 @@ export default function AccountSidebar({ user }: AccountSidebarProps) {
           </div>
         </div>
       ) : (
-        // যদি Overview পেজ হয়, তবে সিম্পল টাইটেল দেখাবে
         <div className="px-6 pt-6 pb-2 animate-in fade-in duration-300">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
             Dashboard Menu

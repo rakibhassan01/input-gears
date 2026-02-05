@@ -19,7 +19,9 @@ import {
   Zap,
   Cpu,
   Plus,
-  X
+  X,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -31,7 +33,6 @@ import ImageUpload from "@/components/ui/image-upload";
 import CategoryModal from "@/modules/admin/components/category-modal";
 import { generateSlug } from "@/lib/utils";
 
-// ✅ 1. Schema Update
 const formSchema = z.object({
   name: z.string().min(3, "Name is required"),
   slug: z.string().min(3, "Slug is required"),
@@ -67,6 +68,7 @@ interface ProductEditFormProps {
 export default function ProductEditForm({ product, isModal, onSuccess }: ProductEditFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // States for Categories
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
@@ -74,7 +76,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
   );
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
-  // ✅ 2. Default Values এ categoryId যোগ করা হয়েছে
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -103,15 +104,14 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
     mode: "onChange",
   });
 
-  const watchedValues = form.watch();
+  const watchedValues = form.watch() as FormValues;
 
-  // ✅ 3. Fetch Categories
   const fetchCategories = async () => {
     setIsLoadingCategories(true);
     try {
       const data = await getCategoriesOptions();
       setCategories(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load categories");
     } finally {
       setIsLoadingCategories(false);
@@ -125,15 +125,11 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     form.setValue("name", name, { shouldValidate: true });
-    // Edit mode-এ সাধারণত নাম চেঞ্জ করলে স্লাগ অটো চেঞ্জ করা হয় না,
-    // তবে আপনি চাইলে ম্যানুয়ালি রিফ্রেশ বাটন দিয়ে করতে পারেন।
   };
 
-  // ✅ 4. Submit Handler
   const onSubmit = async (data: FormValues) => {
     setIsPending(true);
     try {
-      // updateProduct ফাংশনে এখন categoryId যাচ্ছে, তাই টাইপ এরর হবে না
       const res = await updateProduct(product.id, data);
 
       if (res.success) {
@@ -161,32 +157,56 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-32">
+    <div className="min-h-screen bg-neutral-50/50 pb-36">
       <div className="max-w-[1600px] mx-auto">
         {!isModal && (
-          <div className="pt-8 pb-6 px-6">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin/products"
-                className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
-              >
-                <ArrowLeft size={20} className="text-gray-600" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
-                <p className="text-sm text-gray-500">
-                  Updating: <span className="font-semibold">{product.name}</span>
-                </p>
+          <div className="pt-10 pb-8 px-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <Link
+                  href="/admin/products"
+                  className="p-3 bg-white border border-neutral-200 rounded-2xl hover:bg-neutral-50 transition-all shadow-sm hover:shadow-md active:scale-95 group"
+                >
+                  <ArrowLeft size={22} className="text-neutral-600 group-hover:text-indigo-600 transition-colors" />
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-black text-neutral-900 tracking-tight">Edit Product</h1>
+                  <p className="text-sm text-neutral-500 font-medium">
+                    Modifying <span className="text-indigo-600 font-bold">{product.name}</span>
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                  className={cn(
+                    "flex items-center gap-2 px-5 py-2.5 text-sm font-bold border rounded-xl transition-all shadow-sm group",
+                    isPreviewOpen 
+                      ? "bg-indigo-600 border-indigo-600 text-white" 
+                      : "bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                  )}
+                >
+                  {isPreviewOpen ? <EyeOff size={18} /> : <Eye size={18} className="text-neutral-400 group-hover:text-indigo-600" />}
+                  {isPreviewOpen ? "Hide Preview" : "Show Preview"}
+                </button>
+                <Link
+                  href={`/products/${watchedValues.slug}`}
+                  target="_blank"
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-neutral-700 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-all shadow-sm group"
+                >
+                  <ExternalLink size={18} className="text-neutral-400 group-hover:text-indigo-600" />
+                  View on Store
+                </Link>
               </div>
             </div>
           </div>
         )}
 
-        <div className={cn("px-6 grid grid-cols-1 gap-8", !isModal && "lg:grid-cols-3")}>
-          {/* --- LEFT SIDE: FORM --- */}
-          <div className={cn(!isModal && "lg:col-span-2", "space-y-8")}>
+        <div className="px-6 grid grid-cols-1 gap-8">
+          <div className="space-y-8">
             <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
-              {/* General Info */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Info size={20} className="text-indigo-600" /> General
@@ -210,7 +230,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     )}
                   </div>
 
-                  {/* Slug */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       Slug <span className="text-red-500">*</span>
@@ -256,7 +275,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     </div>
                   </div>
 
-                  {/* ✅ 5. Category Selection (নতুন যোগ করা হয়েছে) */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Category <span className="text-red-500">*</span>
@@ -307,7 +325,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     )}
                   </div>
 
-                  {/* Description */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Description
@@ -326,8 +343,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                 </div>
               </div>
 
-              {/* Specifications & Variants */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                   <Zap size={80} className="text-indigo-600" />
                 </div>
@@ -443,7 +459,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
 
                   <hr className="border-gray-100" />
 
-                  {/* Matrix Specifications Editor */}
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
@@ -454,7 +469,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                       </div>
                     </div>
 
-                    {/* Active Specs List */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {Object.entries(watchedValues.specs || {}).map(([key, value]) => (
                         <div key={key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
@@ -477,7 +491,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                       ))}
                     </div>
 
-                    {/* Add Spec Row */}
                     <div className="flex flex-col sm:flex-row gap-3 p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
                        <input 
                         id="spec-key-edit"
@@ -531,14 +544,12 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                 </div>
               </div>
 
-              {/* Advanced Technical Specs */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Cpu size={20} className="text-indigo-600" /> Advanced Technical Index
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Brand */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Brand</label>
                     <input 
@@ -548,7 +559,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* SKU */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">SKU / Model</label>
                     <input 
@@ -558,7 +568,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* Availability */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Availability Status</label>
                     <select
@@ -572,7 +581,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     </select>
                   </div>
 
-                  {/* Sensor */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sensor Technology</label>
                     <input 
@@ -582,7 +590,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* DPI */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Max DPI / Sensitivity</label>
                     <input 
@@ -592,7 +599,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* Weight */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Product Weight</label>
                     <input 
@@ -602,7 +608,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* Connection */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Connection Type</label>
                     <input 
@@ -612,7 +617,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* Polling Rate */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Polling Rate</label>
                     <input 
@@ -622,7 +626,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                     />
                   </div>
 
-                  {/* Warranty */}
                   <div className="space-y-2">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Warranty Period</label>
                     <input 
@@ -634,7 +637,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                 </div>
               </div>
 
-              {/* Media (Updated to ImageUpload component for consistency) */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-6">Media</h2>
                 <div className="space-y-4">
@@ -686,7 +688,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                 </div>
               </div>
 
-              {/* Pricing & Inventory */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                   <h2 className="text-lg font-bold text-gray-900 mb-6">
@@ -717,7 +718,6 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
                 </div>
               </div>
 
-              {/* Status & Schedule */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <RefreshCw size={20} className="text-indigo-600" /> Status & Scheduling
@@ -769,88 +769,152 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
               </div>
             </form>
           </div>
+        </div>
 
-          {/* --- RIGHT SIDE: PREVIEW --- */}
-          {!isModal && (
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-4">
-                <div className="flex items-center gap-2 mb-2 text-gray-500">
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Live Preview
-                  </span>
+        {/* Slide-out Preview Drawer */}
+        {!isModal && (
+          <>
+            {/* Backdrop */}
+            {isPreviewOpen && (
+              <div 
+                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-90 animate-in fade-in duration-300"
+                onClick={() => setIsPreviewOpen(false)}
+              />
+            )}
+
+            <div className={cn(
+              "fixed inset-y-0 right-0 w-full sm:w-[450px] bg-white shadow-2xl z-100 transition-transform duration-500 ease-in-out border-l border-gray-100 flex flex-col",
+              isPreviewOpen ? "translate-x-0" : "translate-x-full"
+            )}>
+              <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                    <Eye size={20} />
+                  </div>
+                  <h3 className="font-black text-xl text-neutral-900 tracking-tight">Live Preview</h3>
                 </div>
+                <button 
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-2.5 hover:bg-neutral-100 rounded-xl transition-all active:scale-95 group"
+                >
+                  <X size={20} className="text-neutral-400 group-hover:text-neutral-900" />
+                </button>
+              </div>
 
-                <div className="pointer-events-none opacity-100 ring-1 ring-gray-200 rounded-3xl overflow-hidden bg-white shadow-xl">
-                  <ProductCard
-                    data={{
-                      id: product.id,
-                      name: watchedValues.name || "Product Name",
-                      price: Number(watchedValues.price) || 0,
-                      image: watchedValues.image || null,
-                      description: watchedValues.description || null,
-                      stock: Number(watchedValues.stock),
-                      slug: watchedValues.slug || "slug",
-                      colors: watchedValues.colors || [],
-                      switchType: watchedValues.switchType || null,
-                      isActive: watchedValues.isActive ?? true,
-                      scheduledAt: watchedValues.scheduledAt ? new Date(watchedValues.scheduledAt) : null,
-                      specs: (watchedValues.specs || {}) as Record<string, string | number | boolean | null>,
-                      brand: watchedValues.brand || null,
-                      sku: watchedValues.sku || null,
-                      dpi: watchedValues.dpi || null,
-                      weight: watchedValues.weight || null,
-                      connectionType: watchedValues.connectionType || null,
-                      pollingRate: watchedValues.pollingRate || null,
-                      sensor: watchedValues.sensor || null,
-                      warranty: watchedValues.warranty || null,
-                      availability: watchedValues.availability || null,
-                      createdAt: product.createdAt,
-                      updatedAt: new Date(),
-                      categoryId: watchedValues.categoryId || null,
-                      // Matching category name
-                      category: {
-                        id: watchedValues.categoryId || "temp",
-                        name:
-                          categories.find(
-                            (c) => c.id === watchedValues.categoryId
-                          )?.name || "Uncategorized",
-                        slug: "temp",
-                        description: null,
-                        image: null,
-                        parentId: null,
-                        isActive: true,
-                        isFeatured: false,
-                        seoTitle: null,
-                        seoDescription: null,
-                        createdAt: new Date(),
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-neutral-50/50">
+                <div className="flex items-center gap-2 mb-2 text-gray-400 px-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest">Store Front View</span>
+                </div>
+                <div className="flex justify-center">
+                  <div className="w-full max-w-sm ring-1 ring-gray-100 rounded-3xl overflow-hidden bg-white shadow-xl shadow-indigo-500/5">
+                    <ProductCard
+                      data={{
+                        id: product.id,
+                        name: watchedValues.name || "Product Name",
+                        price: Number(watchedValues.price) || 0,
+                        image: watchedValues.image || null,
+                        description: watchedValues.description || null,
+                        stock: Number(watchedValues.stock),
+                        slug: watchedValues.slug || "slug",
+                        colors: watchedValues.colors || [],
+                        switchType: watchedValues.switchType || null,
+                        isActive: watchedValues.isActive ?? true,
+                        scheduledAt: watchedValues.scheduledAt ? new Date(watchedValues.scheduledAt) : null,
+                        specs: (watchedValues.specs || {}) as Record<string, string | number | boolean | null>,
+                        brand: watchedValues.brand || null,
+                        sku: watchedValues.sku || null,
+                        dpi: watchedValues.dpi || null,
+                        weight: watchedValues.weight || null,
+                        connectionType: watchedValues.connectionType || null,
+                        pollingRate: watchedValues.pollingRate || null,
+                        sensor: watchedValues.sensor || null,
+                        warranty: watchedValues.warranty || null,
+                        availability: watchedValues.availability || null,
+                        createdAt: product.createdAt,
                         updatedAt: new Date(),
-                      },
-                    }}
-                  />
+                        categoryId: watchedValues.categoryId || null,
+                        category: {
+                          id: watchedValues.categoryId || "temp",
+                          name: categories.find((c) => c.id === watchedValues.categoryId)?.name || "Uncategorized",
+                          slug: "temp",
+                          description: null,
+                          image: null,
+                          parentId: null,
+                          isActive: true,
+                          isFeatured: false,
+                          seoTitle: null,
+                          seoDescription: null,
+                          createdAt: new Date(),
+                          updatedAt: new Date(),
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Quick Stats</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-neutral-50 rounded-xl">
+                      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tight">Stock Level</p>
+                      <p className={cn("text-lg font-black", watchedValues.stock > 10 ? "text-emerald-600" : "text-amber-600")}>
+                        {watchedValues.stock} units
+                      </p>
+                    </div>
+                    <div className="p-4 bg-neutral-50 rounded-xl">
+                      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tight">Price Point</p>
+                      <p className="text-lg font-black text-neutral-900">
+                        ${watchedValues.price}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
-      {/* Sticky Bottom Bar */}
+      {/* Glassmorphism Sticky Bottom Bar */}
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-60",
-        isModal && "relative mt-8 z-0 rounded-b-2xl"
+        "sticky bottom-6 mx-auto w-full max-w-[1400px] z-60 px-6",
+        isModal && "relative bottom-0 px-0 mt-10 z-0"
       )}>
-        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            {form.formState.isDirty ? (
-              <>
-                <span className="h-2 w-2 rounded-full bg-amber-400"></span>
-                You have unsaved changes
-              </>
-            ) : (
-              <>
-                <span className="h-2 w-2 rounded-full bg-green-400"></span>
-                Up to date
-              </>
+        <div className={cn(
+          "bg-white/80 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-4 sm:p-5 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-4 ring-1 ring-black/5",
+          isModal && "rounded-2xl shadow-none border-neutral-100 bg-neutral-50/50 backdrop-blur-none"
+        )}>
+          <div className="flex items-center gap-4 pl-2">
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-2xl transition-all duration-500",
+              form.formState.isDirty 
+                ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200/50" 
+                : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50"
+            )}>
+              <div className="relative flex h-2 w-2">
+                <span className={cn(
+                  "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                  form.formState.isDirty ? "bg-amber-400" : "bg-emerald-400"
+                )}></span>
+                <span className={cn(
+                  "relative inline-flex rounded-full h-2 w-2",
+                  form.formState.isDirty ? "bg-amber-500" : "bg-emerald-500"
+                )}></span>
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest">
+                {form.formState.isDirty ? "Unsaved Changes" : "Everything Saved"}
+              </span>
+            </div>
+            
+            {form.formState.isDirty && (
+              <button
+                type="button"
+                onClick={() => form.reset()}
+                className="text-xs font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-1.5 px-2"
+              >
+                <RefreshCw size={14} />
+                Discard
+              </button>
             )}
           </div>
 
@@ -859,7 +923,7 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
+                className="flex-1 sm:flex-none px-8 py-3.5 text-sm font-black text-neutral-600 bg-neutral-100/50 hover:bg-neutral-100 rounded-2xl transition-all active:scale-95"
               >
                 Cancel
               </button>
@@ -867,14 +931,19 @@ export default function ProductEditForm({ product, isModal, onSuccess }: Product
             <button
               onClick={form.handleSubmit(onSubmit)}
               disabled={isPending || (!form.formState.isDirty && !isModal)}
-              className="flex-1 sm:flex-none px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              className={cn(
+                "flex-1 sm:flex-none px-12 py-3.5 text-sm font-black text-white rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
+                form.formState.isDirty 
+                  ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 hover:shadow-indigo-300" 
+                  : "bg-neutral-800 hover:bg-black shadow-neutral-200"
+              )}
             >
               {isPending ? (
-                <Loader2 className="animate-spin" size={18} />
+                <Loader2 className="animate-spin" size={20} />
               ) : (
-                <Save size={18} />
+                <Save size={20} />
               )}
-              {isModal ? "Save Changes" : "Update Changes"}
+              {isModal ? "Save Details" : (isPending ? "Updating..." : "Update Product")}
             </button>
           </div>
         </div>

@@ -13,7 +13,7 @@ export default function Loading() {
         <div className="h-11 w-36 bg-gray-200/60 rounded-xl animate-pulse" />
       </div>
 
-      {/* 2. Stats Grid Skeleton (Dashboard/Order পেজের জন্য) */}
+      {/* 2. Stats Grid Skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <div

@@ -18,11 +18,11 @@ export default async function OrderConfirmationPage(props: PageProps) {
   const params = await props.params;
   const { orderId } = params;
 
-  // ১. অর্ডার নাম্বার দিয়ে ডাটা আনা
+  // 1. Fetch order by order number
   const order = await prisma.order.findUnique({
     where: { orderNumber: orderId },
     include: {
-      // ✅ FIX: স্কিমা অনুযায়ী নাম 'items' হবে (আগে orderItems ছিল)
+      // Fix: Use 'items' per schema (previously orderItems)
       items: true,
     },
   });
@@ -72,7 +72,7 @@ export default async function OrderConfirmationPage(props: PageProps) {
             </div>
           </div>
 
-          {/* ✅ FIX: Items Rendering (order.items ব্যবহার করতে হবে) */}
+          {/* Fix: Rendering items (use order.items) */}
           <div className="space-y-4 mb-6">
             {order.items.map((item, idx) => (
               <div key={idx} className="flex justify-between items-center">

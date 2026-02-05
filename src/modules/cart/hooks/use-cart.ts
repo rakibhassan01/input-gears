@@ -1,9 +1,7 @@
-// hooks/use-cart.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
 
-// কার্ট আইটেমের টাইপ
 export interface CartItem {
   id: string;
   name: string;
@@ -155,7 +153,7 @@ export const useCart = create<CartStore>()(
       },
     }),
     {
-      name: "shopping-cart-storage", // লোকাল স্টোরেজে এই নামে সেভ হবে
+      name: "shopping-cart-storage",
       storage: createJSONStorage(() => localStorage),
     }
   )

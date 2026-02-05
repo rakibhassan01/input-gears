@@ -4,8 +4,8 @@ import dynamic from "next/dynamic";
 
 // ✅ Dynamic Import (SSR False)
 const CartView = dynamic(() => import("@/modules/cart/views/cart-view"), {
-  ssr: false, // সার্ভারে রেন্ডার হবে না, তাই কোনো হাইডেশন এরর আসবে না
-  loading: () => <CartSkeleton />, // লোডিং এর সময় কি দেখাবে (নিচে কোড দিচ্ছি)
+  ssr: false, // Client-side only to avoid hydration mismatch
+  loading: () => <CartSkeleton />,
 });
 
 export default function CartPage() {
@@ -16,7 +16,7 @@ export default function CartPage() {
   );
 }
 
-// ✨ লোডিং এর সময় এই স্কেলিটন দেখাবে (Optional but Recommended)
+// Loading skeleton (Optional but Recommended)
 function CartSkeleton() {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10">

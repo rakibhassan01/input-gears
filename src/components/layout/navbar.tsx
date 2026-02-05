@@ -30,7 +30,7 @@ import MobileBottomNav from "./mobile-bottom-nav";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-// CartNav কে ডাইনামিকালি ইমপোর্ট করুন (SSR বন্ধ করে)
+// Dynamically import CartNav with SSR disabled
 const CartNav = dynamic(
   () => import("../../modules/cart/components/cart-nav"),
   {

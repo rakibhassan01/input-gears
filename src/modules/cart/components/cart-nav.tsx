@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // ✅ ১. এটা ইমপোর্ট করুন
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/modules/cart/hooks/use-cart";
@@ -13,7 +13,6 @@ export default function CartNav() {
   const cart = useCart();
   const { data: session } = useSession();
 
-  // Scroll Lock
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -54,15 +53,12 @@ export default function CartNav() {
 
   const DrawerContent = (
     <div className="relative z-9999">
-      {" "}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
         onClick={() => setIsOpen(false)}
       />
-      {/* Main Drawer Panel */}
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-0 sm:pl-10 pointer-events-none">
         <div className="pointer-events-auto w-screen max-w-md transform bg-white shadow-2xl transition-transform duration-300 ease-out animate-in slide-in-from-right h-full flex flex-col">
-          {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shadow-sm z-10 bg-white shrink-0">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               My Cart
@@ -78,7 +74,6 @@ export default function CartNav() {
             </button>
           </div>
 
-          {/* Scrollable Content (h-full সমস্যা ফিক্স করার জন্য flex-1) */}
           <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
             {cart.items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-5">
@@ -102,7 +97,6 @@ export default function CartNav() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Free Shipping Bar */}
                 <div className="bg-linear-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100/50">
                   <div className="flex items-center gap-2 text-indigo-700 mb-2.5">
                     <Truck size={18} className="fill-indigo-200" />
@@ -128,7 +122,6 @@ export default function CartNav() {
                   </div>
                 </div>
 
-                {/* Items List */}
                 <ul className="space-y-6">
                   {cart.items.map((item) => (
                     <li key={item.id} className="flex gap-4 group">

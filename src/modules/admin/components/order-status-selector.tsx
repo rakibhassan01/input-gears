@@ -6,7 +6,7 @@ import { Loader2, ChevronDown } from "lucide-react";
 import { updateOrderStatus } from "@/modules/admin/actions";
 import { cn } from "@/lib/utils";
 
-// আপনার প্রিজমা স্কিমা অনুযায়ী স্ট্যাটাস লিস্ট
+// Status list from Prisma schema
 const STATUS_OPTIONS = [
   {
     label: "PENDING",
@@ -47,14 +47,14 @@ export default function OrderStatusSelector({
   const [status, setStatus] = useState(currentStatus);
   const [isPending, startTransition] = useTransition();
 
-  // কালার খুঁজে বের করা
+  // Determine colors
   const activeColor =
     STATUS_OPTIONS.find((s) => s.value === status)?.color ||
     "bg-gray-100 text-gray-700";
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
-    setStatus(newStatus); // UI তে সাথে সাথে আপডেট দেখাবে (Optimistic Update)
+    setStatus(newStatus); // Optimistic Update
 
     startTransition(async () => {
       const res = await updateOrderStatus(orderId, newStatus);
@@ -62,7 +62,7 @@ export default function OrderStatusSelector({
         toast.success(`Order marked as ${newStatus}`);
       } else {
         toast.error(res.message);
-        setStatus(currentStatus); // ফেইল হলে আগের অবস্থায় ফিরে যাবে
+        setStatus(currentStatus); // Revert on failure
       }
     });
   };

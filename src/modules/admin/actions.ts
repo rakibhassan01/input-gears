@@ -201,7 +201,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
     });
 
     revalidatePath("/admin/categories");
-    // ✅ Dropdown রিফ্রেশ করার জন্য এটি জরুরি হতে পারে যদি আমরা সার্ভার কম্পোনেন্ট ব্যবহার করি
+    // Necessary for dropdown refresh if using server components
     revalidatePath("/admin/products/create");
 
     return { success: true, message: "Category created successfully!" };
@@ -273,7 +273,7 @@ export async function getStoreAppearance() {
 
   return {
     settings: finalSettings,
-    slides: slides, // এখন আর activeSlides আলাদা করার দরকার নেই
+    slides: slides,
   };
 }
 
@@ -291,8 +291,7 @@ interface TopBarInput {
 export async function updateTopBar(data: TopBarInput) {
   await requireAdmin();
   // Logic:
-  // যদি useSchedule TRUE হয় -> তাহলে ডেট নিব।
-  // যদি useSchedule FALSE হয় -> ডেট NULL করে দিব (Permanent Active)।
+  // Handle scheduling
 
   const startDate =
     data.useSchedule && data.topBarStart ? new Date(data.topBarStart) : null;

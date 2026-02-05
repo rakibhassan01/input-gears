@@ -3,7 +3,7 @@ import { Product } from "@/modules/products/types";
 import ProductDetailsView from "@/modules/products/views/product-details-view";
 import { notFound } from "next/navigation";
 
-// 1. Next.js 15 এ params একটি Promise হয়
+// 1. Next.js 15: params is a Promise
 interface PageProps {
   params: Promise<{
     slug: string;
@@ -11,11 +11,11 @@ interface PageProps {
 }
 
 export default async function ProductDetailsPage(props: PageProps) {
-  // 2. params কে await করতে হবে
+  // 2. Must await params
   const params = await props.params;
   const { slug } = params;
 
-  // ৩. ডাটাবেস থেকে প্রোডাক্ট খোঁজা
+  // 3. Fetch product from DB
   const productFromDb = await prisma.product.findUnique({
     where: { slug },
   });
@@ -38,7 +38,7 @@ export default async function ProductDetailsPage(props: PageProps) {
     },
   });
 
-  // ৪. Data Transformation (DB -> UI)
+  // 4. Data Transformation
   const transformedProduct: Product = {
     ...productFromDb,
     description: productFromDb.description || "",

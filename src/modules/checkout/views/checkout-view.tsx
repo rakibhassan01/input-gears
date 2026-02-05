@@ -30,27 +30,20 @@ import { cn } from "@/lib/utils";
 import CheckoutSkeleton from "../components/checkout-skeleton";
 import { placeOrder } from "../place-order";
 
-// --- Validation Schema ---
 const checkoutSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
   phone: z.string().min(11, "Valid phone number required"),
   address: z.string().min(10, "Full shipping address is required"),
-  // খালি স্ট্রিং অথবা ভ্যালিড ইমেইল - দুটিই এক্সেপ্ট করবে
   email: z.union([z.literal(""), z.string().email()]),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
-// =========================================================
-// 🟢 MAIN COMPONENT (Parent)
-// =========================================================
 export default function CheckoutForm() {
   const cart = useCart();
   const [clientSecret, setClientSecret] = useState("");
-  // ✅ ১. অর্ডার সফল হয়েছে কিনা ট্র্যাক করার জন্য স্টেট
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // কার্টে আইটেম থাকলে পেমেন্ট ইনটেন্ট ফেচ করা
   useEffect(() => {
     if (cart.items.length > 0) {
       fetch("/api/create-payment-intent", {
@@ -79,17 +72,10 @@ export default function CheckoutForm() {
     appearance: { theme: "stripe" as const },
   };
 
-  // -------------------------------------------------------
-  // 🛡️ Conditional Rendering Logic (UX Priority)
-  // -------------------------------------------------------
-
-  // ২. যদি অর্ডার সাকসেস হয় (রিডাইরেক্টের আগ মুহূর্ত), স্কেলিটন দেখান
-  // এতে কার্ট খালি হওয়ার পরেও "Cart Empty" মেসেজ দেখাবে না
   if (isSuccess) {
     return <CheckoutSkeleton />;
   }
 
-  // ৩. যদি আসলেই কার্ট খালি হয় (এবং অর্ডার প্রসেসিং না চলে), তবেই এরর UI দেখান
   if (cart.items.length === 0) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-6 animate-in fade-in zoom-in duration-500">
@@ -114,30 +100,22 @@ export default function CheckoutForm() {
     );
   }
 
-  // ৪. ডাটা রেডি না হওয়া পর্যন্ত (Stripe Secret) স্কেলিটন দেখান
   if (!clientSecret) {
     return <CheckoutSkeleton />;
   }
 
-  // ৫. সব রেডি থাকলে ফর্ম রেন্ডার
   return (
     <Elements options={options} stripe={stripePromise}>
       <CheckoutContent
-        clientSecret={clientSecret}
         onPaymentSuccess={() => setIsSuccess(true)}
       />
     </Elements>
   );
 }
 
-// =========================================================
-// 🟡 CONTENT COMPONENT (Child)
-// =========================================================
 function CheckoutContent({
-  clientSecret,
   onPaymentSuccess,
 }: {
-  clientSecret: string;
   onPaymentSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -149,7 +127,6 @@ function CheckoutContent({
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("cod");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Calculations
   const subtotal = cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -168,7 +145,6 @@ function CheckoutContent({
     mode: "onChange",
   });
 
-  // Autofill User Data
   useEffect(() => {
     if (session?.user) {
       form.setValue("fullName", session.user.name);
@@ -176,13 +152,11 @@ function CheckoutContent({
     }
   }, [session, form]);
 
-  // --- 🚀 SUBMIT HANDLER ---
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsProcessing(true);
 
     try {
       if (paymentMethod === "cod") {
-        // --- COD FLOW ---
         const result = await placeOrder(data, cart.items, "cod");
 
         if (result.success) {
@@ -194,7 +168,6 @@ function CheckoutContent({
           setIsProcessing(false);
         }
       } else {
-        // --- STRIPE FLOW ---
         if (!stripe || !elements) return;
 
         const { error, paymentIntent } = await stripe.confirmPayment({
@@ -208,7 +181,6 @@ function CheckoutContent({
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
           toast.success("Payment Successful!");
 
-          // পেমেন্ট সাকসেস হলে অর্ডার ডাটাবেসে সেভ করা
           const result = await placeOrder(
             data,
             cart.items,
@@ -217,9 +189,7 @@ function CheckoutContent({
           );
 
           if (result.success) {
-            // ✅ সাকসেস স্টেট আপডেট
             onPaymentSuccess();
-
             cart.clearCart();
             router.push(`/order-confirmation/${result.orderId}`);
           } else {
@@ -244,10 +214,8 @@ function CheckoutContent({
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Secure Checkout</h1>
 
       <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-start">
-        {/* --- LEFT SIDE: INPUTS --- */}
         <div className="lg:col-span-7 space-y-8">
           <form id="checkout-form" onSubmit={form.handleSubmit(onSubmit)}>
-            {/* Delivery Details */}
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-sm">
               <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
                 <MapPin className="text-indigo-600" />
@@ -256,7 +224,6 @@ function CheckoutContent({
                 </h2>
               </div>
               <div className="space-y-5">
-                {/* Full Name */}
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                     Full Name
@@ -276,7 +243,6 @@ function CheckoutContent({
                     />
                   </div>
                 </div>
-                {/* Phone */}
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                     Phone
@@ -296,7 +262,6 @@ function CheckoutContent({
                     />
                   </div>
                 </div>
-                {/* Address */}
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                     Address
@@ -314,7 +279,6 @@ function CheckoutContent({
               </div>
             </div>
 
-            {/* Payment Method Selector */}
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-sm mt-8">
               <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
                 <CreditCard size={20} className="text-indigo-600" />
@@ -324,7 +288,6 @@ function CheckoutContent({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* COD Option */}
                 <div
                   onClick={() => setPaymentMethod("cod")}
                   className={cn(
@@ -356,7 +319,6 @@ function CheckoutContent({
                   </div>
                 </div>
 
-                {/* Stripe Option */}
                 <div
                   onClick={() => setPaymentMethod("stripe")}
                   className={cn(
@@ -388,7 +350,6 @@ function CheckoutContent({
           </form>
         </div>
 
-        {/* --- RIGHT SIDE: SUMMARY --- */}
         <div className="lg:col-span-5 mt-8 lg:mt-0 relative">
           <div className="sticky top-24">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-xl shadow-gray-200/50 relative overflow-hidden">
@@ -396,7 +357,6 @@ function CheckoutContent({
                 Order Summary
               </h2>
 
-              {/* Items List */}
               <div className="space-y-4 max-h-[240px] overflow-y-auto custom-scrollbar pr-2 mb-6">
                 {cart.items.map((item) => (
                   <div key={item.id} className="flex gap-4 items-center">
@@ -429,7 +389,6 @@ function CheckoutContent({
                 ))}
               </div>
 
-              {/* Totals */}
               <div className="space-y-3 border-t border-dashed border-gray-200 pt-6 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
@@ -447,7 +406,6 @@ function CheckoutContent({
                 </div>
               </div>
 
-              {/* Stripe Element (Conditional) */}
               {paymentMethod === "stripe" && (
                 <div className="mt-6 p-4 bg-white rounded-xl border border-indigo-200 shadow-inner animate-in fade-in">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
@@ -460,7 +418,6 @@ function CheckoutContent({
                 </div>
               )}
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 form="checkout-form"

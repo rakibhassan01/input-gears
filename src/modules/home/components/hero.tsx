@@ -100,11 +100,11 @@ export default function HeroBanner({ slides }: HeroBannerProps) {
                 sizes="(max-width: 768px) 100vw, 1440px"
               />
 
-              {/* ✅ শুধুমাত্র টেক্সট থাকলেই ওভারলে এবং লেখা দেখাবে */}
+              {/* Overlay and text */}
               {hasText && (
                 <>
                   <div className="absolute inset-0 bg-black/20" />{" "}
-                  {/* হালকা ওভারলে যাতে টেক্সট পড়া যায় */}
+                  {/* Subtle overlay for readability */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-4">
                     {slide.subtitle && (
                       <p className="text-[10px] md:text-xs font-medium tracking-widest uppercase mb-2 opacity-90 animate-in fade-in slide-in-from-bottom-2 duration-700">

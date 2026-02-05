@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import AdminSidebar from "./admin-sidebar";
 import { Menu, Search, Bell, BadgeCheck, ChevronDown } from "lucide-react";
 import Image from "next/image";
@@ -14,34 +14,41 @@ interface AdminLayoutWrapperProps {
     image: string | null;
   };
 }
-
 export default function AdminLayoutWrapper({
   children,
   user,
 }: AdminLayoutWrapperProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // URL পাল্টলে সার্চ ইনপুট আপডেট রাখব
+  // Sync search input with URL
   useEffect(() => {
-    setSearchQuery(searchParams.get("q") || "");
-  }, [searchParams]);
+    const q = searchParams.get("q") || "";
+    if (q !== searchQuery) {
+      startTransition(() => {
+        setSearchQuery(q);
+      });
+    }
+  }, [searchParams, searchQuery]);
 
   // Close sidebar on navigation (mobile)
   useEffect(() => {
-    setIsSidebarOpen(false);
-    setIsSearchOpen(false);
+    startTransition(() => {
+      setIsSidebarOpen(false);
+      setIsSearchOpen(false);
+    });
   }, [pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    // কারেন্ট পাথের উপর ভিত্তি করে রিডাইরেক্ট logic
+    // Redirect logic based on current path
     let targetPath = "/admin/products";
     if (pathname.includes("/admin/orders")) targetPath = "/admin/orders";
     if (pathname.includes("/admin/customers")) targetPath = "/admin/customers";

@@ -11,12 +11,12 @@ import {
 import CategoryModal from "@/modules/admin/components/category-modal";
 
 export default async function CategoriesPage() {
-  // ১. ডাটা ফেচিং (সাথে প্রোডাক্ট কাউন্ট)
+  // 1. Fetch data (with product count)
   const categories = await prisma.category.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       _count: {
-        select: { products: true }, // প্রোডাক্ট সংখ্যা গুনবে
+        select: { products: true }, // Count products
       },
     },
   });
@@ -45,7 +45,7 @@ export default async function CategoriesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Total Categories */}
         <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 group hover:border-indigo-200 transition-colors">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
+          <div className="p-3 rounded-2xl bg-linear-to-br from-indigo-50 to-white border border-indigo-100 shadow-sm group-hover:scale-110 transition-transform">
             <Layers size={24} />
           </div>
           <div>
@@ -122,7 +122,7 @@ export default async function CategoriesPage() {
                           />
                         ) : (
                           // Fallback if no image (Colorful Initials)
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 text-indigo-600 font-bold text-lg">
+                          <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-indigo-50 to-blue-50 text-indigo-600 font-bold text-lg">
                             {category.name.charAt(0)}
                           </div>
                         )}

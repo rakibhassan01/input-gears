@@ -8,7 +8,6 @@ export const profileSchema = z.object({
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 
-// ✅ পাসওয়ার্ড চেঞ্জ করার জন্য আলাদা স্কিমা
 export const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),

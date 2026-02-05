@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useCart } from "@/modules/cart/hooks/use-cart"; // আপনার কার্ট হুক পাথ
+import { useCart } from "@/modules/cart/hooks/use-cart";
 import {
   ShoppingCart,
   Heart,

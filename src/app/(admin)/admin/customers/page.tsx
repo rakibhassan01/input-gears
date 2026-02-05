@@ -21,7 +21,7 @@ export default async function CustomersPage({
   const sortField = sort || "createdAt";
   const sortOrder = order || "desc";
 
-  // ১. ইউজার ডাটা ফেচিং (অর্ডার হিস্টোরি সহ)
+  // 1. Fetch user data (with order history)
   const users = await prisma.user.findMany({
     where: {
       role: { in: ["user", "admin"] }, // Show all roles maybe? user requested admin actions so admin might be there
@@ -42,7 +42,7 @@ export default async function CustomersPage({
     orderBy: { [sortField]: sortOrder },
   });
 
-  // ২. স্ট্যাটস ক্যালকুলেশন (Simplified for cleaner UI)
+  // 2. Stats calculation (Simplified for cleaner UI)
   const totalCustomers = users.filter((u) => u.role === "user").length;
   const activeCustomers = users.filter((u) => u.orders.length > 0).length;
   const newCustomersThisMonth = users.filter((u) => {

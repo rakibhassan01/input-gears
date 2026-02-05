@@ -24,7 +24,7 @@ export default function ImageUpload({
   const [isMounted, setIsMounted] = useState(false);
 
   // ✅ 2. Hydration Mismatch Fix
-  // এই প্যাটার্নটি Next.js এ স্ট্যান্ডার্ড এবং নিরাপদ
+  // This pattern is standard and safe in Next.js
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
@@ -32,8 +32,7 @@ export default function ImageUpload({
 
   // ✅ 3. Type Safe Upload Handler
   const onUpload = (result: unknown) => {
-    // Note: CldUploadWidget এর টাইপ লাইব্রেরি থেকে অনেক সময় 'any' রিটার্ন করে,
-    // তাই আমরা এখানে Type Assertion বা Check ব্যবহার করব।
+    // Note: CldUploadWidget type might return 'any', so using type assertion
 
     // Check if result exists and has info property
     if (result && typeof result === "object" && "info" in result) {
@@ -46,7 +45,7 @@ export default function ImageUpload({
     }
   };
 
-  // মাউন্ট না হওয়া পর্যন্ত কিছুই রেন্ডার করবে না (Hydration Error প্রতিরোধ করে)
+  // Prevent hydration error by waiting for mount
   if (!isMounted) {
     return null;
   }

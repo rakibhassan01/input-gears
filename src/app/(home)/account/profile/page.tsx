@@ -7,10 +7,10 @@ export const metadata = {
 };
 
 export default async function ProfilePage() {
-  // ১. সার্ভার সাইডে ডাটা আনা
+  // 1. Fetch data on server side
   const user = await getUserProfile();
 
-  // ২. লগইন না থাকলে রিডাইরেক্ট
+  // 2. Redirect if not logged in
   if (!user) {
     redirect("/auth/login");
   }

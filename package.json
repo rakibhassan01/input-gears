@@ -2,6 +2,8 @@
   "name": "input-gears",
   "version": "0.1.0",
   "private": true,
+  "author": "Rakib Hassan",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

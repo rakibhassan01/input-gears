@@ -114,7 +114,24 @@ model Product {
 
   specs Json? @default("{}")
 
+  reservations StockReservation[]
+
   @@map("products")
+}
+
+model StockReservation {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String? 
+  quantity  Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId, expiresAt])
+  @@map("stock_reservations")
 }
 
 // 1. Enums

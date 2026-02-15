@@ -210,7 +210,27 @@ export async function placeOrder(
     }, [] as typeof validatedCartItems);
 
     const result = await prisma.$transaction(async (tx) => {
-      // Create the order and items
+      // 1. Fetch reservations for this user and these products
+      const reservations = await tx.stockReservation.findMany({
+        where: {
+          userId: user?.id || null,
+          productId: { in: uniqueProductIds },
+        },
+      });
+
+      const reservationMap = new Map(reservations.map(r => [r.productId, r]));
+
+      // 2. Verified Stock Check (Accounting for reservations)
+      for (const item of validatedCartItems) {
+        const product = productById.get(item.id);
+        const reservation = reservationMap.get(item.id);
+        if (!product) throw new Error("Invalid cart items");
+        
+        const effectiveStock = product.stock + (reservation?.quantity || 0);
+        if (item.quantity > effectiveStock) throw new Error(`Out of stock for ${product.name}`);
+      }
+
+      // 3. Create the order and items
       const order = await tx.order.create({
         data: {
           orderNumber: newOrderNumber,
@@ -244,15 +264,33 @@ export async function placeOrder(
         },
       });
 
-      // Update product stocks
+      // 4. Update product stocks or consume reservations
       for (const item of mergedCartItems) {
+        const reservation = reservationMap.get(item.id);
+
         try {
-          await tx.product.update({
-            where: { id: item.id },
-            data: { stock: { decrement: item.quantity } },
-          });
+          if (reservation) {
+            // Stock was already decremented on Add to Cart, just delete reservation
+            // If the reservation quantity is different, adjust the stock
+            const delta = item.quantity - reservation.quantity;
+            if (delta !== 0) {
+              await tx.product.update({
+                where: { id: item.id },
+                data: { stock: { decrement: delta } },
+              });
+            }
+            await tx.stockReservation.delete({
+              where: { id: reservation.id },
+            });
+          } else {
+            // No reservation found (flow bypassed or expired), decrement stock normally
+            await tx.product.update({
+              where: { id: item.id },
+              data: { stock: { decrement: item.quantity } },
+            });
+          }
         } catch (updateError) {
-          console.error(`Failed to update stock for product ${item.id}:`, updateError);
+          console.error(`Failed to consume reservation/update stock for product ${item.id}:`, updateError);
           throw updateError; // Rethrow to rollback transaction
         }
       }

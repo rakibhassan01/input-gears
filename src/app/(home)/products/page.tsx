@@ -1,6 +1,8 @@
 import ProductView from "@/modules/products/views/product-view";
 import React from "react";
 
+export const revalidate = 60;
+
 export default async function page({
   searchParams,
 }: {

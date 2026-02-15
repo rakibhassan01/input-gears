@@ -2,6 +2,19 @@ import ProductView from "@/modules/products/views/product-view";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const categories = await prisma.category.findMany({
+    select: { slug: true },
+    where: { isActive: true },
+  });
+
+  return categories.map((cat) => ({
+    categorySlug: cat.slug,
+  }));
+}
+
 interface CategoryPageProps {
   params: Promise<{
     categorySlug: string;

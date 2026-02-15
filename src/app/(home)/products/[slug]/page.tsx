@@ -2,12 +2,53 @@ import { prisma } from "@/lib/prisma";
 import { Product } from "@/modules/products/types";
 import ProductDetailsView from "@/modules/products/views/product-details-view";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+export const revalidate = 3600; // Revalidate every hour
+
+export async function generateStaticParams() {
+  const products = await prisma.product.findMany({
+    where: { isActive: true },
+    select: { slug: true },
+    take: 100, // Pre-render top 100 products for faster initial loads
+  });
+
+  return products.map((product) => ({
+    slug: product.slug,
+  }));
+}
 
 // 1. Next.js 15: params is a Promise
 interface PageProps {
   params: Promise<{
     slug: string;
   }>;
+}
+
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
+  const { slug } = params;
+
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    select: { name: true, description: true },
+  });
+
+  if (!product) {
+    return {
+      title: "Product Not Found | InputGears",
+    };
+  }
+
+  return {
+    title: `${product.name} | InputGears`,
+    description: product.description?.substring(0, 160) || `Buy ${product.name} at InputGears.`,
+    openGraph: {
+      title: product.name,
+      description: product.description?.substring(0, 160),
+      type: "website",
+    },
+  };
 }
 
 export default async function ProductDetailsPage(props: PageProps) {

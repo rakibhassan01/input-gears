@@ -77,6 +77,7 @@ export default function Navbar() {
   const [showResults, setShowResults] = useState(false);
   const [categories, setCategories] = useState<CategoryWithBrands[]>([]);
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const { data: session, isPending } = useSession();
   const wishlist = useWishlist();
@@ -335,6 +336,17 @@ export default function Navbar() {
                 )}
               </Link>
 
+              <button
+                onClick={() => setIsMobileSearchOpen((prev) => !prev)}
+                className={`md:hidden p-2.5 rounded-xl transition-all relative ${
+                  isMobileSearchOpen 
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {isMobileSearchOpen ? <X size={22} /> : <Search size={22} />}
+              </button>
+
               <CartNav />
 
               <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block" />
@@ -359,6 +371,82 @@ export default function Navbar() {
               )}
             </div>
           </div>
+
+          {/* MOBILE SEARCH EXPANDER */}
+          <AnimatePresence>
+            {isMobileSearchOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="md:hidden border-t border-gray-100 bg-white overflow-hidden"
+              >
+                <div className="p-4 space-y-4">
+                  <div className="relative search-container">
+                    <form onSubmit={handleSearch} className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search gadgets..."
+                        className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-12 pr-4 py-3.5 focus:bg-white focus:border-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all"
+                        autoFocus
+                      />
+                      <Search
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                    </form>
+
+                    {/* Mobile Live Results */}
+                    {showResults && searchQuery.length >= 2 && (
+                      <div className="mt-3 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden max-h-[60vh] overflow-y-auto no-scrollbar">
+                        <div className="p-3 border-b border-gray-50 flex items-center justify-between">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
+                             Results
+                          </span>
+                          {isSearchLoading && (
+                            <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                          )}
+                        </div>
+                        {searchResults.length > 0 ? (
+                          searchResults.map((p) => (
+                            <Link
+                              key={p.id}
+                              href={`/products/${p.slug}`}
+                              onClick={() => {
+                                setShowResults(false);
+                                setIsMobileSearchOpen(false);
+                              }}
+                              className="flex items-center gap-4 p-3 hover:bg-indigo-50/50 transition-all border-b border-gray-50 last:border-0"
+                            >
+                              <div className="relative h-12 w-12 bg-gray-50 rounded-lg overflow-hidden shrink-0 border border-gray-100 p-1">
+                                {p.image ? (
+                                  <NextImage src={p.image} alt={p.name} fill className="object-contain" />
+                                ) : (
+                                  <Zap className="m-auto text-gray-300" size={16} />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-black text-gray-900 truncate">
+                                  {p.name}
+                                </h4>
+                                <span className="text-xs font-bold text-indigo-600">${p.price}</span>
+                              </div>
+                            </Link>
+                          ))
+                        ) : !isSearchLoading && (
+                          <div className="p-4 text-center">
+                            <p className="text-[10px] font-bold text-gray-400 italic">No products found</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </nav>
 
         {/* SECONDARY NAVBAR (Desktop Categories Mega Menu Row) */}
@@ -474,18 +562,6 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                <div className="p-6 pb-2">
-                  <form onSubmit={handleSearch} className="relative">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Find your gear..."
-                      className="w-full bg-gray-100 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 border-none"
-                    />
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                  </form>
-                </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Categories</p>
@@ -533,15 +609,7 @@ export default function Navbar() {
                     >
                       Join Now / Sign In
                     </Link>
-                  ) : (
-                    <Link
-                      href="/account"
-                      className="flex items-center justify-center w-full bg-indigo-50 text-indigo-600 font-bold py-4 rounded-2xl mb-4"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      My Dashboard
-                    </Link>
-                  )}
+                  ) : null}
                   <div className="flex justify-center gap-4 text-[11px] text-gray-400 font-medium uppercase tracking-tighter">
                     <Link href="/support">Support</Link>
                     <Link href="/tracking">Orders</Link>

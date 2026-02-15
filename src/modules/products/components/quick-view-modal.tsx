@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingCart, Plus, Minus, Star, Zap } from "lucide-react";
 import { useCart } from "@/modules/cart/hooks/use-cart";
 import { useSession } from "@/lib/auth-client";
-import { toast } from "sonner";
 import { createPortal } from "react-dom";
 
 interface QuickViewModalProps {
@@ -83,14 +82,14 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-1200 flex items-center justify-center p-4 sm:p-8 overflow-y-auto no-scrollbar">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-gray-950/40 backdrop-blur-md cursor-pointer"
+            className="fixed inset-0 bg-gray-950/20 backdrop-blur-xl cursor-pointer"
           />
 
           {/* Modal Container */}
@@ -98,19 +97,19 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row my-auto z-10"
+            className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2),0_0_20px_rgba(99,102,241,0.1)] overflow-hidden flex flex-col md:flex-row my-auto z-10 max-h-[85vh] md:max-h-none overflow-y-auto md:overflow-visible no-scrollbar border border-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-6 right-6 z-20 p-2 rounded-full bg-gray-100 text-gray-400 hover:bg-gray-900 hover:text-white transition-all active:scale-90"
+              className="absolute top-4 right-4 md:top-6 md:right-6 z-20 p-2.5 rounded-full bg-white/80 backdrop-blur-md md:bg-gray-100 text-gray-500 hover:bg-gray-900 hover:text-white transition-all active:scale-90 shadow-sm border border-gray-100"
             >
-              <X size={20} />
+              <X size={18} className="md:w-5 md:h-5" />
             </button>
 
             {/* Left: Image */}
-            <div className="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center min-h-[300px] md:min-h-[500px]">
+            <div className="w-full md:w-1/2 bg-gray-50/50 p-6 md:p-8 flex items-center justify-center min-h-[220px] md:min-h-[500px]">
               <div className="relative w-full aspect-square max-w-[400px]">
                 {product.image ? (
                   <Image
@@ -126,7 +125,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
             </div>
 
             {/* Right: Info */}
-            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+            <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center">
               <div className="space-y-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -140,7 +139,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
+                  <h2 className="text-2xl md:text-4xl font-black text-gray-900 leading-tight">
                     {product.name}
                   </h2>
                   <div className="flex items-center gap-4">
@@ -163,16 +162,16 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
 
                 <div className="pt-6 space-y-6">
                   {/* Quantity & Add to Cart */}
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex items-center p-1 border border-gray-100 rounded-2xl bg-gray-50 w-max">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex items-center p-0.5 border border-gray-100 rounded-2xl bg-gray-50/80 shrink-0">
                       <button
                         onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                         disabled={quantity <= 1}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white text-gray-500 transition disabled:opacity-30"
+                        className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-white text-gray-500 transition disabled:opacity-30"
                       >
-                        <Minus size={16} strokeWidth={3} />
+                        <Minus className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" strokeWidth={3} />
                       </button>
-                      <span className="w-10 text-center font-black text-gray-900">
+                      <span className="w-8 md:w-10 text-center font-black text-gray-900 text-sm md:text-base">
                         {quantity}
                       </span>
                       <button
@@ -180,18 +179,18 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                           setQuantity((q) => Math.min(product.stock, q + 1))
                         }
                         disabled={quantity >= product.stock}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white text-gray-500 transition disabled:opacity-30"
+                        className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-white text-gray-500 transition disabled:opacity-30"
                       >
-                        <Plus size={16} strokeWidth={3} />
+                        <Plus className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" strokeWidth={3} />
                       </button>
                     </div>
 
                     <button
                       onClick={handleAddToCart}
                       disabled={isAdding || product.stock === 0}
-                      className="flex-1 bg-gray-900 text-white h-[52px] rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all active:scale-95 disabled:bg-gray-200 disabled:cursor-not-allowed shadow-xl shadow-gray-200/50"
+                      className="flex-1 bg-gray-900 text-white h-[48px] md:h-[52px] rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-2 md:gap-3 hover:bg-indigo-600 transition-all active:scale-95 disabled:bg-gray-200 disabled:cursor-not-allowed shadow-xl shadow-gray-200/50"
                     >
-                      <ShoppingCart size={18} strokeWidth={2.5} />
+                      <ShoppingCart className="w-4 h-4 md:w-[18px] md:h-[18px]" strokeWidth={2.5} />
                       {product.stock === 0
                         ? "Sold Out"
                         : isAdding

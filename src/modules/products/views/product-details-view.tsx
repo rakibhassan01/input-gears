@@ -282,25 +282,25 @@ const ProductDetailsView = memo(
               )}
 
               {/* Actions: Quantity & Add to Cart */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex items-center gap-3 md:gap-4 pt-4">
                 {/* Quantity */}
-                <div className="flex items-center p-1 border border-gray-200 rounded-2xl bg-white shadow-sm w-max">
+                <div className="flex items-center p-0.5 border border-gray-200 rounded-2xl bg-white shadow-sm shrink-0">
                   <button
                     onClick={decrementQty}
-                    className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-600 transition disabled:opacity-30"
+                    className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-600 transition disabled:opacity-30"
                     disabled={quantity <= 1}
                   >
-                    <Minus size={18} strokeWidth={3} />
+                    <Minus className="w-4 h-4 md:w-[18px] md:h-[18px]" strokeWidth={3} />
                   </button>
-                  <span className="w-12 text-center font-black text-gray-900 text-lg">
+                  <span className="w-8 md:w-12 text-center font-black text-gray-900 text-base md:text-lg">
                     {quantity}
                   </span>
                   <button
                     onClick={incrementQty}
-                    className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-600 transition disabled:opacity-30"
+                    className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-600 transition disabled:opacity-30"
                     disabled={quantity >= product.stock}
                   >
-                    <Plus size={18} strokeWidth={3} />
+                    <Plus className="w-4 h-4 md:w-[18px] md:h-[18px]" strokeWidth={3} />
                   </button>
                 </div>
 
@@ -308,9 +308,9 @@ const ProductDetailsView = memo(
                 <button
                   onClick={handleAddToCart}
                   disabled={isAdding || product.stock === 0}
-                  className="flex-1 bg-gray-900 border-b-4 border-gray-950 text-white h-[60px] rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-indigo-600 hover:border-indigo-700 transition-all duration-300 active:translate-y-1 active:border-b-0 shadow-2xl shadow-gray-200/50 disabled:bg-gray-300 disabled:border-transparent disabled:cursor-not-allowed"
+                  className="flex-1 bg-gray-900 border-b-2 md:border-b-4 border-gray-950 text-white h-[52px] md:h-[60px] rounded-2xl font-black text-sm md:text-lg flex items-center justify-center gap-2 md:gap-3 hover:bg-indigo-600 hover:border-indigo-700 transition-all duration-300 active:translate-y-1 active:border-b-0 shadow-2xl shadow-gray-200/50 disabled:bg-gray-300 disabled:border-transparent disabled:cursor-not-allowed"
                 >
-                  <ShoppingCart size={24} strokeWidth={2.5} />
+                  <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" strokeWidth={2.5} />
                   {product.stock === 0
                     ? "Out of Stock"
                     : isAdding

@@ -243,7 +243,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
             onClick={onAddToCart}
             disabled={isOutOfStock}
             className={`
-                relative h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm active:scale-90 overflow-hidden z-10
+                relative h-10 w-10 sm:h-11 sm:w-11 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm active:scale-90 overflow-hidden z-10
                 ${
                   isOutOfStock
                     ? "bg-gray-50 text-gray-300 cursor-not-allowed shadow-none border border-gray-100"

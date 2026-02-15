@@ -18,10 +18,12 @@ export default async function RootLayout({
       <Suspense fallback={<NavbarSkeleton />}>
         <Navbar />
       </Suspense>
-      <Suspense fallback={<div className="min-h-screen bg-gray-50/50" />}>
-        {children}
-      </Suspense>
-      <Footer />
+      <div className="pb-24 lg:pb-0">
+        <Suspense fallback={<div className="min-h-screen bg-gray-50/50" />}>
+          {children}
+        </Suspense>
+        <Footer />
+      </div>
     </NuqsAdapter>
   );
 }

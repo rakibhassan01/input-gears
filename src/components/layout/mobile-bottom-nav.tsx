@@ -26,12 +26,11 @@ export default function MobileBottomNav() {
   const wishlist = useWishlist();
   const compare = useCompare();
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-
   const wishlistCount = wishlist.items.length;
   const compareCount = compare.items.length;
 
   const handleToggleAccountMenu = useCallback(() => {
-    setIsAccountMenuOpen((prev) => !prev);
+    setIsAccountMenuOpen((prev: boolean) => !prev);
   }, []);
 
   const handleCloseAccountMenu = useCallback(() => {
@@ -83,7 +82,7 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[1100] bg-white/95 backdrop-blur-3xl border-t border-gray-100 rounded-t-[32px] shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.08)] pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-1100 bg-white/95 backdrop-blur-3xl border-t border-gray-100 rounded-t-[32px] shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.08)] pb-safe">
         <nav className="max-w-md mx-auto px-6 pt-3 pb-2 flex items-center justify-between">
           {tabs.map((tab) => {
             const Icon = tab.icon;

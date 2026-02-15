@@ -46,7 +46,7 @@ const placeOrderSchema = z.object({
   fullName: z.string().min(2),
   phone: z.string().min(11),
   address: z.string().min(10),
-  email: z.union([z.literal(""), z.string().email(), z.null(), z.undefined()]),
+  email: z.string().email("Valid email is required"),
 });
 
 const cartItemsSchema = z

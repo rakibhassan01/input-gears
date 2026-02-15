@@ -46,7 +46,6 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute =
     pathname.startsWith("/account") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/checkout") ||
     pathname.startsWith("/dashboard");
 
   // If user is logged in & trying to access auth routes -> redirect to account

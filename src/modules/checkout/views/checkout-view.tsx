@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   User,
   Phone,
+  Mail,
   ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,14 +35,15 @@ import { Tag, X, CheckCircle2, Ticket } from "lucide-react";
 const checkoutSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
   phone: z.string().min(11, "Valid phone number required"),
+  email: z.string().email("Valid email is required"),
   address: z.string().min(10, "Full shipping address is required"),
-  email: z.union([z.literal(""), z.string().email()]),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
   const cart = useCart();
+  const { isPending: sessionPending } = useSession();
   const [clientSecret, setClientSecret] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -101,7 +103,7 @@ export default function CheckoutForm() {
     );
   }
 
-  if (!clientSecret) {
+  if (sessionPending || !clientSecret) {
     return <CheckoutSkeleton />;
   }
 
@@ -163,7 +165,7 @@ function CheckoutContent({
       } else {
         toast.error(res.message || "Invalid coupon");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to validate coupon");
     } finally {
       setIsValidating(false);
@@ -248,8 +250,8 @@ function CheckoutContent({
           }
         }
       }
-    } catch (error) {
-      console.error(error);
+    } catch (_error) {
+      console.error(_error);
       toast.error("Something went wrong.");
       setIsProcessing(false);
     }
@@ -309,6 +311,31 @@ function CheckoutContent({
                       placeholder="017..."
                     />
                   </div>
+                </div>
+                <div className="relative">
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={18}
+                    />
+                    <input
+                      {...form.register("email")}
+                      type="email"
+                      className={cn(
+                        "w-full rounded-xl border-gray-200 border bg-gray-50/30 pl-11 pr-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all",
+                        form.formState.errors.email && "border-red-500"
+                      )}
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  {!session && (
+                    <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
+                      Guest checkout. We&apos;ll use this to send your order confirmation.
+                    </p>
+                  )}
                 </div>
                 <div className="relative">
                   <label className="text-sm font-medium text-gray-700 mb-1.5 block">

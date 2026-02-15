@@ -29,6 +29,7 @@ model User {
   addresses Address[]
   wishlist  WishlistItem[]
   cart      CartItem[]
+  reviews   Review[]
 
   @@map("user")
 }
@@ -115,8 +116,33 @@ model Product {
   specs Json? @default("{}")
 
   reservations StockReservation[]
+  reviews      Review[]
 
   @@map("products")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  rating    Int
+  comment   String?      @db.Text
+  images    String[]     @default([])
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  productId String
+  userId    String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId, status])
+  @@map("reviews")
 }
 
 model StockReservation {

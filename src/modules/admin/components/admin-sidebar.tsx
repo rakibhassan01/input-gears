@@ -20,6 +20,7 @@ import {
   Loader2,
   Paintbrush,
   Zap,
+  Star,
   X,
 } from "lucide-react";
 
@@ -40,6 +41,7 @@ const sidebarGroups = [
       { title: "All Products", href: "/admin/products", icon: List },
       { title: "Add New", href: "/admin/products/create", icon: PackagePlus },
       { title: "Categories", href: "/admin/categories", icon: Layers },
+      { title: "Reviews", href: "/admin/reviews", icon: Star },
     ],
   },
   {

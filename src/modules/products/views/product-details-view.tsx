@@ -27,10 +27,12 @@ import RelatedProducts from "../components/related-products";
 interface ProductDetailsViewProps {
   product: Product;
   relatedProducts: Product[];
+  averageRating: number;
+  totalReviews: number;
 }
 
 const ProductDetailsView = memo(
-  ({ product, relatedProducts }: ProductDetailsViewProps) => {
+  ({ product, relatedProducts, averageRating, totalReviews }: ProductDetailsViewProps) => {
     const cart = useCart();
     const wishlist = useWishlist();
     const { data: session } = useSession();
@@ -194,13 +196,17 @@ const ProductDetailsView = memo(
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={16} fill="currentColor" />
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          size={16}
+                          className={cn("fill-current", s <= Math.round(averageRating) ? "text-yellow-400" : "text-gray-200")}
+                        />
                       ))}
                     </div>
-                    <span className="text-sm text-gray-900 font-bold">4.8</span>
+                    <span className="text-sm text-gray-900 font-bold">{averageRating.toFixed(1)}</span>
                     <span className="text-sm text-gray-400 font-medium">
-                      (125 Reviews)
+                      ({totalReviews} Reviews)
                     </span>
                   </div>
                   {product.switchType && (

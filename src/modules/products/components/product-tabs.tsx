@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Product } from "../types";
 import { FileText, ClipboardList, MessageSquare, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReviewList from "../../reviews/components/review-list";
+import ReviewForm from "../../reviews/components/review-form";
+import { getReviewStats } from "../../reviews/actions";
 
 interface ProductTabsProps {
   product: Product;
@@ -12,12 +15,23 @@ interface ProductTabsProps {
 
 const ProductTabs = ({ product }: ProductTabsProps) => {
   const [activeTab, setActiveTab] = useState("specification");
+  const [reviewCount, setReviewCount] = useState(0);
+
+  useEffect(() => {
+    async function loadStats() {
+      const res = await getReviewStats(product.id);
+      if (res.success && res.data) {
+        setReviewCount(res.data.totalReviews);
+      }
+    }
+    loadStats();
+  }, [product.id]);
 
   const tabs = [
     { id: "specification", label: "Specification", icon: ClipboardList },
     { id: "description", label: "Description", icon: FileText },
     { id: "questions", label: "Questions (0)", icon: MessageSquare },
-    { id: "reviews", label: "Reviews (0)", icon: Star },
+    { id: "reviews", label: `Reviews (${reviewCount})`, icon: Star },
   ];
 
   const specs = [
@@ -120,17 +134,9 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
             )}
 
             {activeTab === "reviews" && (
-              <div className="flex flex-col items-center justify-center py-20 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                  <Star className="text-gray-400" size={32} />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">No reviews yet</h3>
-                <p className="text-gray-500 mt-2 max-w-xs">
-                  Purchased this product? Share your experience with others!
-                </p>
-                <button className="mt-6 px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-indigo-600 transition shadow-lg">
-                  Write a Review
-                </button>
+              <div className="space-y-12">
+                <ReviewForm productId={product.id} />
+                <ReviewList productId={product.id} />
               </div>
             )}
           </motion.div>

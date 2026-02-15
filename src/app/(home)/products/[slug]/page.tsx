@@ -38,7 +38,24 @@ export default async function ProductDetailsPage(props: PageProps) {
     },
   });
 
-  // 4. Data Transformation
+  // 4. Fetch Review Stats
+  const reviewStats = await prisma.review.aggregate({
+    where: {
+      productId: productFromDb.id,
+      status: "APPROVED",
+    },
+    _avg: {
+      rating: true,
+    },
+    _count: {
+      rating: true,
+    },
+  });
+
+  const averageRating = reviewStats._avg.rating || 0;
+  const totalReviews = reviewStats._count.rating || 0;
+
+  // 5. Data Transformation
   const transformedProduct: Product = {
     ...productFromDb,
     description: productFromDb.description || "",
@@ -74,6 +91,8 @@ export default async function ProductDetailsPage(props: PageProps) {
     <ProductDetailsView
       product={transformedProduct}
       relatedProducts={transformedRelatedProducts}
+      averageRating={averageRating}
+      totalReviews={totalReviews}
     />
   );
 }

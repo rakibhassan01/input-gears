@@ -248,6 +248,7 @@ interface HeroSlideInput {
 
 // --- 1. Get Data ---
 export async function getStoreAppearance() {
+  await requireAdmin();
   const settings = await prisma.siteSettings.findUnique({
     where: { id: "general" },
   });

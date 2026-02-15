@@ -15,8 +15,54 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Input Gears",
-  description: "Input Gears - Premium Gear for Productivity",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"
+  ),
+  title: {
+    default: "Input Gears | Premium Mechanical Keyboards & Gear",
+    template: "%s | Input Gears",
+  },
+  description:
+    "Explore Input Gears for premium mechanical keyboards, high-performance gaming mice, and professional desk accessories. Level up your productivity setup.",
+  keywords: [
+    "mechanical keyboards",
+    "gaming gear",
+    "custom keyboards",
+    "Input Gears",
+    "productivity setup",
+    "audiophile gear",
+  ],
+  authors: [{ name: "Input Gears Team" }],
+  creator: "Input Gears",
+  publisher: "Input Gears",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Input Gears",
+    title: "Input Gears | Premium Gear for Productivity",
+    description:
+      "Premium selection of mechanical keyboards and high-performance gear for enthusiasts.",
+    images: [
+      {
+        url: "/input-gears.webp",
+        width: 1200,
+        height: 630,
+        alt: "Input Gears Branding",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Input Gears | Premium Gear for Productivity",
+    description:
+      "Premium selection of mechanical keyboards and high-performance gear.",
+    images: ["/input-gears.webp"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

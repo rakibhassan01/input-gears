@@ -236,6 +236,7 @@ model SiteSettings {
   topBarActive Boolean   @default(true)
   topBarStart  DateTime?
   topBarEnd    DateTime?
+  maintenanceMode Boolean @default(false)
 
   updatedAt DateTime @updatedAt
 

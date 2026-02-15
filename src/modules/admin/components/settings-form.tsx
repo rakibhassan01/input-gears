@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Store,
@@ -10,6 +10,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getMaintenanceMode, updateMaintenanceMode } from "@/modules/admin/actions";
 
 // Tabs Configuration
 const TABS = [
@@ -22,14 +23,31 @@ const TABS = [
 export default function SettingsForm() {
   const [activeTab, setActiveTab] = useState("general");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
-  // Mock Save Function
-  const handleSave = () => {
+  useEffect(() => {
+    async function loadSettings() {
+      const mode = await getMaintenanceMode();
+      setIsMaintenance(mode);
+    }
+    loadSettings();
+  }, []);
+
+  // Save Function
+  const handleSave = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await updateMaintenanceMode(isMaintenance);
+      if (res.success) {
+        toast.success("Settings saved successfully!");
+      } else {
+        toast.error(res.message || "Failed to save settings");
+      }
+    } catch {
+      toast.error("An error occurred while saving");
+    } finally {
       setIsLoading(false);
-      toast.success("Settings saved successfully!");
-    }, 1000);
+    }
   };
 
   return (
@@ -112,7 +130,12 @@ export default function SettingsForm() {
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={isMaintenance}
+                    onChange={(e) => setIsMaintenance(e.target.checked)}
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>

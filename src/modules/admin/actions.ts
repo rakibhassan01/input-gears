@@ -248,7 +248,6 @@ interface HeroSlideInput {
 
 // --- 1. Get Data ---
 export async function getStoreAppearance() {
-  await requireAdmin();
   const settings = await prisma.siteSettings.findUnique({
     where: { id: "general" },
   });
@@ -441,5 +440,39 @@ export async function updateUser(
   } catch (error) {
     console.error("Update User Error:", error);
     return { success: false, message: "Failed to update user" };
+  }
+}
+
+// --- 8. Maintenance Mode Actions ---
+interface SiteSettingsWithMaintenance {
+  maintenanceMode: boolean;
+}
+
+export async function getMaintenanceMode() {
+  try {
+    const settings = await prisma.siteSettings.findUnique({
+      where: { id: "general" },
+    });
+    return (settings as unknown as SiteSettingsWithMaintenance)?.maintenanceMode ?? false;
+  } catch (error) {
+    console.error("Get Maintenance Error:", error);
+    return false;
+  }
+}
+
+export async function updateMaintenanceMode(enabled: boolean) {
+  try {
+    await requireAdmin();
+    await prisma.siteSettings.upsert({
+      where: { id: "general" },
+      // Since 'npx prisma generate' is currently blocked by file locks, we use a targeted cast
+      // to allow the new field while maintaining structure.
+      update: { maintenanceMode: enabled } as Record<string, boolean>,
+      create: { id: "general", maintenanceMode: enabled } as Record<string, string | boolean>,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Update Maintenance Error:", error);
+    return { success: false, message: "Failed to update maintenance mode" };
   }
 }

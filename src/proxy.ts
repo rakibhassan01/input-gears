@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
@@ -12,6 +13,34 @@ export async function proxy(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: request.headers,
   });
+
+  // ✅ Maintenance Mode Enforcement
+  // Skip check for admin, sign-in, and the maintenance page itself
+  const isMaintenanceExempt = 
+    pathname.startsWith("/admin") || 
+    pathname.startsWith("/maintenance") || 
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next");
+
+  if (!isMaintenanceExempt && session?.user?.role !== "admin") {
+    try {
+      interface SiteSettingsWithMaintenance {
+        maintenanceMode: boolean;
+      }
+
+      const settings = (await prisma.siteSettings.findUnique({
+        where: { id: "general" },
+        select: { maintenanceMode: true } as Record<string, boolean>
+      })) as unknown as SiteSettingsWithMaintenance | null;
+
+      if (settings?.maintenanceMode) {
+        return NextResponse.rewrite(new URL("/maintenance", request.url));
+      }
+    } catch (error) {
+      console.error("Middleware Maintenance Check Error:", error);
+    }
+  }
 
   const isAuthRoute = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   const isProtectedRoute =
@@ -43,11 +72,13 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/account/:path*",
-    "/admin/:path*",
-    "/checkout/:path*",
-    "/dashboard/:path*",
-    "/sign-in",
-    "/sign-up",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

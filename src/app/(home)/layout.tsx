@@ -11,6 +11,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const { settings } = await getStoreAppearance();
+
   return (
     <NuqsAdapter>
       <TopAnnouncement data={settings} />

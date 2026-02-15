@@ -30,7 +30,7 @@ model User {
   wishlist  WishlistItem[]
   cart      CartItem[]
 
-  @@map("user") // Better Auth table name lowercase 'user' prefer kore
+  @@map("user")
 }
 
 model Session {
@@ -38,8 +38,8 @@ model Session {
   userId    String
   expiresAt DateTime
   token     String   @unique
-  ipAddress String? // Better Auth Security feature
-  userAgent String? // Better Auth Security feature
+  ipAddress String? 
+  userAgent String? 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -59,7 +59,7 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   idToken               String?
-  password              String? // For credential accounts
+  password              String? 
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -71,7 +71,7 @@ model Account {
 model Verification {
   id         String   @id @default(cuid())
   identifier String
-  value      String // The OTP or Token value
+  value      String 
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -84,9 +84,9 @@ model Product {
   name        String
   slug        String  @unique
   description String?
-  price       Float // Decimal ও ব্যবহার করতে পারেন, তবে সহজ রাখার জন্য Float দিলাম
+  price       Float 
   stock       Int
-  image       String? // ইমেজের URL
+  image       String? 
 
   // Technical Specifications
   brand          String?
@@ -114,7 +114,7 @@ model Product {
 
   specs Json? @default("{}")
 
-  @@map("products") // ডাটাবেসে টেবিলের নাম হবে 'products'
+  @@map("products")
 }
 
 // 1. Enums
@@ -138,34 +138,35 @@ enum PaymentMethod {
   STRIPE
 }
 
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
 // 2. Order Model
 model Order {
   id          String  @id @default(cuid())
   orderNumber String  @unique
-  // ✅ User Relation (Optional)
-  // যদি ইউজার লগড-ইন থাকে, তাহলে ID থাকবে। গেস্ট হলে null থাকবে।
   userId      String?
   user        User?   @relation(fields: [userId], references: [id])
 
-  // ✅ Shipping Info (Snapshot)
-  // লগড-ইন বা গেস্ট, যেই হোক না কেন, এই অর্ডারের জন্য ঠিকানা এখানে ফিক্সড থাকবে।
-  name    String // Receiver's Name
-  email   String? // Contact Email
-  phone   String // Contact Phone
-  address String // Shipping Address
+  name    String 
+  email   String? 
+  phone   String 
+  address String 
 
-  // Order Details
-  totalAmount Float
-  status      OrderStatus @default(PENDING)
+  totalAmount    Float
+  discountAmount Float @default(0)
+  status         OrderStatus @default(PENDING)
 
-  // Payment Info
   paymentMethod PaymentMethod @default(COD)
   paymentStatus PaymentStatus @default(PENDING)
 
-  // Stripe Data
   stripePaymentIntentId String? @unique
 
-  // Relations
+  coupon   Coupon? @relation(fields: [couponId], references: [id])
+  couponId String?
+
   items OrderItem[]
 
   createdAt DateTime @default(now())
@@ -174,21 +175,16 @@ model Order {
   @@map("orders")
 }
 
-// 3. Order Item Model (Snapshot of Product)
+// 3. Order Item Model
 model OrderItem {
   id String @id @default(cuid())
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  // প্রোডাক্ট ডিলিট হলেও অর্ডারের ডাটা যাতে থাকে, তাই রিলেশন অপশনাল রাখা যেতে পারে
-  // অথবা শুধু productId স্ট্রিং হিসেবে রাখা হয় অনেক সময়। 
-  // তবে রিলেশন রাখা ভালো অ্যানালিটিক্সের জন্য।
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
-  // Snapshot Fields
-  // অফার শেষ হয়ে গেলে বা দাম বাড়লে যাতে আগের অর্ডারে সমস্যা না হয়
   name     String
   price    Float
   quantity Int
@@ -200,39 +196,32 @@ model OrderItem {
 model Category {
   id          String  @id @default(uuid())
   name        String
-  slug        String  @unique // URL এর জন্য (e.g. /electronics/laptops)
-  description String? @db.Text // বড় ডেসক্রিপশন সাপোর্ট করার জন্য
-  image       String? // Cloudinary URL
+  slug        String  @unique 
+  description String? @db.Text 
+  image       String? 
 
-  // --- Advanced Features ---
-
-  // 1. Hierarchy (Sub-categories Support)
-  // এটি Self-Relation। যেমন: "Electronics" (Parent) -> "Laptops" (Child)
   parentId String?
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
 
-  // 2. Control Flags
-  isActive   Boolean @default(true) // সাময়িকভাবে ক্যাটাগরি বন্ধ রাখার জন্য
-  isFeatured Boolean @default(false) // হোমপেজে দেখানোর জন্য
+  isActive   Boolean @default(true) 
+  isFeatured Boolean @default(false) 
 
-  // 3. SEO Fields (Optional but Recommended)
   seoTitle       String?
   seoDescription String?
 
-  // 4. Relations
-  products Product[] // One-to-Many relation (Product model আপডেট করতে হবে)
+  products Product[] 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([parentId]) // পারফরম্যান্সের জন্য ইনডেক্সিং
+  @@index([parentId]) 
 }
 
 model SiteSettings {
   id           String    @id @default("general")
   topBarText   String?
-  topBarLink   String? // নতুন: "Shop Now" এ ক্লিক করলে কই যাবে
+  topBarLink   String? 
   topBarActive Boolean   @default(true)
   topBarStart  DateTime?
   topBarEnd    DateTime?
@@ -243,11 +232,27 @@ model SiteSettings {
   @@map("site_settings")
 }
 
+model Coupon {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  type       CouponType
+  value      Float
+  expiresAt  DateTime
+  isActive   Boolean  @default(true)
+  usageLimit Int?
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  orders     Order[]
+
+  @@map("coupons")
+}
+
 model HeroSlide {
   id       String  @id @default(cuid())
   title    String
   subtitle String?
-  image    String // Cloudinary Public ID
+  image    String 
   link     String?
   order    Int     @default(0)
 
@@ -271,7 +276,7 @@ model Address {
   country String  @default("Bangladesh")
 
   isDefault Boolean @default(false)
-  type      String  @default("HOME") // HOME or WORK
+  type      String  @default("HOME") 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

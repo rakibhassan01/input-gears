@@ -10,38 +10,28 @@ export async function GET(request: Request) {
   }
 
   try {
-    const products = await prisma.product.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { name: { contains: query, mode: "insensitive" } },
-              { description: { contains: query, mode: "insensitive" } },
-            ],
-          },
-          { isActive: true },
-          {
-            OR: [
-              { scheduledAt: null },
-              { scheduledAt: { lte: new Date() } },
-            ],
-          },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        image: true,
-        category: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      take: 8,
-    });
+    // Fuzzy matching with Postgres similarity
+    // Using raw SQL because Prisma doesn't natively support trigram similarity yet.
+    const products = await prisma.$queryRaw`
+      SELECT 
+        p.id, 
+        p.name, 
+        p.slug, 
+        p.price, 
+        p.image,
+        c.name as "categoryName"
+      FROM products p
+      LEFT JOIN "Category" c ON p."categoryId" = c.id
+      WHERE (
+        similarity(p.name, ${query}) > 0.2
+        OR p.name ILIKE ${"%" + query + "%"}
+        OR p.description ILIKE ${"%" + query + "%"}
+      )
+      AND p."isActive" = true
+      AND (p."scheduledAt" IS NULL OR p."scheduledAt" <= NOW())
+      ORDER BY similarity(p.name, ${query}) DESC
+      LIMIT 8
+    `;
 
     return NextResponse.json(products);
   } catch (error) {

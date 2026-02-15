@@ -460,6 +460,15 @@ export async function getMaintenanceMode() {
   }
 }
 
+export async function getSettingsPageData() {
+  await requireAdmin();
+  const [maintenanceMode, coupons] = await Promise.all([
+    getMaintenanceMode(),
+    prisma.coupon.findMany({ orderBy: { createdAt: "desc" } })
+  ]);
+  return { maintenanceMode, coupons };
+}
+
 export async function updateMaintenanceMode(enabled: boolean) {
   try {
     await requireAdmin();
@@ -474,5 +483,67 @@ export async function updateMaintenanceMode(enabled: boolean) {
   } catch (error) {
     console.error("Update Maintenance Error:", error);
     return { success: false, message: "Failed to update maintenance mode" };
+  }
+}
+
+// --- 9. Coupon Management Actions ---
+export async function getCoupons() {
+  try {
+    await requireAdmin();
+    return await prisma.coupon.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Get Coupons Error:", error);
+    return [];
+  }
+}
+
+export async function createCoupon(data: {
+  code: string;
+  type: "PERCENTAGE" | "FIXED";
+  value: number;
+  expiresAt: Date;
+  usageLimit?: number;
+}) {
+  try {
+    await requireAdmin();
+    await prisma.coupon.create({
+      data: {
+        ...data,
+        code: data.code.toUpperCase(),
+      },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Create Coupon Error:", error);
+    return { success: false, message: "Failed to create coupon. Maybe the code already exists?" };
+  }
+}
+
+export async function deleteCoupon(id: string) {
+  try {
+    await requireAdmin();
+    await prisma.coupon.delete({
+      where: { id },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Delete Coupon Error:", error);
+    return { success: false, message: "Failed to delete coupon" };
+  }
+}
+
+export async function toggleCouponStatus(id: string, isActive: boolean) {
+  try {
+    await requireAdmin();
+    await prisma.coupon.update({
+      where: { id },
+      data: { isActive },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Toggle Coupon Error:", error);
+    return { success: false, message: "Failed to update coupon status" };
   }
 }

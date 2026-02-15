@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Store,
@@ -8,30 +8,33 @@ import {
   Bell,
   Save,
   CreditCard,
+  Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMaintenanceMode, updateMaintenanceMode } from "@/modules/admin/actions";
+import { updateMaintenanceMode } from "@/modules/admin/actions";
+import CouponManager from "./coupon-manager";
+import { Coupon } from "@prisma/client";
 
 // Tabs Configuration
 const TABS = [
   { id: "general", label: "General", icon: Store },
   { id: "payment", label: "Payment & Currency", icon: CreditCard },
+  { id: "coupons", label: "Coupons & Discounts", icon: Ticket },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: ShieldCheck },
 ];
 
-export default function SettingsForm() {
+interface SettingsFormProps {
+  initialData: {
+    maintenanceMode: boolean;
+    coupons: Coupon[];
+  };
+}
+
+export default function SettingsForm({ initialData }: SettingsFormProps) {
   const [activeTab, setActiveTab] = useState("general");
   const [isLoading, setIsLoading] = useState(false);
-  const [isMaintenance, setIsMaintenance] = useState(false);
-
-  useEffect(() => {
-    async function loadSettings() {
-      const mode = await getMaintenanceMode();
-      setIsMaintenance(mode);
-    }
-    loadSettings();
-  }, []);
+  const [isMaintenance, setIsMaintenance] = useState(initialData.maintenanceMode);
 
   // Save Function
   const handleSave = async () => {
@@ -201,6 +204,11 @@ export default function SettingsForm() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Coupons Management */}
+        {activeTab === "coupons" && (
+          <CouponManager initialCoupons={initialData.coupons} />
         )}
 
         {/* Save Button */}

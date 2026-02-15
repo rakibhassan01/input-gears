@@ -1,6 +1,9 @@
 import SettingsForm from "@/modules/admin/components/settings-form";
+import { getSettingsPageData } from "@/modules/admin/actions";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const initialData = await getSettingsPageData();
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
       {/* Header */}
@@ -12,7 +15,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Settings Component */}
-      <SettingsForm />
+      <SettingsForm initialData={initialData} />
     </div>
   );
 }

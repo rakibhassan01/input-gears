@@ -60,11 +60,50 @@ const cartItemsSchema = z
   )
   .min(1);
 
+// --- Coupon Validation ---
+export async function validateCoupon(code: string) {
+  try {
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: code.toUpperCase() },
+    });
+
+    if (!coupon) {
+      return { success: false, message: "Invalid coupon code" };
+    }
+
+    if (!coupon.isActive) {
+      return { success: false, message: "This coupon is no longer active" };
+    }
+
+    if (coupon.expiresAt < new Date()) {
+      return { success: false, message: "This coupon has expired" };
+    }
+
+    if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
+      return { success: false, message: "Coupon usage limit reached" };
+    }
+
+    return {
+      success: true,
+      coupon: {
+        id: coupon.id,
+        code: coupon.code,
+        type: coupon.type,
+        value: coupon.value,
+      },
+    };
+  } catch (error) {
+    console.error("Coupon Validation Error:", error);
+    return { success: false, message: "Failed to validate coupon" };
+  }
+}
+
 export async function placeOrder(
   formData: PlaceOrderFormData,
   cartItems: CartItemInput[],
   paymentMethod: PaymentMethodInput,
-  paymentIntentId?: string
+  paymentIntentId?: string,
+  couponCode?: string
 ) {
   try {
     const validatedForm = placeOrderSchema.parse(formData);
@@ -106,7 +145,24 @@ export async function placeOrder(
     }, 0);
 
     const shippingCents = subtotalCents > 100000 ? 0 : 6000;
-    const totalCents = subtotalCents + shippingCents;
+    
+    // --- Coupon Application ---
+    let discountCents = 0;
+    let couponId: string | null = null;
+    
+    if (couponCode) {
+      const couponRes = await validateCoupon(couponCode);
+      if (couponRes.success && couponRes.coupon) {
+        couponId = couponRes.coupon.id;
+        if (couponRes.coupon.type === "PERCENTAGE") {
+          discountCents = Math.round(subtotalCents * (couponRes.coupon.value / 100));
+        } else {
+          discountCents = Math.round(couponRes.coupon.value * 100);
+        }
+      }
+    }
+
+    const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
 
     const dbPaymentMethod = paymentMethod === "cod" ? "COD" : "STRIPE";
     let isPaid = false;
@@ -142,6 +198,17 @@ export async function placeOrder(
     const newOrderNumber = await generateOrderNumber();
 
     // --- 3. Atomic Database Operations (Simplified Transaction) ---
+    // Merge duplicate product items in cart to prevent multiple redundant updates
+    const mergedCartItems = validatedCartItems.reduce((acc, current) => {
+      const existing = acc.find(item => item.id === current.id);
+      if (existing) {
+        existing.quantity += current.quantity;
+      } else {
+        acc.push({ ...current });
+      }
+      return acc;
+    }, [] as typeof validatedCartItems);
+
     const result = await prisma.$transaction(async (tx) => {
       // Create the order and items
       const order = await tx.order.create({
@@ -156,12 +223,14 @@ export async function placeOrder(
               ? validatedForm.email
               : null,
           totalAmount: totalCents / 100,
+          discountAmount: discountCents / 100,
           status: isPaid ? "PROCESSING" : "PENDING",
           paymentStatus: isPaid ? "PAID" : "PENDING",
           paymentMethod: dbPaymentMethod,
           stripePaymentIntentId: paymentIntentId || null,
+          couponId: couponId,
           items: {
-            create: validatedCartItems.map((item) => {
+            create: mergedCartItems.map((item) => {
               const product = productById.get(item.id)!;
               return {
                 productId: product.id,
@@ -176,10 +245,23 @@ export async function placeOrder(
       });
 
       // Update product stocks
-      for (const item of validatedCartItems) {
-        await tx.product.update({
-          where: { id: item.id },
-          data: { stock: { decrement: item.quantity } },
+      for (const item of mergedCartItems) {
+        try {
+          await tx.product.update({
+            where: { id: item.id },
+            data: { stock: { decrement: item.quantity } },
+          });
+        } catch (updateError) {
+          console.error(`Failed to update stock for product ${item.id}:`, updateError);
+          throw updateError; // Rethrow to rollback transaction
+        }
+      }
+
+      // Update coupon usage if applicable
+      if (couponId) {
+        await tx.coupon.update({
+          where: { id: couponId },
+          data: { usageCount: { increment: 1 } },
         });
       }
 

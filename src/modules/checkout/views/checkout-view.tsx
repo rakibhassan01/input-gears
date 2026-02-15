@@ -28,7 +28,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CheckoutSkeleton from "../components/checkout-skeleton";
-import { placeOrder } from "../place-order";
+import { placeOrder, validateCoupon } from "../actions";
+import { Tag, X, CheckCircle2, Ticket } from "lucide-react";
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
@@ -127,12 +128,52 @@ function CheckoutContent({
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("cod");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // --- Coupon State ---
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string;
+    code: string;
+    type: string;
+    value: number;
+  } | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+
   const subtotal = cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const discountAmount = appliedCoupon
+    ? appliedCoupon.type === "PERCENTAGE"
+      ? subtotal * (appliedCoupon.value / 100)
+      : appliedCoupon.value
+    : 0;
+
   const shipping = subtotal > 1000 ? 0 : 60;
-  const total = subtotal + shipping;
+  const total = Math.max(0, subtotal - discountAmount + shipping);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidating(true);
+    try {
+      const res = await validateCoupon(couponCode);
+      if (res.success && res.coupon) {
+        setAppliedCoupon(res.coupon as { id: string; code: string; type: string; value: number });
+        toast.success(`Coupon "${res.coupon.code}" applied!`);
+      } else {
+        toast.error(res.message || "Invalid coupon");
+      }
+    } catch (error) {
+      toast.error("Failed to validate coupon");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  };
 
   const form = useForm({
     resolver: zodResolver(checkoutSchema),
@@ -157,7 +198,13 @@ function CheckoutContent({
 
     try {
       if (paymentMethod === "cod") {
-        const result = await placeOrder(data, cart.items, "cod");
+        const result = await placeOrder(
+          data, 
+          cart.items, 
+          "cod", 
+          undefined, 
+          appliedCoupon?.code
+        );
 
         if (result.success) {
           onPaymentSuccess();
@@ -185,7 +232,8 @@ function CheckoutContent({
             data,
             cart.items,
             "stripe",
-            paymentIntent.id
+            paymentIntent.id,
+            appliedCoupon?.code
           );
 
           if (result.success) {
@@ -389,11 +437,65 @@ function CheckoutContent({
                 ))}
               </div>
 
+              {/* Coupon Section */}
+              <div className="mb-6">
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Ticket size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Promo Code"
+                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-500 transition-all font-medium uppercase placeholder:normal-case"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={!couponCode || isValidating}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold disabled:bg-gray-200 disabled:text-gray-400 transition-all hover:bg-indigo-600 min-w-[80px] flex items-center justify-center"
+                    >
+                      {isValidating ? <Loader2 size={16} className="animate-spin" /> : "Apply"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-100 rounded-xl animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center gap-2 text-emerald-700">
+                      <CheckCircle2 size={18} />
+                      <div>
+                        <p className="text-xs font-bold leading-tight uppercase">{appliedCoupon.code}</p>
+                        <p className="text-[10px] opacity-70">Coupon Applied Successfully</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="p-1.5 hover:bg-emerald-100 rounded-lg text-emerald-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3 border-t border-dashed border-gray-200 pt-6 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
+
+                {appliedCoupon && (
+                  <div className="flex justify-between text-emerald-600 font-medium animate-in slide-in-from-right-2">
+                    <div className="flex items-center gap-1">
+                      <Tag size={14} />
+                      <span>Discount ({appliedCoupon.code})</span>
+                    </div>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span>{shipping === 0 ? "Free" : `$${shipping}`}</span>

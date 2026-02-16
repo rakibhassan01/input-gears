@@ -129,7 +129,7 @@ export default function MobileBottomNav() {
 
                   <span
                     className={`text-[10px] font-black tracking-widest uppercase transition-colors duration-300 ${
-                      tab.isActive ? "text-indigo-600" : "text-gray-400"
+                      tab.isActive ? "text-indigo-600" : "text-gray-600"
                     }`}
                   >
                     {tab.name}
@@ -158,7 +158,7 @@ export default function MobileBottomNav() {
 
                 <span
                   className={`text-[10px] font-black tracking-widest uppercase transition-colors duration-300 ${
-                    tab.isActive ? "text-indigo-600" : "text-gray-400"
+                    tab.isActive ? "text-indigo-600" : "text-gray-600"
                   }`}
                 >
                   {tab.name}

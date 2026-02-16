@@ -241,7 +241,7 @@ export default function Navbar() {
                       className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-[2rem] shadow-2xl overflow-hidden z-100"
                     >
                       <div className="p-4 border-b border-gray-50 flex items-center justify-between">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
+                        <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">
                           {isSearchLoading ? "Searching..." : `Found ${searchResults.length} Results`}
                         </span>
                         {isSearchLoading && (
@@ -270,7 +270,7 @@ export default function Navbar() {
                                 </h4>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs font-bold text-indigo-600">${p.price}</span>
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-full">
+                                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-full">
                                     {p.category?.name || "Gadget"}
                                   </span>
                                 </div>
@@ -280,7 +280,7 @@ export default function Navbar() {
                           ) )
                         ) : (
                           <div className="p-8 text-center">
-                            <p className="text-xs font-bold text-gray-400 italic">No exact matches found...</p>
+                            <p className="text-xs font-bold text-gray-600 italic">No exact matches found...</p>
                           </div>
                         )}
                       </div>
@@ -343,6 +343,7 @@ export default function Navbar() {
                     ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
+                aria-label={isMobileSearchOpen ? "Close search" : "Open search"}
               >
                 {isMobileSearchOpen ? <X size={22} /> : <Search size={22} />}
               </button>
@@ -402,7 +403,7 @@ export default function Navbar() {
                     {showResults && searchQuery.length >= 2 && (
                       <div className="mt-3 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden max-h-[60vh] overflow-y-auto no-scrollbar">
                         <div className="p-3 border-b border-gray-50 flex items-center justify-between">
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
+                          <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">
                              Results
                           </span>
                           {isSearchLoading && (
@@ -437,7 +438,7 @@ export default function Navbar() {
                           ))
                         ) : !isSearchLoading && (
                           <div className="p-4 text-center">
-                            <p className="text-[10px] font-bold text-gray-400 italic">No products found</p>
+                            <p className="text-[10px] font-bold text-gray-600 italic">No products found</p>
                           </div>
                         )}
                       </div>
@@ -470,7 +471,7 @@ export default function Navbar() {
                   <Link
                     href={`/${cat.slug}`}
                     className={`group flex items-center gap-2 px-4 h-full text-[11px] font-black uppercase tracking-widest transition-all ${
-                      isActive ? "text-indigo-600" : "text-gray-500 hover:text-indigo-600"
+                      isActive ? "text-indigo-600" : "text-gray-600 hover:text-indigo-600"
                     }`}
                   >
                     <Icon
@@ -491,7 +492,7 @@ export default function Navbar() {
                       >
                         <div className="bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-2xl p-4 overflow-hidden">
                           <div className="mb-3 px-2">
-                             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Shop by Brand</span>
+                             <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Shop by Brand</span>
                           </div>
                           <div className="grid gap-1">
                             {cat.brands.length > 0 ? (
@@ -506,7 +507,7 @@ export default function Navbar() {
                                 </Link>
                               ))
                             ) : (
-                              <p className="p-3 text-[10px] text-gray-400 italic">No brands found</p>
+                              <p className="p-3 text-[10px] text-gray-600 italic">No brands found</p>
                             )}
                           </div>
                           <div className="mt-3 pt-3 border-t border-gray-50">
@@ -564,7 +565,7 @@ export default function Navbar() {
 
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Categories</p>
+                  <p className="text-[11px] font-bold text-gray-600 uppercase tracking-widest">Categories</p>
                   {categories.map((cat) => {
                     const Icon = CATEGORY_ICONS[cat.slug] || Cpu;
                     return (
@@ -583,11 +584,11 @@ export default function Navbar() {
                         {/* Mobile Brands Shortcut */}
                         <div className="pl-14 flex flex-wrap gap-2 pt-1">
                            {cat.brands.slice(0, 3).map(brand => (
-                             <Link 
-                                key={brand} 
+                             <Link
+                                key={brand}
                                 href={`/${cat.slug}?brand=${encodeURIComponent(brand)}`}
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-[10px] font-bold text-gray-400 hover:text-indigo-600 uppercase tracking-tighter"
+                                className="text-[10px] font-bold text-gray-600 hover:text-indigo-600 uppercase tracking-tighter"
                              >
                                {brand}
                              </Link>
@@ -610,7 +611,7 @@ export default function Navbar() {
                       Join Now / Sign In
                     </Link>
                   ) : null}
-                  <div className="flex justify-center gap-4 text-[11px] text-gray-400 font-medium uppercase tracking-tighter">
+                  <div className="flex justify-center gap-4 text-[11px] text-gray-600 font-medium uppercase tracking-tighter">
                     <Link href="/support">Support</Link>
                     <Link href="/tracking">Orders</Link>
                     <Link href="/privacy">Privacy</Link>

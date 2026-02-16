@@ -29,6 +29,7 @@ export default function MobileFilters({
         <SheetTrigger asChild>
           <Button
             size="lg"
+            aria-label="Open filters"
             className="h-14 w-14 rounded-full bg-gray-950 text-white shadow-2xl shadow-gray-400 border-none hover:bg-gray-800 active:scale-95 transition-all"
           >
             <Filter size={24} />

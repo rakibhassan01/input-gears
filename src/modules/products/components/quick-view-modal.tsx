@@ -103,6 +103,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
             {/* Close Button */}
             <button
               onClick={onClose}
+              aria-label="Close modal"
               className="absolute top-4 right-4 md:top-6 md:right-6 z-20 p-2.5 rounded-full bg-white/80 backdrop-blur-md md:bg-gray-100 text-gray-500 hover:bg-gray-900 hover:text-white transition-all active:scale-90 shadow-sm border border-gray-100"
             >
               <X size={18} className="md:w-5 md:h-5" />
@@ -155,7 +156,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                   </div>
                 </div>
 
-                <p className="text-gray-500 text-sm md:text-base leading-relaxed font-medium">
+                <p className="text-gray-600 text-sm md:text-base leading-relaxed font-medium">
                   {product.description ||
                     "Designed for enthusiasts who demand performance and style. Experience premium tactile feedback and unmatched durability."}
                 </p>
@@ -167,6 +168,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                       <button
                         onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                         disabled={quantity <= 1}
+                        aria-label="Decrease quantity"
                         className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-white text-gray-500 transition disabled:opacity-30"
                       >
                         <Minus className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" strokeWidth={3} />
@@ -179,6 +181,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                           setQuantity((q) => Math.min(product.stock, q + 1))
                         }
                         disabled={quantity >= product.stock}
+                        aria-label="Increase quantity"
                         className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-white text-gray-500 transition disabled:opacity-30"
                       >
                         <Plus className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" strokeWidth={3} />
@@ -200,7 +203,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                   </div>
 
                   <div className="pt-4 border-t border-gray-50">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
                       Category:{" "}
                       <span className="text-gray-900">
                         {product.category?.name || "Gears"}

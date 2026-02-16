@@ -138,6 +138,7 @@ const ProductDetailsView = memo(
                   <button
                     key={index}
                     onClick={() => setSelectedImage(img)}
+                    aria-label={`View product image ${index + 1}`}
                     className={cn(
                       "relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-2 transition-all duration-300 bg-white",
                       selectedImage === img
@@ -164,16 +165,20 @@ const ProductDetailsView = memo(
                     <span className="px-3 py-1 text-[10px] font-black text-indigo-600 bg-indigo-50 rounded-full uppercase tracking-tighter">
                       {product.brand || "Input Gears"}
                     </span>
-                    <span className="text-[10px] font-bold text-gray-400">
+                    <span className="text-[10px] font-bold text-gray-600">
                       SKU: {product.sku || "N/A"}
                     </span>
                   </div>
                   <div className="flex gap-3">
-                    <button className="p-3 rounded-2xl bg-white border border-gray-100 text-gray-500 hover:text-indigo-600 hover:shadow-xl hover:shadow-indigo-500/10 transition-all active:scale-95">
+                    <button 
+                      aria-label="Share product"
+                      className="p-3 rounded-2xl bg-white border border-gray-100 text-gray-500 hover:text-indigo-600 hover:shadow-xl hover:shadow-indigo-500/10 transition-all active:scale-95"
+                    >
                       <Share2 size={18} />
                     </button>
                     <button
                       onClick={handleToggleWishlist}
+                      aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                       className={cn(
                         "p-3 rounded-2xl bg-white border border-gray-100 transition-all active:scale-95",
                         isWishlisted
@@ -205,7 +210,7 @@ const ProductDetailsView = memo(
                       ))}
                     </div>
                     <span className="text-sm text-gray-900 font-bold">{averageRating.toFixed(1)}</span>
-                    <span className="text-sm text-gray-400 font-medium">
+                    <span className="text-sm text-gray-600 font-medium">
                       ({totalReviews} Reviews)
                     </span>
                   </div>
@@ -222,7 +227,7 @@ const ProductDetailsView = memo(
                   <h2 className="text-4xl font-black text-indigo-600 leading-none">
                     {formattedPrice}
                   </h2>
-                  <span className="text-xl text-gray-400 line-through font-bold">
+                  <span className="text-xl text-gray-600 line-through font-bold">
                     {discountedPrice}
                   </span>
                   <span className="ml-auto px-3 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest">
@@ -246,6 +251,7 @@ const ProductDetailsView = memo(
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
+                        aria-label={`Select color ${color}`}
                         className={cn(
                           "group relative h-10 w-10 rounded-full border-2 p-1 flex items-center justify-center transition-all duration-300",
                           selectedColor === color
@@ -287,6 +293,7 @@ const ProductDetailsView = memo(
                 <div className="flex items-center p-0.5 border border-gray-200 rounded-2xl bg-white shadow-sm shrink-0">
                   <button
                     onClick={decrementQty}
+                    aria-label="Decrease quantity"
                     className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-600 transition disabled:opacity-30"
                     disabled={quantity <= 1}
                   >
@@ -297,6 +304,7 @@ const ProductDetailsView = memo(
                   </span>
                   <button
                     onClick={incrementQty}
+                    aria-label="Increase quantity"
                     className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-600 transition disabled:opacity-30"
                     disabled={quantity >= product.stock}
                   >
@@ -325,7 +333,7 @@ const ProductDetailsView = memo(
                   <div className="w-10 h-10 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                     <Truck size={20} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
                     Free Shipping
                   </span>
                 </div>
@@ -333,7 +341,7 @@ const ProductDetailsView = memo(
                   <div className="w-10 h-10 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
                     <RefreshCcw size={20} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
                     30 Days Return
                   </span>
                 </div>
@@ -341,7 +349,7 @@ const ProductDetailsView = memo(
                   <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
                     <ShieldCheck size={20} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
                     Secure Shield
                   </span>
                 </div>

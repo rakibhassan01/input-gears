@@ -77,6 +77,7 @@ export default function UserNav({ session }: UserNavProps) {
       {/* Trigger Button - Simple Avatar Only */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Open user menu"
         className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all duration-300 ${
           isOpen
             ? "bg-indigo-50 border-indigo-200 ring-4 ring-indigo-50"
@@ -100,8 +101,8 @@ export default function UserNav({ session }: UserNavProps) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] border border-gray-100 ring-1 ring-black/5 overflow-hidden z-[100] animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300 origin-top-right">
-          <div className="p-5 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100">
+        <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] border border-gray-100 ring-1 ring-black/5 overflow-hidden z-100 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300 origin-top-right">
+          <div className="p-5 bg-linear-to-br from-gray-50 to-white border-b border-gray-100">
             <div className="flex items-center gap-2 mb-1">
               <p className="font-bold text-gray-900 truncate">
                 {session.user.name}

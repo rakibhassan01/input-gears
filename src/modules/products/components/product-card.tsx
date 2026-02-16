@@ -159,6 +159,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
         <div className="absolute top-4 right-4 flex flex-col gap-2 transform transition-all duration-500 delay-75 md:translate-x-12 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 z-20">
           <button
             onClick={onToggleWishlist}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             className={`group/btn relative h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
               isWishlisted
                 ? "bg-indigo-600 text-white"
@@ -173,6 +174,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
 
           <button
             onClick={onToggleCompare}
+            aria-label={isComparing ? "Remove from compare" : "Add to compare"}
             className={`group/btn relative h-10 w-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all ${
               isComparing
                 ? "bg-amber-500 text-white"
@@ -192,6 +194,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
               e.stopPropagation();
               setIsQuickViewOpen(true);
             }}
+            aria-label="Quick view product"
             className="group/btn relative h-10 w-10 bg-white/90 backdrop-blur-md text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
           >
             <Search size={18} />
@@ -224,14 +227,14 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
               {data.name}
             </h3>
           </Link>
-          <p className="text-[10px] sm:text-sm text-gray-400 line-clamp-2 mt-1 sm:mt-1.5 leading-relaxed font-medium">
+          <p className="text-[10px] sm:text-sm text-gray-600 line-clamp-2 mt-1 sm:mt-1.5 leading-relaxed font-medium">
             {data.description || "Premium gadget for enthusiasts."}
           </p>
         </div>
 
         <div className="pt-3 sm:pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-0.5">
+            <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-600 font-bold mb-0.5">
               Price
             </span>
             <span className="font-black text-base sm:text-xl text-indigo-600 tabular-nums">
@@ -242,6 +245,7 @@ const ProductCard = memo(({ data }: ProductCardProps) => {
           <button
             onClick={onAddToCart}
             disabled={isOutOfStock}
+            aria-label={isOutOfStock ? "Out of stock" : isAdded ? "Product added" : "Add to cart"}
             className={`
                 relative h-10 w-10 sm:h-11 sm:w-11 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm active:scale-90 overflow-hidden z-10
                 ${

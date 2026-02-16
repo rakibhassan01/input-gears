@@ -37,6 +37,7 @@ export default function CartNav() {
   const TriggerButton = (
     <button
       onClick={() => setIsOpen(true)}
+      aria-label={`Open cart, ${totalItems} items`}
       className="relative p-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-all active:scale-95 group"
     >
       <ShoppingBag
@@ -62,12 +63,13 @@ export default function CartNav() {
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shadow-sm z-10 bg-white shrink-0">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               My Cart
-              <span className="text-sm font-medium text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
+              <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
                 {totalItems}
               </span>
             </h2>
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="Close cart"
               className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
             >
               <X size={20} />
@@ -84,7 +86,7 @@ export default function CartNav() {
                   <h3 className="text-xl font-bold text-gray-900">
                     Your cart is empty
                   </h3>
-                  <p className="text-gray-500 max-w-[220px] mx-auto leading-relaxed">
+                  <p className="text-gray-600 max-w-[220px] mx-auto leading-relaxed">
                     Looks like you haven&apos;t added anything to your cart yet.
                   </p>
                 </div>
@@ -187,7 +189,7 @@ export default function CartNav() {
                   <p className="text-2xl font-bold text-gray-900">
                     ${total.toFixed(2)}
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-1">
+                  <p className="text-[10px] text-gray-600 mt-1">
                     Shipping & taxes calculated at checkout
                   </p>
                 </div>

@@ -33,9 +33,12 @@ export const auth = betterAuth({
     },
   },
 
-  // 3. Security & Rate Limiting (Optional but recommended)
+  // 3. Security & Rate Limiting
   rateLimit: {
-    window: 10, // 10 seconds
-    max: 100, // max requests
+    window: 60, // 60 seconds
+    max: 1000, // relaxed max requests
   },
+  trustedOrigins: [
+    process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
+  ],
 });

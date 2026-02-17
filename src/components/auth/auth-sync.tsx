@@ -30,7 +30,8 @@ export function AuthSync() {
       }
       prevSessionRef.current = session;
     }
-  }, [session, isPending, wishlistItems.length, cartItems.length, syncWishlist, fetchWishlist, syncCart, fetchCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, isPending, wishlistItems.length, cartItems.length]);
 
   return null;
 }

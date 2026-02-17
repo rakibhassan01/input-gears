@@ -204,10 +204,22 @@ function GeneralInfoForm({ user }: ProfileFormProps) {
                 </div>
                 <input
                   {...form.register("phone")}
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.value = target.value.replace(/\D/g, "");
+                  }}
                   className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-100 bg-gray-50/30 text-sm font-bold text-gray-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 focus:bg-white outline-none transition-all placeholder:text-gray-400"
                   placeholder="017xxxxxxxx"
                 />
               </div>
+              {form.formState.errors.phone && (
+                <p className="text-red-500 text-[10px] font-black uppercase tracking-wider ml-1">
+                  {form.formState.errors.phone.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5 md:col-span-2">

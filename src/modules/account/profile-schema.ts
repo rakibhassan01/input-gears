@@ -3,7 +3,10 @@ import { z } from "zod";
 export const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   image: z.string().optional(),
-  phone: z.string().min(11, "Valid phone number is required"),
+  phone: z
+    .string()
+    .min(11, "Valid phone number is required")
+    .regex(/^\d+$/, "Phone number must contain only digits"),
 });
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;

@@ -13,7 +13,13 @@ const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
   role: z.enum(["user", "admin"]),
-  phone: z.string().optional().nullable(),
+  phone: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || /^\d+$/.test(val), {
+      message: "Phone number must contain only digits",
+    }),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;

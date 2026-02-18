@@ -15,6 +15,8 @@ async function requireAdmin() {
   if (session?.user?.role !== "admin") {
     throw new Error("Unauthorized");
   }
+
+  return session;
 }
 
 // --- 1. Product Schema Update ---
@@ -594,6 +596,134 @@ export async function getRevenueAnalytics() {
     return chartData;
   } catch (error) {
     console.error("Get Revenue Analytics Error:", error);
+    return [];
+  }
+}
+
+// --- 11. Inventory & Stock Control Actions ---
+
+/**
+ * Fetch products with stock below threshold (default 5)
+ */
+export async function getLowStockProducts(threshold: number = 5) {
+  try {
+    await requireAdmin();
+
+    return await prisma.product.findMany({
+      where: {
+        stock: {
+          lt: threshold,
+        },
+        isActive: true,
+      },
+      include: {
+        category: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        stock: "asc",
+      },
+    });
+  } catch (error) {
+    console.error("Get Low Stock Error:", error);
+    return [];
+  }
+}
+
+/**
+ * Bulk update stock for multiple products and log the changes
+ */
+export async function updateStockBulk(
+  updates: { id: string; stock: number }[],
+  reason: string = "Manual Bulk Update"
+) {
+  try {
+    const session = await requireAdmin();
+    const userId = session.user.id;
+
+    // Use a transaction to ensure all updates and logs are atomic
+    await prisma.$transaction(async (tx) => {
+      for (const update of updates) {
+        // Get old stock for logging
+        const product = await tx.product.findUnique({
+          where: { id: update.id },
+          select: { stock: true },
+        });
+
+        if (!product) continue;
+
+        const oldStock = product.stock;
+        const newStock = update.stock;
+        const change = newStock - oldStock;
+
+        // Skip if no change
+        if (change === 0) continue;
+
+        // Update product stock
+        await tx.product.update({
+          where: { id: update.id },
+          data: { stock: newStock },
+        });
+
+        // Create log entry using a typed approach with a runtime safety check
+        const stockLog = (tx as any).stockLog;
+        if (stockLog) {
+          await stockLog.create({
+            data: {
+              productId: update.id,
+              userId,
+              oldStock,
+              newStock,
+              change,
+              reason,
+            },
+          });
+        } else {
+          console.error("Prisma client not generated with StockLog model. Skipping log entry.");
+        }
+      }
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/admin"); // Dashboard low stock alerts
+
+    return { success: true, message: `Successfully updated ${updates.length} products.` };
+  } catch (error) {
+    console.error("Bulk Stock Update Error:", error);
+    return { success: false, message: "Failed to update stock levels." };
+  }
+}
+
+/**
+ * Fetch stock change history
+ */
+export async function getStockLogs(limit: number = 50) {
+  try {
+    await requireAdmin();
+
+    const stockLog = (prisma as any).stockLog;
+    if (!stockLog) {
+      console.error("Prisma client not generated with StockLog model.");
+      return [];
+    }
+
+    return await stockLog.findMany({
+      take: limit,
+      include: {
+        product: {
+          select: { name: true, image: true },
+        },
+        user: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  } catch (error) {
+    console.error("Get Stock Logs Error:", error);
     return [];
   }
 }

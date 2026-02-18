@@ -18,6 +18,8 @@ import {
   Filter,
   RefreshCw,
   Calendar,
+  Layers,
+  History,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -36,6 +38,7 @@ interface ProductsTableProps {
 
 import { AlertModal } from "@/components/ui/alert-modal";
 import ProductEditModal from "./product-edit-modal";
+import BulkStockUpdateModal from "./bulk-stock-update-modal";
 
 export default function ProductsTable({
   products,
@@ -49,6 +52,7 @@ export default function ProductsTable({
   const [isPending, startTransition] = useTransition();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   // Selection state
@@ -138,6 +142,19 @@ export default function ProductsTable({
         }}
         product={selectedProduct}
       />
+
+      {isStockModalOpen && (
+        <BulkStockUpdateModal
+          key={selectedIds.join(",")}
+          isOpen={isStockModalOpen}
+          onClose={() => setIsStockModalOpen(false)}
+          selectedProducts={products.filter((p) => selectedIds.includes(p.id))}
+          onSuccess={() => {
+            setSelectedIds([]);
+            router.refresh();
+          }}
+        />
+      )}
       {/* 1. Enhanced Toolbar (Filtering) */}
       <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap items-center gap-4 bg-gray-50/20">
         <div className="flex items-center gap-2">
@@ -146,6 +163,20 @@ export default function ProductsTable({
             Filters
           </span>
         </div>
+
+        {/* Stock History Link */}
+        <Link
+          href="/admin/inventory/history"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:border-indigo-200 hover:shadow-sm transition-all group"
+        >
+          <History
+            size={14}
+            className="text-gray-400 group-hover:text-indigo-600 transition-colors"
+          />
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 group-hover:text-indigo-600 transition-colors">
+            Stock History
+          </span>
+        </Link>
 
         {/* Category Filter */}
         <select
@@ -215,6 +246,15 @@ export default function ProductsTable({
                   <Trash2 size={16} className="text-red-400" />
                 )}
                 Delete
+              </button>
+
+              <button
+                disabled={isPending}
+                onClick={() => setIsStockModalOpen(true)}
+                className="flex items-center gap-2 hover:bg-indigo-500/10 hover:text-indigo-400 p-2 rounded-xl transition-colors text-xs font-black uppercase tracking-widest disabled:opacity-50"
+              >
+                <Layers size={16} className="text-indigo-400" />
+                Update Stock
               </button>
 
               <button

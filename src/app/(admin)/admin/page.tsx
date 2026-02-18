@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   Zap,
   BarChart3,
+  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,7 +18,10 @@ import {
   RevenueChart,
   TrafficDonutChart,
 } from "@/modules/admin/components/dashboard-charts";
-import { getRevenueAnalytics } from "@/modules/admin/actions";
+import {
+  getRevenueAnalytics,
+  getLowStockProducts,
+} from "@/modules/admin/actions";
 
 export default async function AdminDashboardPage() {
   // 1. Parallel data fetching
@@ -29,6 +33,7 @@ export default async function AdminDashboardPage() {
     recentOrders,
     trendingProducts,
     revenueAnalytics,
+    lowStockProducts,
   ] = await Promise.all([
     prisma.order.aggregate({
       _sum: { totalAmount: true },
@@ -46,6 +51,7 @@ export default async function AdminDashboardPage() {
       take: 4,
     }),
     getRevenueAnalytics(),
+    getLowStockProducts(5),
   ]);
 
   const revenue = totalRevenue._sum.totalAmount || 0;
@@ -94,6 +100,31 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* --- Low Stock Alerts --- */}
+      {lowStockProducts.length > 0 && (
+        <div className="bg-red-50 border border-red-100 rounded-[24px] p-6 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="bg-red-500 p-3 rounded-2xl text-white animate-pulse">
+              <AlertTriangle size={24} />
+            </div>
+            <div>
+              <h4 className="text-red-900 font-black uppercase tracking-tight">
+                Low Stock Warning
+              </h4>
+              <p className="text-red-700 text-xs font-bold uppercase tracking-widest mt-0.5">
+                {lowStockProducts.length} products have less than 5 units left!
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/products?stock=low-stock"
+            className="px-5 py-2.5 bg-red-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-800 transition-all shadow-lg active:scale-95"
+          >
+            Review Inventory
+          </Link>
+        </div>
+      )}
+
       {/* --- Stats Grid --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (

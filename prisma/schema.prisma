@@ -30,6 +30,7 @@ model User {
   wishlist  WishlistItem[]
   cart      CartItem[]
   reviews   Review[]
+  stockLogs StockLog[]
 
   @@map("user")
 }
@@ -117,6 +118,7 @@ model Product {
 
   reservations StockReservation[]
   reviews      Review[]
+  stockLogs    StockLog[]
 
   @@map("products")
 }
@@ -349,4 +351,23 @@ model CartItem {
 
   @@unique([userId, productId])
   @@map("cart_items")
+}
+
+model StockLog {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  oldStock  Int
+  newStock  Int
+  change    Int
+  reason    String? // e.g., "Manual Update", "Order Return", "Inventory Adjustment"
+  
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([userId])
+  @@map("stock_logs")
 }

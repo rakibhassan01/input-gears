@@ -547,3 +547,53 @@ export async function toggleCouponStatus(id: string, isActive: boolean) {
     return { success: false, message: "Failed to update coupon status" };
   }
 }
+
+// --- 10. Analytics Actions ---
+export async function getRevenueAnalytics() {
+  try {
+    await requireAdmin();
+
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().split("T")[0];
+    });
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 6);
+    startDate.setHours(0, 0, 0, 0);
+
+    const orders = await prisma.order.findMany({
+      where: {
+        paymentStatus: "PAID",
+        createdAt: {
+          gte: startDate,
+        },
+      },
+      select: {
+        totalAmount: true,
+        createdAt: true,
+      },
+    });
+
+    const revenueByDay = orders.reduce((acc, order) => {
+      const day = order.createdAt.toISOString().split("T")[0];
+      acc[day] = (acc[day] || 0) + order.totalAmount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const chartData = last7Days.map((day) => {
+      const date = new Date(day);
+      const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+      return {
+        name: dayName,
+        revenue: revenueByDay[day] || 0,
+      };
+    });
+
+    return chartData;
+  } catch (error) {
+    console.error("Get Revenue Analytics Error:", error);
+    return [];
+  }
+}

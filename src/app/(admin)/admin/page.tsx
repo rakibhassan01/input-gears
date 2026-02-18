@@ -17,6 +17,7 @@ import {
   RevenueChart,
   TrafficDonutChart,
 } from "@/modules/admin/components/dashboard-charts";
+import { getRevenueAnalytics } from "@/modules/admin/actions";
 
 export default async function AdminDashboardPage() {
   // 1. Parallel data fetching
@@ -27,6 +28,7 @@ export default async function AdminDashboardPage() {
     totalCustomers,
     recentOrders,
     trendingProducts,
+    revenueAnalytics,
   ] = await Promise.all([
     prisma.order.aggregate({
       _sum: { totalAmount: true },
@@ -43,6 +45,7 @@ export default async function AdminDashboardPage() {
     prisma.product.findMany({
       take: 4,
     }),
+    getRevenueAnalytics(),
   ]);
 
   const revenue = totalRevenue._sum.totalAmount || 0;
@@ -150,7 +153,7 @@ export default async function AdminDashboardPage() {
                 </div>
               </div>
             </div>
-            <RevenueChart />
+            <RevenueChart data={revenueAnalytics} />
           </div>
 
           {/* Trending Products */}

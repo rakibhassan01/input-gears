@@ -36,7 +36,13 @@ const trafficData = [
 
 // --- Sub-Components ---
 
-export function RevenueChart() {
+export function RevenueChart({
+  data = [],
+}: {
+  data?: { name: string; revenue: number }[];
+}) {
+  const displayData = data.length > 0 ? data : revenueData;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -45,7 +51,7 @@ export function RevenueChart() {
       className="h-[300px] w-full"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={revenueData}>
+        <AreaChart data={displayData}>
           <defs>
             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3} />

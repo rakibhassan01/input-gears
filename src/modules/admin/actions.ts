@@ -540,11 +540,18 @@ export async function getMaintenanceMode() {
 
 export async function getSettingsPageData() {
   await requireRole(["SUPER_ADMIN"]);
-  const [maintenanceMode, coupons] = await Promise.all([
+  const [maintenanceMode, coupons, shippingZones, settings] = await Promise.all([
     getMaintenanceMode(),
-    prisma.coupon.findMany({ orderBy: { createdAt: "desc" } })
+    prisma.coupon.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.shippingZone.findMany({ orderBy: { name: "asc" } }),
+    prisma.siteSettings.findUnique({ where: { id: "general" } }),
   ]);
-  return { maintenanceMode, coupons };
+  return { 
+    maintenanceMode, 
+    coupons, 
+    shippingZones,
+    taxRate: settings?.taxRate ?? 0
+  };
 }
 
 export async function updateMaintenanceMode(enabled: boolean) {
@@ -799,5 +806,105 @@ export async function getStockLogs(limit: number = 50) {
   } catch (error) {
     console.error("Get Stock Logs Error:", error);
     return [];
+  }
+}
+
+// --- 12. Shipping & Tax Settings Actions ---
+
+export async function upsertShippingZone(data: { id?: string; name: string; charge: number }) {
+  try {
+    const session = await requireRole(["SUPER_ADMIN"]);
+    
+    if (data.id) {
+      await prisma.shippingZone.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          charge: data.charge,
+        },
+      });
+      
+      await createAuditLog({
+        adminId: session.user.id,
+        action: "UPDATE_SHIPPING_ZONE",
+        entityType: "SHIPPING_ZONE",
+        entityId: data.id,
+        details: `Updated shipping zone "${data.name}" to ${data.charge}`,
+      });
+    } else {
+      const zone = await prisma.shippingZone.create({
+        data: {
+          name: data.name,
+          charge: data.charge,
+        },
+      });
+
+      await createAuditLog({
+        adminId: session.user.id,
+        action: "CREATE_SHIPPING_ZONE",
+        entityType: "SHIPPING_ZONE",
+        entityId: zone.id,
+        details: `Created shipping zone "${data.name}" with charge ${data.charge}`,
+      });
+    }
+
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("Upsert Shipping Zone Error:", error);
+    return { success: false, message: "Failed to save shipping zone" };
+  }
+}
+
+export async function deleteShippingZone(id: string) {
+  try {
+    const session = await requireRole(["SUPER_ADMIN"]);
+    const zone = await prisma.shippingZone.findUnique({ where: { id } });
+    
+    await prisma.shippingZone.delete({
+      where: { id },
+    });
+
+    if (zone) {
+      await createAuditLog({
+        adminId: session.user.id,
+        action: "DELETE_SHIPPING_ZONE",
+        entityType: "SHIPPING_ZONE",
+        entityId: id,
+        details: `Deleted shipping zone "${zone.name}"`,
+      });
+    }
+
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("Delete Shipping Zone Error:", error);
+    return { success: false, message: "Failed to delete shipping zone" };
+  }
+}
+
+export async function updateTaxRate(rate: number) {
+  try {
+    const session = await requireRole(["SUPER_ADMIN"]);
+    
+    await prisma.siteSettings.upsert({
+      where: { id: "general" },
+      update: { taxRate: rate },
+      create: { id: "general", taxRate: rate, maintenanceMode: false },
+    });
+
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "UPDATE_TAX_RATE",
+      entityType: "SETTINGS",
+      entityId: "general",
+      details: `Updated global tax rate to ${rate}%`,
+    });
+
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("Update Tax Rate Error:", error);
+    return { success: false, message: "Failed to update tax rate" };
   }
 }

@@ -41,6 +41,12 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+interface ShippingZone {
+  id: string;
+  name: string;
+  charge: number;
+}
+
 export default function CheckoutForm() {
   const cart = useCart();
   const { isPending: sessionPending } = useSession();
@@ -140,6 +146,21 @@ function CheckoutContent({
   } | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
+  // --- Shipping & Tax State ---
+  const [zones, setZones] = useState<ShippingZone[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<string>("");
+  const [taxRate, setTaxRate] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/checkout-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.zones) setZones(data.zones);
+        if (data.taxRate) setTaxRate(data.taxRate);
+      })
+      .catch(console.error);
+  }, []);
+
   const subtotal = cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -151,8 +172,10 @@ function CheckoutContent({
       : appliedCoupon.value
     : 0;
 
-  const shipping = subtotal > 1000 ? 0 : 60;
-  const total = Math.max(0, subtotal - discountAmount + shipping);
+  const selectedZone = zones.find((z) => z.id === selectedZoneId);
+  const shipping = selectedZone ? selectedZone.charge : (subtotal > 1000 ? 0 : 60);
+  const taxAmount = (subtotal - discountAmount) * (taxRate / 100);
+  const total = Math.max(0, subtotal - discountAmount + shipping + taxAmount);
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
@@ -205,7 +228,8 @@ function CheckoutContent({
           cart.items, 
           "cod", 
           undefined, 
-          appliedCoupon?.code
+          appliedCoupon?.code,
+          selectedZoneId
         );
 
         if (result.success) {
@@ -235,7 +259,8 @@ function CheckoutContent({
             cart.items,
             "stripe",
             paymentIntent.id,
-            appliedCoupon?.code
+            appliedCoupon?.code,
+            selectedZoneId
           );
 
           if (result.success) {
@@ -350,6 +375,25 @@ function CheckoutContent({
                     )}
                     placeholder="House, Road, City..."
                   />
+                </div>
+
+                {/* Shipping Zone Selection */}
+                <div className="relative">
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    Shipping Zone
+                  </label>
+                  <select
+                    value={selectedZoneId}
+                    onChange={(e) => setSelectedZoneId(e.target.value)}
+                    className="w-full rounded-xl border-gray-200 border bg-gray-50/30 px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all cursor-pointer"
+                  >
+                    <option value="">Select Shipping Zone (Default)</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} (৳{zone.charge})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -525,12 +569,20 @@ function CheckoutContent({
 
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? "Free" : `$${shipping}`}</span>
+                  <span>{shipping === 0 ? "Free" : `৳${shipping}`}</span>
                 </div>
+
+                {taxRate > 0 && (
+                  <div className="flex justify-between text-gray-400">
+                    <span>VAT/Tax ({taxRate}%)</span>
+                    <span>৳{taxAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-end pt-3 border-t border-gray-100 mt-3">
                   <span className="text-base font-bold">Total</span>
                   <span className="text-2xl font-extrabold text-indigo-600">
-                    ${total.toFixed(2)}
+                    ৳{total.toFixed(2)}
                   </span>
                 </div>
               </div>

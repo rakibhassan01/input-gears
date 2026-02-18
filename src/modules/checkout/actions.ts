@@ -103,7 +103,8 @@ export async function placeOrder(
   cartItems: CartItemInput[],
   paymentMethod: PaymentMethodInput,
   paymentIntentId?: string,
-  couponCode?: string
+  couponCode?: string,
+  shippingZoneId?: string
 ) {
   try {
     const validatedForm = placeOrderSchema.parse(formData);
@@ -119,10 +120,16 @@ export async function placeOrder(
       new Set(validatedCartItems.map((i) => i.id))
     );
 
-    const products = await prisma.product.findMany({
-      where: { id: { in: uniqueProductIds } },
-      select: { id: true, name: true, price: true, image: true, stock: true },
-    });
+    const [products, shippingZone, settings] = await Promise.all([
+      prisma.product.findMany({
+        where: { id: { in: uniqueProductIds } },
+        select: { id: true, name: true, price: true, image: true, stock: true },
+      }),
+      shippingZoneId
+        ? prisma.shippingZone.findUnique({ where: { id: shippingZoneId } })
+        : Promise.resolve(null),
+      prisma.siteSettings.findUnique({ where: { id: "general" } }),
+    ]);
 
     if (products.length !== uniqueProductIds.length) {
       throw new Error("Invalid cart items");
@@ -144,8 +151,10 @@ export async function placeOrder(
       return acc + unitPriceCents * item.quantity;
     }, 0);
 
-    const shippingCents = subtotalCents > 100000 ? 0 : 6000;
-    
+    const shippingCents = shippingZone ? Math.round(shippingZone.charge * 100) : (subtotalCents > 100000 ? 0 : 6000);
+    const taxRate = settings?.taxRate ?? 0;
+    const taxCents = Math.round(subtotalCents * (taxRate / 100));
+
     // --- Coupon Application ---
     let discountCents = 0;
     let couponId: string | null = null;
@@ -162,7 +171,7 @@ export async function placeOrder(
       }
     }
 
-    const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
+    const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents + taxCents);
 
     const dbPaymentMethod = paymentMethod === "cod" ? "COD" : "STRIPE";
     let isPaid = false;
@@ -244,6 +253,8 @@ export async function placeOrder(
               : null,
           totalAmount: totalCents / 100,
           discountAmount: discountCents / 100,
+          shippingAmount: shippingCents / 100,
+          taxAmount: taxCents / 100,
           status: isPaid ? "PROCESSING" : "PENDING",
           paymentStatus: isPaid ? "PAID" : "PENDING",
           paymentMethod: dbPaymentMethod,

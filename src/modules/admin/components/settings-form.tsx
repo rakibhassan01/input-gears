@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Store,
@@ -9,16 +9,19 @@ import {
   Save,
   CreditCard,
   Ticket,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateMaintenanceMode } from "@/modules/admin/actions";
+import { updateMaintenanceMode, updateTaxRate } from "@/modules/admin/actions";
 import CouponManager from "./coupon-manager";
-import { Coupon } from "@prisma/client";
+import ShippingZoneManager from "./shipping-zone-manager";
+import { Coupon, ShippingZone } from "@prisma/client";
 
 // Tabs Configuration
 const TABS = [
   { id: "general", label: "General", icon: Store },
   { id: "payment", label: "Payment & Currency", icon: CreditCard },
+  { id: "shipping", label: "Shipping", icon: Truck }, // New Tab
   { id: "coupons", label: "Coupons & Discounts", icon: Ticket },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: ShieldCheck },
@@ -28,23 +31,30 @@ interface SettingsFormProps {
   initialData: {
     maintenanceMode: boolean;
     coupons: Coupon[];
+    shippingZones: ShippingZone[];
+    taxRate: number;
   };
 }
 
 export default function SettingsForm({ initialData }: SettingsFormProps) {
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab ] = useState("general");
   const [isLoading, setIsLoading] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(initialData.maintenanceMode);
+  const [taxRate, setTaxRate] = useState(initialData.taxRate);
 
   // Save Function
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const res = await updateMaintenanceMode(isMaintenance);
-      if (res.success) {
+      const maintenancePromise = updateMaintenanceMode(isMaintenance);
+      const taxPromise = updateTaxRate(Number(taxRate));
+      
+      const [mRes, tRes] = await Promise.all([maintenancePromise, taxPromise]);
+      
+      if (mRes.success && tRes.success) {
         toast.success("Settings saved successfully!");
       } else {
-        toast.error(res.message || "Failed to save settings");
+        toast.error("Some settings failed to save.");
       }
     } catch {
       toast.error("An error occurred while saving");
@@ -168,13 +178,19 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
                   </label>
                   <input
                     type="number"
-                    defaultValue="5"
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(Number(e.target.value))}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none"
                   />
                 </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Shipping Settings */}
+        {activeTab === "shipping" && (
+          <ShippingZoneManager initialZones={initialData.shippingZones} />
         )}
 
         {/* Other tabs placeholders... */}

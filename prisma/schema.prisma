@@ -214,6 +214,9 @@ model Order {
 
   paymentMethod PaymentMethod @default(COD)
   paymentStatus PaymentStatus @default(PENDING)
+  
+  shippingAmount Float @default(0)
+  taxAmount      Float @default(0)
 
   stripePaymentIntentId String? @unique
 
@@ -279,6 +282,7 @@ model SiteSettings {
   topBarStart  DateTime?
   topBarEnd    DateTime?
   maintenanceMode Boolean @default(false)
+  taxRate         Float   @default(0)
 
   updatedAt DateTime @updatedAt
 
@@ -395,4 +399,15 @@ model AuditLog {
   @@index([adminId])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+model ShippingZone {
+  id     String @id @default(cuid())
+  name   String @unique
+  charge Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("shipping_zones")
 }

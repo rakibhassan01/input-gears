@@ -12,6 +12,7 @@ import {
   X,
   LayoutDashboard,
   BadgeCheck,
+  Shield,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
@@ -90,6 +91,17 @@ export default function MobileAccountMenu({
       bg: "bg-gray-50",
     },
   ];
+
+  // Add Admin Dashboard if user is admin
+  if (isAdmin) {
+    menuItems.unshift({
+      label: "Admin Dashboard",
+      icon: Shield,
+      href: "/admin",
+      color: "text-rose-600",
+      bg: "bg-rose-50",
+    });
+  }
 
   return (
     <>

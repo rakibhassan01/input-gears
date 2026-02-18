@@ -70,7 +70,7 @@ export default function UserNav({ session }: UserNavProps) {
     });
   };
 
-  const isAdmin = session.user.role === "admin";
+  const isAdminLike = session.user.role && ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"].includes(session.user.role);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -107,7 +107,7 @@ export default function UserNav({ session }: UserNavProps) {
               <p className="font-bold text-gray-900 truncate">
                 {session.user.name}
               </p>
-              {isAdmin && (
+              {isAdminLike && (
                 <BadgeCheck className="w-4 h-4 text-indigo-600 fill-indigo-600/10" />
               )}
             </div>
@@ -117,7 +117,7 @@ export default function UserNav({ session }: UserNavProps) {
           </div>
 
           <div className="p-2 space-y-0.5">
-            {isAdmin && (
+            {isAdminLike && (
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}

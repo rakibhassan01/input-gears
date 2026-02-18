@@ -54,7 +54,10 @@ export default function AccountSidebar({ user }: AccountSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "SUPER_ADMIN";
+  const isManager = user?.role === "MANAGER";
+  const isEditor = user?.role === "CONTENT_EDITOR";
+  const canAccessAdmin = isAdmin || isManager || isEditor;
 
   const isOverviewPage = pathname === "/account";
 
@@ -101,7 +104,7 @@ export default function AccountSidebar({ user }: AccountSidebarProps) {
       )}
 
       {/* 2. Admin Switcher */}
-      {isAdmin && (
+      {canAccessAdmin && (
         <div className="px-4 pt-4 pb-2">
           <Link
             href="/admin"

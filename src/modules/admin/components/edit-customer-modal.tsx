@@ -12,7 +12,7 @@ import { updateUser } from "@/modules/admin/actions";
 const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["user", "admin"]),
+  role: z.enum(["USER", "MANAGER", "CONTENT_EDITOR", "SUPER_ADMIN"]),
   phone: z
     .string()
     .optional()
@@ -48,7 +48,7 @@ export default function EditCustomerModal({
     defaultValues: {
       name: user.name || "",
       email: user.email || "",
-      role: user.role as "user" | "admin",
+      role: user.role as any,
       phone: user.phone || "",
     },
   });
@@ -184,10 +184,12 @@ export default function EditCustomerModal({
                         />
                         <select
                           {...form.register("role")}
-                          className="w-full h-14 bg-gray-50 border-gray-100 border rounded-2xl pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all outline-none appearance-none cursor-pointer"
+                          className="w-full h-14 bg-gray-50 border-gray-100 border rounded-2xl pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all outline-none appearance-none cursor-pointer uppercase"
                         >
-                          <option value="user">User</option>
-                          <option value="admin">Administrator</option>
+                          <option value="USER">User</option>
+                          <option value="MANAGER">Manager</option>
+                          <option value="CONTENT_EDITOR">Content Editor</option>
+                          <option value="SUPER_ADMIN">Administrator</option>
                         </select>
                       </div>
                     </div>

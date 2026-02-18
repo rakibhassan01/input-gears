@@ -39,7 +39,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next");
 
-  if (!isMaintenanceExempt && session?.user?.role !== "admin") {
+  const isAdminLike = session?.user?.role && ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"].includes(session.user.role as string);
+
+  if (!isMaintenanceExempt && !isAdminLike) {
     try {
       interface SiteSettingsWithMaintenance {
         maintenanceMode: boolean;
@@ -78,7 +80,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // ✅ Admin Role Enforcement
-  if (pathname.startsWith("/admin") && session?.user?.role !== "admin") {
+  if (pathname.startsWith("/admin") && !isAdminLike) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

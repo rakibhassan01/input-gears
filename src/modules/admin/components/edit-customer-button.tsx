@@ -31,7 +31,7 @@ export default function EditCustomerButton({ user }: EditCustomerButtonProps) {
         onClose={() => setIsOpen(false)}
         user={{
           ...user,
-          role: (user.role as "user" | "admin") || "user",
+          role: user.role || "USER",
         }}
       />
     </>

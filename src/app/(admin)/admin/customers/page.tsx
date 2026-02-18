@@ -24,7 +24,7 @@ export default async function CustomersPage({
   // 1. Fetch user data (with order history)
   const users = await prisma.user.findMany({
     where: {
-      role: { in: ["user", "admin"] }, // Show all roles maybe? user requested admin actions so admin might be there
+      role: { in: ["USER", "MANAGER", "CONTENT_EDITOR", "SUPER_ADMIN"] }, 
       OR: q
         ? [
             { name: { contains: q, mode: "insensitive" } },
@@ -43,7 +43,7 @@ export default async function CustomersPage({
   });
 
   // 2. Stats calculation (Simplified for cleaner UI)
-  const totalCustomers = users.filter((u) => u.role === "user").length;
+  const totalCustomers = users.filter((u) => u.role === "USER").length;
   const activeCustomers = users.filter((u) => u.orders.length > 0).length;
   const newCustomersThisMonth = users.filter((u) => {
     const date = new Date(u.createdAt);

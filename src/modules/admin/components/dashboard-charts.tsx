@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useSyncExternalStore } from "react";
 import {
   AreaChart,
   Area,
@@ -34,6 +34,8 @@ const trafficData = [
   { name: "Referral", value: 10, color: "#EC4899" },
 ];
 
+const emptySubscribe = () => () => {};
+
 // --- Sub-Components ---
 
 export function RevenueChart({
@@ -41,7 +43,10 @@ export function RevenueChart({
 }: {
   data?: { name: string; revenue: number }[];
 }) {
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const displayData = data.length > 0 ? data : revenueData;
+
+  if (!isMounted) return <div className="h-[300px] bg-gray-50/50 animate-pulse rounded-[24px]" />;
 
   return (
     <motion.div
@@ -98,6 +103,10 @@ export function RevenueChart({
 }
 
 export function TrafficDonutChart() {
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  if (!isMounted) return <div className="h-[200px] w-full bg-gray-50/50 animate-pulse rounded-full" />;
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}

@@ -198,6 +198,36 @@ async function main() {
     ],
   });
 
+  // 3. Create Site Settings
+  await prisma.siteSettings.upsert({
+    where: { id: "general" },
+    create: {
+      id: "general",
+      topBarText: "🚀 Welcome to Input Gears - Your Premium Gear Shop!",
+      topBarActive: true,
+      maintenanceMode: false,
+    },
+    update: {},
+  });
+
+  // 4. Create Hero Slides
+  await prisma.heroSlide.createMany({
+    data: [
+      {
+        title: "Ultimate Mechanical Experience",
+        subtitle: "Premium Keyboards for Enthusiasts",
+        image: "https://images.unsplash.com/photo-1595044426077-d36d93375ea4?w=1200&auto=format&fit=crop&q=80",
+        order: 1,
+      },
+      {
+        title: "Wireless Precision",
+        subtitle: "Ultra-Lightweight Gaming Mice",
+        image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=1200&auto=format&fit=crop&q=80",
+        order: 2,
+      },
+    ],
+  });
+
   console.log("✅ Seeding completed!");
 }
 

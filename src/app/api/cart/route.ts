@@ -158,67 +158,88 @@ export async function POST(req: Request) {
       const reservationDuration = 15 * 60 * 1000;
       const expiresAt = new Date(Date.now() + reservationDuration);
 
-      for (const item of items as CartInputItem[]) {
-        try {
-          await prisma.$transaction(async (tx) => {
-            const product = await tx.product.findUnique({
-              where: { id: item.id },
-              select: { id: true, stock: true },
-            });
+      await prisma.$transaction(async (tx) => {
+        for (const item of items as CartInputItem[]) {
+          const product = await tx.product.findUnique({
+            where: { id: item.id },
+            select: { id: true, stock: true },
+          });
 
-            if (!product) return;
+          if (!product) continue;
 
-            const existingCartItem = await tx.cartItem.findUnique({
+          const existingCartItem = await tx.cartItem.findUnique({
+            where: {
+              userId_productId: {
+                userId: session.user.id,
+                productId: item.id,
+              },
+            },
+          });
+
+          const currentQuantity = existingCartItem?.quantity || 0;
+          const targetQuantity = item.quantity;
+          const delta = targetQuantity - currentQuantity;
+
+          // Simple guard: if delta is 0, just touch reservation expiry
+          if (delta === 0) {
+            await tx.stockReservation.upsert({
               where: {
-                userId_productId: {
-                  userId: session.user.id,
+                productId_userId: {
                   productId: item.id,
+                  userId: session.user.id,
                 },
               },
+              create: {
+                productId: item.id,
+                userId: session.user.id,
+                quantity: targetQuantity,
+                expiresAt,
+              },
+              update: { expiresAt },
             });
+            continue;
+          }
 
-            const currentQuantity = existingCartItem?.quantity || 0;
-            const targetQuantity = item.quantity;
-            const delta = targetQuantity - currentQuantity;
+          // Check stock availability for increase
+          if (delta > 0 && product.stock < delta) {
+            continue;
+          }
 
-            // Simple guard: if delta is 0, just touch reservation expiry
-            if (delta === 0) {
-              await tx.stockReservation.upsert({
-                where: { productId_userId: { productId: item.id, userId: session.user.id } },
-                create: { productId: item.id, userId: session.user.id, quantity: targetQuantity, expiresAt },
-                update: { expiresAt }
-              });
-              return;
-            }
-
-            // Check stock availability for increase
-            if (delta > 0 && product.stock < delta) {
-               // Skip or handle as needed - here we skip sync for this item or take what's left
-               return; 
-            }
-
-            // Update stock and cart
-            await tx.product.update({
-              where: { id: item.id },
-              data: { stock: { decrement: delta } },
-            });
-
-            await tx.cartItem.upsert({
-              where: { userId_productId: { userId: session.user.id, productId: item.id } },
-              create: { userId: session.user.id, productId: item.id, quantity: targetQuantity },
-              update: { quantity: targetQuantity },
-            });
-
-            await tx.stockReservation.upsert({
-              where: { productId_userId: { productId: item.id, userId: session.user.id } },
-              create: { productId: item.id, userId: session.user.id, quantity: targetQuantity, expiresAt },
-              update: { quantity: targetQuantity, expiresAt },
-            });
+          // Update stock and cart
+          await tx.product.update({
+            where: { id: item.id },
+            data: { stock: { decrement: delta } },
           });
-        } catch (error) {
-          console.error(`Batch sync failed for product ${item.id}:`, error);
+
+          await tx.cartItem.upsert({
+            where: {
+              userId_productId: { userId: session.user.id, productId: item.id },
+            },
+            create: {
+              userId: session.user.id,
+              productId: item.id,
+              quantity: targetQuantity,
+            },
+            update: { quantity: targetQuantity },
+          });
+
+          await tx.stockReservation.upsert({
+            where: {
+              productId_userId: {
+                productId: item.id,
+                userId: session.user.id,
+              },
+            },
+            create: {
+              productId: item.id,
+              userId: session.user.id,
+              quantity: targetQuantity,
+              expiresAt,
+            },
+            update: { quantity: targetQuantity, expiresAt },
+          });
         }
-      }
+      });
     }
 
     return NextResponse.json({ success: true });

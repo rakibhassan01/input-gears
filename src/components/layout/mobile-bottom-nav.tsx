@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useSyncExternalStore, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, Tag, Heart, ArrowLeftRight, User } from "lucide-react";
+import { Home, Tag, Heart, ArrowLeftRight, User, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import { useWishlist } from "@/modules/products/hooks/use-wishlist";
 import { useCompare } from "@/modules/products/hooks/use-compare";
 import MobileAccountMenu from "./mobile-account-menu";
+
+const emptySubscribe = () => () => {};
 
 interface Tab {
   name: string;
@@ -25,9 +27,11 @@ export default function MobileBottomNav() {
   const { data: session } = useSession();
   const wishlist = useWishlist();
   const compare = useCompare();
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-  const wishlistCount = wishlist.items.length;
-  const compareCount = compare.items.length;
+
+  const wishlistCount = isMounted ? wishlist.items.length : 0;
+  const compareCount = isMounted ? compare.items.length : 0;
 
   const handleToggleAccountMenu = useCallback(() => {
     setIsAccountMenuOpen((prev: boolean) => !prev);
@@ -37,6 +41,8 @@ export default function MobileBottomNav() {
     setIsAccountMenuOpen(false);
   }, []);
 
+  const isAdmin = isMounted && !!session?.user && ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"].includes((session.user as { role?: string }).role!);
+
   const tabs: Tab[] = [
     {
       name: "Home",
@@ -44,6 +50,12 @@ export default function MobileBottomNav() {
       href: "/",
       isActive: pathname === "/",
     },
+    ...(isAdmin ? [{
+      name: "Admin",
+      icon: LayoutDashboard,
+      href: "/admin",
+      isActive: pathname.startsWith("/admin"),
+    }] : []),
     {
       name: "Offers",
       icon: Tag,
@@ -67,7 +79,7 @@ export default function MobileBottomNav() {
     {
       name: "You",
       icon: User,
-      href: session ? "/account" : "/sign-in",
+      href: (isMounted && session) ? "/account" : "/sign-in",
       isActive: pathname.startsWith("/account") || pathname === "/sign-in",
       isAccountTab: true,
     },

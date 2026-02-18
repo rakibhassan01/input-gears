@@ -72,7 +72,7 @@ export default function AccountView({
     },
   ];
 
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "SUPER_ADMIN";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

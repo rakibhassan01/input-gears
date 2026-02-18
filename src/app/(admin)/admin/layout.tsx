@@ -17,7 +17,10 @@ export default async function AdminLayout({
   });
 
   // ✅ Security Check
-  if (session?.user?.role !== "admin") {
+  const allowedRoles = ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"];
+  const userRole = (session?.user as any)?.role;
+
+  if (!session?.user || !allowedRoles.includes(userRole)) {
     redirect("/");
   }
 

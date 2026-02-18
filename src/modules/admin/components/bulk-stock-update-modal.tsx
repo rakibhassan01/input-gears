@@ -67,11 +67,11 @@ export default function BulkStockUpdateModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-9998"
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-[9999] pointer-events-none">
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-9999 pointer-events-none">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}

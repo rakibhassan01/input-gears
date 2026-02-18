@@ -17,7 +17,7 @@ async function requireAdmin() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  if (session?.user?.role !== "super_admin" && session?.user?.role !== "admin") {
+  if (!session?.user?.role || !["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"].includes(session.user.role)) {
     throw new Error("Unauthorized: Admin access required");
   }
   return session;

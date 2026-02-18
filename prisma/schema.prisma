@@ -17,7 +17,7 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  role       String?   @default("user")
+  role       UserRole  @default(USER)
   banned     Boolean?  @default(false)
   banReason  String?
   banExpires DateTime?
@@ -160,6 +160,13 @@ model StockReservation {
   @@unique([productId, userId])
   @@index([productId, expiresAt])
   @@map("stock_reservations")
+}
+
+enum UserRole {
+  USER
+  MANAGER
+  CONTENT_EDITOR
+  SUPER_ADMIN
 }
 
 // 1. Enums

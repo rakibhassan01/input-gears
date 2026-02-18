@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -22,9 +22,21 @@ import {
   Zap,
   Star,
   X,
+  type LucideIcon,
 } from "lucide-react";
+import { UserRole } from "@prisma/client";
 
-const sidebarGroups = [
+const emptySubscribe = () => () => {};
+
+const sidebarGroups: {
+  group: string;
+  items: {
+    title: string;
+    href: string;
+    icon: LucideIcon;
+    roles: UserRole[];
+  }[];
+}[] = [
   {
     group: "Overview",
     items: [
@@ -32,16 +44,32 @@ const sidebarGroups = [
         title: "Dashboard",
         href: "/admin",
         icon: LayoutDashboard,
+        roles: ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"],
       },
     ],
   },
   {
     group: "Manage Product",
     items: [
-      { title: "All Products", href: "/admin/products", icon: List },
-      { title: "Add New", href: "/admin/products/create", icon: PackagePlus },
-      { title: "Categories", href: "/admin/categories", icon: Layers },
-      { title: "Reviews", href: "/admin/reviews", icon: Star },
+      {
+        title: "All Products",
+        href: "/admin/products",
+        icon: List,
+        roles: ["SUPER_ADMIN", "MANAGER"],
+      },
+      {
+        title: "Add New",
+        href: "/admin/products/create",
+        icon: PackagePlus,
+        roles: ["SUPER_ADMIN", "MANAGER"],
+      },
+      {
+        title: "Categories",
+        href: "/admin/categories",
+        icon: Layers,
+        roles: ["SUPER_ADMIN", "CONTENT_EDITOR"],
+      },
+      { title: "Reviews", href: "/admin/reviews", icon: Star, roles: ["SUPER_ADMIN"] },
     ],
   },
   {
@@ -51,11 +79,13 @@ const sidebarGroups = [
         title: "Orders",
         href: "/admin/orders",
         icon: ShoppingBag,
+        roles: ["SUPER_ADMIN", "MANAGER"],
       },
       {
         title: "Customers",
         href: "/admin/customers",
         icon: Users,
+        roles: ["SUPER_ADMIN"],
       },
     ],
   },
@@ -66,6 +96,7 @@ const sidebarGroups = [
         title: "Appearance",
         icon: Paintbrush,
         href: "/admin/appearance",
+        roles: ["SUPER_ADMIN", "CONTENT_EDITOR"],
       },
     ],
   },
@@ -76,6 +107,7 @@ const sidebarGroups = [
         title: "Settings",
         href: "/admin/settings",
         icon: Settings,
+        roles: ["SUPER_ADMIN"],
       },
     ],
   },
@@ -89,6 +121,9 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const { data: session } = authClient.useSession();
+  const userRole = (session?.user as { role?: UserRole })?.role;
   const pathname = usePathname();
   const router = useRouter();
 
@@ -150,15 +185,22 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
       {/* 2. Navigation Items */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-2 scrollbar-hide">
-        {sidebarGroups.map((group, groupIdx) => (
-          <div key={groupIdx} className="mb-4">
-            {!isCollapsed && (
-              <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 mt-4 opacity-50">
-                {group.group}
-              </p>
-            )}
-            <div className="space-y-1">
-              {group.items.map((item, idx) => {
+        {sidebarGroups.map((group, groupIdx) => {
+          const visibleItems = isMounted ? group.items.filter((item) =>
+            userRole && item.roles.includes(userRole)
+          ) : [];
+
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={groupIdx} className="mb-4">
+              {!isCollapsed && (
+                <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 mt-4 opacity-50">
+                  {group.group}
+                </p>
+              )}
+              <div className="space-y-1">
+                {visibleItems.map((item, idx) => {
                 const isActive = item.href ? pathname === item.href : false;
 
                 return (
@@ -184,7 +226,6 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
                     {!isCollapsed && <span>{item.title}</span>}
 
-                    {/* Tooltip for Collapsed State */}
                     {isCollapsed && (
                       <div className="absolute left-full ml-6 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-100 shadow-xl">
                         {item.title}
@@ -196,7 +237,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               })}
             </div>
           </div>
-        ))}
+        );
+      })}
       </nav>
 
       {/* 3. Footer / Logout */}

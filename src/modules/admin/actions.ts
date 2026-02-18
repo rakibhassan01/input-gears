@@ -7,12 +7,16 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 
-async function requireAdmin() {
+import { UserRole } from "@prisma/client";
+
+async function requireRole(allowedRoles: UserRole[]) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (session?.user?.role !== "admin") {
+  const userRole = session?.user?.role as UserRole;
+
+  if (!session?.user || !allowedRoles.includes(userRole)) {
     throw new Error("Unauthorized");
   }
 
@@ -51,7 +55,7 @@ export type ProductFormValues = z.infer<typeof productSchema>;
 // --- 2. Create Product (Updated) ---
 export async function createProduct(data: ProductFormValues) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     const validatedData = productSchema.parse(data);
 
     // Check if slug exists
@@ -111,7 +115,7 @@ export async function createProduct(data: ProductFormValues) {
 // --- 3. Update Product (Updated) ---
 export async function updateProduct(id: string, data: ProductFormValues) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     // Validation
     const validatedData = productSchema.parse(data);
 
@@ -180,7 +184,7 @@ const categorySchema = z.object({
 
 export async function createCategory(data: z.infer<typeof categorySchema>) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "CONTENT_EDITOR"]);
     const validated = categorySchema.parse(data);
 
     // Check slug uniqueness
@@ -214,7 +218,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
 }
 
 export async function getCategoriesOptions() {
-  await requireAdmin();
+  await requireRole(["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"]);
   const categories = await prisma.category.findMany({
     select: { id: true, name: true },
     orderBy: { name: "asc" },
@@ -225,7 +229,7 @@ export async function getCategoriesOptions() {
 // --- Order Actions (Same as before) ---
 export async function updateOrderStatus(orderId: string, newStatus: string) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     const status = z.nativeEnum(OrderStatus).parse(newStatus);
 
     await prisma.order.update({
@@ -291,7 +295,7 @@ interface TopBarInput {
 
 // --- 2. Update Top Bar ---
 export async function updateTopBar(data: TopBarInput) {
-  await requireAdmin();
+  await requireRole(["SUPER_ADMIN"]);
   // Logic:
   // Handle scheduling
 
@@ -324,7 +328,7 @@ export async function updateTopBar(data: TopBarInput) {
 }
 // --- 3. Update Hero Slides (Reverted to Simple Version) ---
 export async function updateHeroSlides(slides: HeroSlideInput[]) {
-  await requireAdmin();
+  await requireRole(["SUPER_ADMIN", "CONTENT_EDITOR"]);
   await prisma.heroSlide.deleteMany();
 
   if (slides.length > 0) {
@@ -347,7 +351,7 @@ export async function updateHeroSlides(slides: HeroSlideInput[]) {
 // --- 4. Bulk Delete Orders ---
 export async function deleteOrders(orderIds: string[]) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
 
     await prisma.order.deleteMany({
       where: {
@@ -368,7 +372,7 @@ export async function deleteOrders(orderIds: string[]) {
 // --- 5. Bulk Delete Products ---
 export async function deleteProducts(productIds: string[]) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
 
     await prisma.product.deleteMany({
       where: {
@@ -390,7 +394,7 @@ export async function deleteProducts(productIds: string[]) {
 // --- 6. Bulk Delete Users ---
 export async function deleteUsers(userIds: string[]) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN"]);
 
     await prisma.user.deleteMany({
       where: {
@@ -413,7 +417,7 @@ export async function deleteUsers(userIds: string[]) {
 const userUpdateSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["user", "admin"]),
+  role: z.enum(["USER", "MANAGER", "CONTENT_EDITOR", "SUPER_ADMIN"]),
   phone: z.string().optional().nullable(),
 });
 
@@ -422,7 +426,7 @@ export async function updateUser(
   data: z.infer<typeof userUpdateSchema>,
 ) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN"]);
     const validated = userUpdateSchema.parse(data);
 
     await prisma.user.update({
@@ -463,7 +467,7 @@ export async function getMaintenanceMode() {
 }
 
 export async function getSettingsPageData() {
-  await requireAdmin();
+  await requireRole(["SUPER_ADMIN"]);
   const [maintenanceMode, coupons] = await Promise.all([
     getMaintenanceMode(),
     prisma.coupon.findMany({ orderBy: { createdAt: "desc" } })
@@ -473,7 +477,7 @@ export async function getSettingsPageData() {
 
 export async function updateMaintenanceMode(enabled: boolean) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN"]);
     await prisma.siteSettings.upsert({
       where: { id: "general" },
       // Since 'npx prisma generate' is currently blocked by file locks, we use a targeted cast
@@ -491,7 +495,7 @@ export async function updateMaintenanceMode(enabled: boolean) {
 // --- 9. Coupon Management Actions ---
 export async function getCoupons() {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     return await prisma.coupon.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -509,7 +513,7 @@ export async function createCoupon(data: {
   usageLimit?: number;
 }) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     await prisma.coupon.create({
       data: {
         ...data,
@@ -525,7 +529,7 @@ export async function createCoupon(data: {
 
 export async function deleteCoupon(id: string) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     await prisma.coupon.delete({
       where: { id },
     });
@@ -538,7 +542,7 @@ export async function deleteCoupon(id: string) {
 
 export async function toggleCouponStatus(id: string, isActive: boolean) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
     await prisma.coupon.update({
       where: { id },
       data: { isActive },
@@ -553,7 +557,7 @@ export async function toggleCouponStatus(id: string, isActive: boolean) {
 // --- 10. Analytics Actions ---
 export async function getRevenueAnalytics() {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN"]);
 
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
@@ -607,7 +611,7 @@ export async function getRevenueAnalytics() {
  */
 export async function getLowStockProducts(threshold: number = 5) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
 
     return await prisma.product.findMany({
       where: {
@@ -639,7 +643,7 @@ export async function updateStockBulk(
   reason: string = "Manual Bulk Update"
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireRole(["SUPER_ADMIN", "MANAGER"]);
     const userId = session.user.id;
 
     // Use a transaction to ensure all updates and logs are atomic
@@ -666,22 +670,17 @@ export async function updateStockBulk(
           data: { stock: newStock },
         });
 
-        // Create log entry using a typed approach with a runtime safety check
-        const stockLog = (tx as any).stockLog;
-        if (stockLog) {
-          await stockLog.create({
-            data: {
-              productId: update.id,
-              userId,
-              oldStock,
-              newStock,
-              change,
-              reason,
-            },
-          });
-        } else {
-          console.error("Prisma client not generated with StockLog model. Skipping log entry.");
-        }
+        // Create log entry
+        await tx.stockLog.create({
+          data: {
+            productId: update.id,
+            userId,
+            oldStock,
+            newStock,
+            change,
+            reason,
+          },
+        });
       }
     });
 
@@ -700,15 +699,9 @@ export async function updateStockBulk(
  */
 export async function getStockLogs(limit: number = 50) {
   try {
-    await requireAdmin();
+    await requireRole(["SUPER_ADMIN", "MANAGER"]);
 
-    const stockLog = (prisma as any).stockLog;
-    if (!stockLog) {
-      console.error("Prisma client not generated with StockLog model.");
-      return [];
-    }
-
-    return await stockLog.findMany({
+    return await prisma.stockLog.findMany({
       take: limit,
       include: {
         product: {

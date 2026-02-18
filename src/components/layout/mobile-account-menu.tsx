@@ -59,7 +59,7 @@ export default function MobileAccountMenu({
   }
 
   const user = session.user as User;
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "SUPER_ADMIN";
 
   const menuItems = [
     {

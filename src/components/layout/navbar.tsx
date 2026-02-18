@@ -348,6 +348,7 @@ export default function Navbar() {
                 {isMobileSearchOpen ? <X size={22} /> : <Search size={22} />}
               </button>
 
+
               <CartNav />
 
               <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block" />

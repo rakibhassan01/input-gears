@@ -19,11 +19,19 @@ import {
   TrafficDonutChart,
 } from "@/modules/admin/components/dashboard-charts";
 import {
-  getRevenueAnalytics,
   getLowStockProducts,
+  getRevenueAnalytics,
 } from "@/modules/admin/actions";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { UserRole } from "@prisma/client";
 
 export default async function AdminDashboardPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const userRole = session?.user?.role as UserRole;
+
   // 1. Parallel data fetching
   const [
     totalRevenue,
@@ -35,13 +43,17 @@ export default async function AdminDashboardPage() {
     revenueAnalytics,
     lowStockProducts,
   ] = await Promise.all([
-    prisma.order.aggregate({
-      _sum: { totalAmount: true },
-      where: { paymentStatus: "PAID" },
-    }),
+    userRole === "SUPER_ADMIN" 
+      ? prisma.order.aggregate({
+          _sum: { totalAmount: true },
+          where: { paymentStatus: "PAID" },
+        })
+      : Promise.resolve({ _sum: { totalAmount: 0 } }),
     prisma.order.count(),
     prisma.product.count(),
-    prisma.user.count({ where: { role: "user" } }),
+    userRole === "SUPER_ADMIN" 
+      ? prisma.user.count({ where: { role: "USER" } })
+      : Promise.resolve(0),
     prisma.order.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
@@ -50,7 +62,7 @@ export default async function AdminDashboardPage() {
     prisma.product.findMany({
       take: 4,
     }),
-    getRevenueAnalytics(),
+    userRole === "SUPER_ADMIN" ? getRevenueAnalytics() : Promise.resolve([]),
     getLowStockProducts(5),
   ]);
 
@@ -127,37 +139,43 @@ export default async function AdminDashboardPage() {
 
       {/* --- Stats Grid --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div
-            key={i}
-            className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-100/50 transition-all group overflow-hidden relative"
-          >
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
-              <stat.icon size={80} />
-            </div>
-            <div className="flex items-center justify-between mb-4 relative z-10">
-              <div
-                className={`p-3 rounded-2xl ${stat.bg} group-hover:rotate-12 transition-transform`}
-              >
-                <stat.icon size={24} className={stat.color} />
+        {stats.map((stat, i) => {
+          // Hide Revenue and Customers for non-admins
+          if ((stat.title === "Total Revenue" || stat.title === "Customers") && userRole !== "SUPER_ADMIN") {
+            return null;
+          }
+          return (
+            <div
+              key={i}
+              className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-100/50 transition-all group overflow-hidden relative"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
+                <stat.icon size={80} />
               </div>
-              <span className="flex items-center text-[10px] font-black text-green-600 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                <TrendingUp size={12} className="mr-1" /> 12%
-              </span>
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <div
+                  className={`p-3 rounded-2xl ${stat.bg} group-hover:rotate-12 transition-transform`}
+                >
+                  <stat.icon size={24} className={stat.color} />
+                </div>
+                <span className="flex items-center text-[10px] font-black text-green-600 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  <TrendingUp size={12} className="mr-1" /> 12%
+                </span>
+              </div>
+              <div className="relative z-10">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                  {stat.title}
+                </p>
+                <h3 className="text-2xl font-black text-gray-900 mt-1 tracking-tight">
+                  {stat.value}
+                </h3>
+                <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-wide">
+                  {stat.desc}
+                </p>
+              </div>
             </div>
-            <div className="relative z-10">
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                {stat.title}
-              </p>
-              <h3 className="text-2xl font-black text-gray-900 mt-1 tracking-tight">
-                {stat.value}
-              </h3>
-              <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-wide">
-                {stat.desc}
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* --- Main Content Grid --- */}
@@ -165,27 +183,29 @@ export default async function AdminDashboardPage() {
         {/* Left Section (2 Columns) */}
         <div className="lg:col-span-2 space-y-8">
           {/* Revenue Chart Section */}
-          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-8 px-2">
-              <div>
-                <h3 className="text-lg font-black text-gray-900 tracking-tight">
-                  Revenue Overview
-                </h3>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                  Monthly earning statistics
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl">
-                  <div className="w-2 h-2 rounded-full bg-indigo-600" />
-                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
-                    Revenue
-                  </span>
+          {userRole === "SUPER_ADMIN" && (
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-8 px-2">
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 tracking-tight">
+                    Revenue Overview
+                  </h3>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                    Monthly earning statistics
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl">
+                    <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                      Revenue
+                    </span>
+                  </div>
                 </div>
               </div>
+              <RevenueChart data={revenueAnalytics} />
             </div>
-            <RevenueChart data={revenueAnalytics} />
-          </div>
+          )}
 
           {/* Trending Products */}
           <div>
@@ -252,37 +272,39 @@ export default async function AdminDashboardPage() {
         {/* Right Section (1 Column) */}
         <div className="space-y-8">
           {/* Traffic Source Donut */}
-          <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg">
-                Traffic
-              </h3>
-              <PieChart size={20} className="text-indigo-600" />
-            </div>
+          {userRole === "SUPER_ADMIN" && (
+            <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg">
+                  Traffic
+                </h3>
+                <PieChart size={20} className="text-indigo-600" />
+              </div>
 
-            <TrafficDonutChart />
+              <TrafficDonutChart />
 
-            <div className="mt-8 space-y-4">
-              {trafficDataLegend.map((data, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-3 h-3 rounded-full ${data.color} ring-4 ring-transparent group-hover:ring-gray-50 transition-all`}
-                    />
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                      {data.source}
+              <div className="mt-8 space-y-4">
+                {trafficDataLegend.map((data, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-3 h-3 rounded-full ${data.color} ring-4 ring-transparent group-hover:ring-gray-50 transition-all`}
+                      />
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                        {data.source}
+                      </span>
+                    </div>
+                    <span className="text-sm font-black text-gray-900 tracking-tight">
+                      {data.percent}%
                     </span>
                   </div>
-                  <span className="text-sm font-black text-gray-900 tracking-tight">
-                    {data.percent}%
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Quick Actions / Monthly Goal */}
           <div className="bg-indigo-600 rounded-[32px] p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-100">
@@ -379,7 +401,7 @@ export default async function AdminDashboardPage() {
                       </span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                         {new Date(order.createdAt).toLocaleDateString(
-                          undefined,
+                          "en-US",
                           { month: "short", day: "numeric", year: "numeric" }
                         )}
                       </span>

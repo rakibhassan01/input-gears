@@ -411,7 +411,7 @@ export default function ProductsTable({
 
                           {product.scheduledAt && (
                             <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100/50">
-                              <Calendar size={10} /> {new Date(product.scheduledAt).toLocaleDateString()}
+                              <Calendar size={10} /> {new Date(product.scheduledAt).toLocaleDateString("en-US")}
                             </span>
                           )}
                         </div>

@@ -22,6 +22,7 @@ import {
   Zap,
   Star,
   X,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 import { UserRole } from "@prisma/client";
@@ -113,6 +114,12 @@ const sidebarGroups: {
         title: "Settings",
         href: "/admin/settings",
         icon: Settings,
+        roles: ["SUPER_ADMIN"],
+      },
+      {
+        title: "Audit Logs",
+        href: "/admin/audit-logs",
+        icon: ClipboardList,
         roles: ["SUPER_ADMIN"],
       },
     ],

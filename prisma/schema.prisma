@@ -31,6 +31,7 @@ model User {
   cart      CartItem[]
   reviews   Review[]
   stockLogs StockLog[]
+  auditLogs AuditLog[] @relation("AdminAuditLogs")
 
   @@map("user")
 }
@@ -377,4 +378,21 @@ model StockLog {
   @@index([productId])
   @@index([userId])
   @@map("stock_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation("AdminAuditLogs", fields: [adminId], references: [id])
+  
+  action     String   // e.g., "PRICE_CHANGE", "ORDER_DELETE", "PRODUCT_UPDATE"
+  entityType String   // e.g., "PRODUCT", "ORDER", "CATEGORY"
+  entityId   String
+  details    String   @db.Text // Human readable description: "Changed price of Product Y from 100 to 120"
+  
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }

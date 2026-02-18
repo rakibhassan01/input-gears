@@ -6,8 +6,8 @@ import { OrderStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
-
 import { UserRole } from "@prisma/client";
+import { createAuditLog } from "./actions/audit-actions";
 
 async function requireRole(allowedRoles: UserRole[]) {
   const session = await auth.api.getSession({
@@ -55,7 +55,7 @@ export type ProductFormValues = z.infer<typeof productSchema>;
 // --- 2. Create Product (Updated) ---
 export async function createProduct(data: ProductFormValues) {
   try {
-    await requireRole(["SUPER_ADMIN", "MANAGER"]);
+    const session = await requireRole(["SUPER_ADMIN", "MANAGER"]);
     const validatedData = productSchema.parse(data);
 
     // Check if slug exists
@@ -101,6 +101,14 @@ export async function createProduct(data: ProductFormValues) {
     revalidatePath("/admin/products");
     revalidatePath("/products");
 
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "CREATE_PRODUCT",
+      entityType: "PRODUCT",
+      entityId: product.id,
+      details: `Created product "${product.name}" with price ${product.price}`,
+    });
+
     return {
       success: true,
       message: "Product created successfully!",
@@ -115,7 +123,7 @@ export async function createProduct(data: ProductFormValues) {
 // --- 3. Update Product (Updated) ---
 export async function updateProduct(id: string, data: ProductFormValues) {
   try {
-    await requireRole(["SUPER_ADMIN", "MANAGER"]);
+    const session = await requireRole(["SUPER_ADMIN", "MANAGER"]);
     // Validation
     const validatedData = productSchema.parse(data);
 
@@ -134,8 +142,13 @@ export async function updateProduct(id: string, data: ProductFormValues) {
       };
     }
 
+    // Get old product for logging details
+    const oldProduct = await prisma.product.findUnique({
+      where: { id },
+    });
+
     // Update Query
-    await prisma.product.update({
+    const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
         name: validatedData.name,
@@ -166,6 +179,21 @@ export async function updateProduct(id: string, data: ProductFormValues) {
 
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}`);
+
+    if (oldProduct) {
+      let details = `Updated product "${updatedProduct.name}"`;
+      if (oldProduct.price !== updatedProduct.price) {
+        details += `. Price changed from ${oldProduct.price} to ${updatedProduct.price}`;
+      }
+      
+      await createAuditLog({
+        adminId: session.user.id,
+        action: "UPDATE_PRODUCT",
+        entityType: "PRODUCT",
+        entityId: id,
+        details,
+      });
+    }
 
     return { success: true, message: "Product updated successfully!" };
   } catch (error) {
@@ -229,7 +257,7 @@ export async function getCategoriesOptions() {
 // --- Order Actions (Same as before) ---
 export async function updateOrderStatus(orderId: string, newStatus: string) {
   try {
-    await requireRole(["SUPER_ADMIN", "MANAGER"]);
+    const session = await requireRole(["SUPER_ADMIN", "MANAGER"]);
     const status = z.nativeEnum(OrderStatus).parse(newStatus);
 
     await prisma.order.update({
@@ -238,6 +266,15 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
     });
 
     revalidatePath("/admin/orders");
+
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "ORDER_STATUS_UPDATE",
+      entityType: "ORDER",
+      entityId: orderId,
+      details: `Changed status of order to ${status}`,
+    });
+
     return { success: true, message: "Order status updated successfully!" };
   } catch (error) {
     console.error("Status Update Error:", error);
@@ -351,7 +388,7 @@ export async function updateHeroSlides(slides: HeroSlideInput[]) {
 // --- 4. Bulk Delete Orders ---
 export async function deleteOrders(orderIds: string[]) {
   try {
-    await requireRole(["SUPER_ADMIN", "MANAGER"]);
+    const session = await requireRole(["SUPER_ADMIN", "MANAGER"]);
 
     await prisma.order.deleteMany({
       where: {
@@ -360,6 +397,15 @@ export async function deleteOrders(orderIds: string[]) {
     });
 
     revalidatePath("/admin/orders");
+
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "ORDER_DELETE",
+      entityType: "ORDER",
+      entityId: "BULK",
+      details: `Deleted orders: ${orderIds.join(", ")}`,
+    });
+
     return {
       success: true,
       message: `${orderIds.length} orders deleted successfully`,
@@ -372,7 +418,7 @@ export async function deleteOrders(orderIds: string[]) {
 // --- 5. Bulk Delete Products ---
 export async function deleteProducts(productIds: string[]) {
   try {
-    await requireRole(["SUPER_ADMIN", "MANAGER"]);
+    const session = await requireRole(["SUPER_ADMIN", "MANAGER"]);
 
     await prisma.product.deleteMany({
       where: {
@@ -382,6 +428,15 @@ export async function deleteProducts(productIds: string[]) {
 
     revalidatePath("/admin/products");
     revalidatePath("/products");
+
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "PRODUCT_DELETE",
+      entityType: "PRODUCT",
+      entityId: "BULK",
+      details: `Deleted products: ${productIds.join(", ")}`,
+    });
+
     return {
       success: true,
       message: `${productIds.length} products deleted successfully`,
@@ -394,7 +449,7 @@ export async function deleteProducts(productIds: string[]) {
 // --- 6. Bulk Delete Users ---
 export async function deleteUsers(userIds: string[]) {
   try {
-    await requireRole(["SUPER_ADMIN"]);
+    const session = await requireRole(["SUPER_ADMIN"]);
 
     await prisma.user.deleteMany({
       where: {
@@ -403,6 +458,15 @@ export async function deleteUsers(userIds: string[]) {
     });
 
     revalidatePath("/admin/customers");
+    
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "USER_DELETE",
+      entityType: "USER",
+      entityId: "BULK",
+      details: `Deleted users: ${userIds.join(", ")}`,
+    });
+
     return {
       success: true,
       message: `${userIds.length} customers deleted successfully`,
@@ -426,7 +490,7 @@ export async function updateUser(
   data: z.infer<typeof userUpdateSchema>,
 ) {
   try {
-    await requireRole(["SUPER_ADMIN"]);
+    const session = await requireRole(["SUPER_ADMIN"]);
     const validated = userUpdateSchema.parse(data);
 
     await prisma.user.update({
@@ -441,6 +505,14 @@ export async function updateUser(
 
     revalidatePath("/admin/customers");
     revalidatePath(`/admin/customers/${id}`);
+
+    await createAuditLog({
+      adminId: session.user.id,
+      action: "USER_UPDATE",
+      entityType: "USER",
+      entityId: id,
+      details: `Updated info for user "${validated.name}" (${validated.role})`,
+    });
 
     return { success: true, message: "User updated successfully!" };
   } catch (error) {
@@ -520,6 +592,15 @@ export async function createCoupon(data: {
         code: data.code.toUpperCase(),
       },
     });
+
+    await createAuditLog({
+      adminId: (await requireRole(["SUPER_ADMIN", "MANAGER"])).user.id,
+      action: "COUPON_CREATE",
+      entityType: "COUPON",
+      entityId: data.code,
+      details: `Created coupon "${data.code}" with value ${data.value} (${data.type})`,
+    });
+
     return { success: true };
   } catch (error) {
     console.error("Create Coupon Error:", error);

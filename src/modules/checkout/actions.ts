@@ -303,6 +303,13 @@ export async function placeOrder(
         });
       }
 
+      // 5. Clear the user's cart
+      if (user?.id) {
+        await tx.cartItem.deleteMany({
+          where: { userId: user.id },
+        });
+      }
+
       return { orderNumber: order.orderNumber };
     });
 

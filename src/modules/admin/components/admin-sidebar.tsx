@@ -82,6 +82,12 @@ const sidebarGroups: {
         roles: ["SUPER_ADMIN", "MANAGER"],
       },
       {
+        title: "Abandoned Carts",
+        href: "/admin/abandoned-carts",
+        icon: ShoppingBag,
+        roles: ["SUPER_ADMIN", "MANAGER"],
+      },
+      {
         title: "Customers",
         href: "/admin/customers",
         icon: Users,

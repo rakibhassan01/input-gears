@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
-import { Trash, CloudLightning } from "lucide-react";
+import { Trash, CloudLightning, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { CloudinaryResult } from "@/types/cloudinary";
+import { addToMediaLibrary } from "@/modules/admin/actions/media-actions";
+import { MediaLibraryModal } from "@/modules/admin/components/media-library-modal";
+
+const emptySubscribe = () => () => {};
 
 interface ImageUploadProps {
   disabled?: boolean;
@@ -21,31 +25,33 @@ export default function ImageUpload({
   onRemove,
   value,
 }: ImageUploadProps) {
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
-  // ✅ 2. Hydration Mismatch Fix
-  // This pattern is standard and safe in Next.js
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true);
-  }, []);
-
-  // ✅ 3. Type Safe Upload Handler
+  // Type Safe Upload Handler
   const onUpload = (result: unknown) => {
-    // Note: CldUploadWidget type might return 'any', so using type assertion
-
-    // Check if result exists and has info property
     if (result && typeof result === "object" && "info" in result) {
       const info = result.info as CloudinaryResult["info"];
 
       if (info.secure_url) {
         onChange(info.secure_url);
+        // Automatically register to Media Library
+        addToMediaLibrary(info.secure_url, info.original_filename || "");
         toast.success("Image uploaded successfully");
       }
     }
   };
 
-  // Prevent hydration error by waiting for mount
+  const handleLibrarySelect = (url: string) => {
+    onChange(url);
+    setIsLibraryOpen(false);
+  };
+
+  // Prevent hydration error
   if (!isMounted) {
     return null;
   }
@@ -54,11 +60,11 @@ export default function ImageUpload({
     <div className="space-y-4 w-full">
       {/* Image Preview */}
       {value && value.length > 0 && (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           {value.map((url) => (
             <div
               key={url}
-              className="relative w-[200px] h-[200px] rounded-xl overflow-hidden border border-gray-200 shadow-sm group"
+              className="relative w-[150px] h-[150px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm group"
             >
               <div className="z-10 absolute top-2 right-2">
                 <button
@@ -67,7 +73,7 @@ export default function ImageUpload({
                   disabled={disabled}
                   className="bg-red-500 text-white p-1.5 rounded-lg shadow-sm hover:bg-red-600 transition-colors disabled:opacity-50"
                 >
-                  <Trash size={16} />
+                  <Trash size={14} />
                 </button>
               </div>
               <Image fill className="object-cover" alt="Image" src={url} />
@@ -76,53 +82,66 @@ export default function ImageUpload({
         </div>
       )}
 
-      {/* Upload Widget */}
-      <CldUploadWidget
-        onSuccess={onUpload}
-        uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-        options={{
-          maxFiles: 1,
-          sources: ["local", "url", "camera"],
-          clientAllowedFormats: ["image"],
-        }}
-      >
-        {({ open }) => {
-          const onClick = () => {
-            if (disabled) return;
-            if (open) {
-              open();
-            }
-          };
+      {/* Upload Controls Group */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Cloudinary Widget */}
+        <CldUploadWidget
+          onSuccess={onUpload}
+          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+          options={{
+            maxFiles: 1,
+            sources: ["local", "url", "camera"],
+            clientAllowedFormats: ["image"],
+          }}
+        >
+          {({ open }) => {
+            const onClick = () => {
+              if (disabled) return;
+              if (open) open();
+            };
 
-          return (
-            <div
-              onClick={onClick}
-              className={`border-2 border-dashed border-gray-300 rounded-2xl p-10 transition flex flex-col items-center justify-center gap-4 cursor-pointer group bg-white ${
-                disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
-              }`}
-            >
-              <div className="p-4 bg-indigo-50 text-indigo-600 rounded-full group-hover:scale-110 transition-transform">
-                <CloudLightning size={32} />
-              </div>
-              <div className="text-center space-y-1">
-                <p className="font-bold text-gray-700 text-sm">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-xs text-gray-400">
-                  SVG, PNG, JPG or GIF (max. 800x400px)
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={disabled}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm"
+            return (
+              <div
+                onClick={onClick}
+                className={`flex-1 border-2 border-dashed border-gray-200 rounded-3xl p-8 transition flex flex-col items-center justify-center gap-4 cursor-pointer group bg-white ${
+                  disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50/50 hover:border-indigo-200"
+                }`}
               >
-                Choose File
-              </button>
-            </div>
-          );
-        }}
-      </CldUploadWidget>
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
+                  <CloudLightning size={24} />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-gray-700 text-sm">Upload New</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Images, Graphics, etc.</p>
+                </div>
+              </div>
+            );
+          }}
+        </CldUploadWidget>
+
+        {/* Media Library Trigger */}
+        <div
+          onClick={() => !disabled && setIsLibraryOpen(true)}
+          className={`flex-1 border-2 border-dashed border-gray-200 rounded-3xl p-8 transition flex flex-col items-center justify-center gap-4 cursor-pointer group bg-white ${
+            disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-indigo-50/30 hover:border-indigo-200"
+          }`}
+        >
+          <div className="p-3 bg-gray-100 text-gray-500 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+            <ImageIcon size={24} />
+          </div>
+          <div className="text-center">
+            <p className="font-bold text-gray-700 text-sm">Media Library</p>
+            <p className="text-[10px] text-gray-400 mt-1">Select Existing Asset</p>
+          </div>
+        </div>
+      </div>
+
+      {isLibraryOpen && (
+        <MediaLibraryModal
+          onSelect={handleLibrarySelect}
+          onClose={() => setIsLibraryOpen(false)}
+        />
+      )}
     </div>
   );
 }

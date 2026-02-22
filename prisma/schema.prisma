@@ -411,3 +411,12 @@ model ShippingZone {
   
   @@map("shipping_zones")
 }
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  @@map("media")
+}

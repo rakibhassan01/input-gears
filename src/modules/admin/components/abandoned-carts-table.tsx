@@ -93,7 +93,7 @@ export function AbandonedCartsTable({ data }: AbandonedCartsTableProps) {
                             key={item.productId}
                             className="flex items-center gap-2"
                           >
-                            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded border">
+                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border">
                               <Image
                                 src={item.image || "/placeholder.svg"}
                                 alt={item.productName}

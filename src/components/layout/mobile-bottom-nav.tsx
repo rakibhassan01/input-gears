@@ -102,7 +102,7 @@ export default function MobileBottomNav() {
               tab.isActive ? "scale-105" : "hover:scale-105 active:scale-95"
             }`;
 
-            if (tab.isAccountTab && session) {
+            if (tab.isAccountTab && isMounted && session) {
               return (
                 <button
                   key={tab.name}

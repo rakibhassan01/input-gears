@@ -35,8 +35,11 @@ export default async function CategoryPage({
   const filters = await searchParams;
 
   // Verify category exists
-  const category = await prisma.category.findUnique({
-    where: { slug: categorySlug },
+  const category = await prisma.category.findFirst({
+    where: { 
+      slug: categorySlug,
+      isActive: true,
+    },
   });
 
   if (!category) {

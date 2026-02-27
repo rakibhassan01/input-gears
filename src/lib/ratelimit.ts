@@ -10,7 +10,7 @@ export const redis = new Redis({
 // Create a new Ratelimit instance
 export const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(10, "10s"),
+  limiter: Ratelimit.slidingWindow(100, "1m"), // 100 requests per minute
   analytics: true,
   prefix: "@upstash/ratelimit",
 });

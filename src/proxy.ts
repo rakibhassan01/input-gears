@@ -10,21 +10,25 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ✅ Rate Limiting
-  const identifier = request.headers.get("x-forwarded-for")?.split(",")[0] || "127.0.0.1";
-  const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
+  // ✅ Rate Limiting (API routes only)
+  if (pathname.startsWith("/api") && !pathname.startsWith("/api/auth")) {
+    const identifier =
+      request.headers.get("x-forwarded-for")?.split(",")[0] || "127.0.0.1";
+    const { success, limit, reset, remaining } =
+      await ratelimit.limit(identifier);
 
-  if (!success) {
-    return new NextResponse("Too many requests", {
-      status: 429,
-      headers: {
-        "X-RateLimit-Limit": limit.toString(),
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": reset.toString(),
-      },
-    });
+    if (!success) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      });
+    }
   }
-  
+
   // session check using Better Auth API
   const session = await auth.api.getSession({
     headers: request.headers,
@@ -32,14 +36,18 @@ export async function proxy(request: NextRequest) {
 
   // ✅ Maintenance Mode Enforcement
   // Skip check for admin, sign-in, and the maintenance page itself
-  const isMaintenanceExempt = 
-    pathname.startsWith("/admin") || 
-    pathname.startsWith("/maintenance") || 
+  const isMaintenanceExempt =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/maintenance") ||
     pathname.startsWith("/sign-in") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next");
 
-  const isAdminLike = session?.user?.role && ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"].includes(session.user.role as string);
+  const isAdminLike =
+    session?.user?.role &&
+    ["SUPER_ADMIN", "MANAGER", "CONTENT_EDITOR"].includes(
+      session.user.role as string,
+    );
 
   if (!isMaintenanceExempt && !isAdminLike) {
     try {
@@ -49,7 +57,7 @@ export async function proxy(request: NextRequest) {
 
       const settings = (await prisma.siteSettings.findUnique({
         where: { id: "general" },
-        select: { maintenanceMode: true } as Record<string, boolean>
+        select: { maintenanceMode: true } as Record<string, boolean>,
       })) as unknown as SiteSettingsWithMaintenance | null;
 
       if (settings?.maintenanceMode) {
@@ -60,7 +68,8 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const isAuthRoute = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  const isAuthRoute =
+    pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   const isProtectedRoute =
     pathname.startsWith("/account") ||
     pathname.startsWith("/admin") ||
@@ -75,7 +84,7 @@ export async function proxy(request: NextRequest) {
   if (!session?.user && isProtectedRoute) {
     const callbackURL = encodeURIComponent(pathname);
     return NextResponse.redirect(
-      new URL(`/sign-in?callbackURL=${callbackURL}`, request.url)
+      new URL(`/sign-in?callbackURL=${callbackURL}`, request.url),
     );
   }
 
